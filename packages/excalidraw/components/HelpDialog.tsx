@@ -9,7 +9,7 @@ import { probablySupportsClipboardBlob } from "../clipboard";
 import { t } from "../i18n";
 
 import { Dialog } from "./Dialog";
-import { ExternalLinkIcon, GithubIcon, youtubeIcon } from "./icons";
+// import { ExternalLinkIcon, GithubIcon, youtubeIcon } from "./icons";
 
 import "./HelpDialog.scss";
 
@@ -17,7 +17,7 @@ import type { JSX } from "react";
 
 const Header = () => (
   <div className="HelpDialog__header">
-    <a
+    {/* <a
       className="HelpDialog__btn"
       href="https://docs.excalidraw.com"
       target="_blank"
@@ -52,7 +52,7 @@ const Header = () => (
     >
       <div className="HelpDialog__link-icon">{youtubeIcon}</div>
       YouTube
-    </a>
+    </a> */}
   </div>
 );
 

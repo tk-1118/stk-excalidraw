@@ -1,4 +1,4 @@
-import clsx from "clsx";
+// import clsx from "clsx";
 
 import { THEME } from "@excalidraw/common";
 
@@ -21,71 +21,73 @@ import { activeConfirmDialogAtom } from "../ActiveConfirmDialog";
 import {
   useExcalidrawSetAppState,
   useExcalidrawActionManager,
-  useExcalidrawElements,
+  // useExcalidrawElements,
   useAppProps,
 } from "../App";
-import { openConfirmModal } from "../OverwriteConfirm/OverwriteConfirmState";
-import Trans from "../Trans";
+// import { openConfirmModal } from "../OverwriteConfirm/OverwriteConfirmState";
+// import Trans from "../Trans";
 import DropdownMenuItem from "../dropdownMenu/DropdownMenuItem";
 import DropdownMenuItemContentRadio from "../dropdownMenu/DropdownMenuItemContentRadio";
-import DropdownMenuItemLink from "../dropdownMenu/DropdownMenuItemLink";
-import { GithubIcon, DiscordIcon, XBrandIcon } from "../icons";
+// import DropdownMenuItemLink from "../dropdownMenu/DropdownMenuItemLink";
+// import { GithubIcon, DiscordIcon, XBrandIcon } from "../icons";
 import {
   boltIcon,
   DeviceDesktopIcon,
   ExportIcon,
   ExportImageIcon,
   HelpIcon,
-  LoadIcon,
+  // LoadIcon,
   MoonIcon,
   save,
   searchIcon,
   SunIcon,
   TrashIcon,
-  usersIcon,
+  // usersIcon,
 } from "../icons";
 
 import "./DefaultItems.scss";
 
 export const LoadScene = () => {
-  const { t } = useI18n();
+  // const { t } = useI18n();
   const actionManager = useExcalidrawActionManager();
-  const elements = useExcalidrawElements();
+  // const elements = useExcalidrawElements();
 
   if (!actionManager.isActionEnabled(actionLoadScene)) {
     return null;
   }
 
-  const handleSelect = async () => {
-    if (
-      !elements.length ||
-      (await openConfirmModal({
-        title: t("overwriteConfirm.modal.loadFromFile.title"),
-        actionLabel: t("overwriteConfirm.modal.loadFromFile.button"),
-        color: "warning",
-        description: (
-          <Trans
-            i18nKey="overwriteConfirm.modal.loadFromFile.description"
-            bold={(text) => <strong>{text}</strong>}
-            br={() => <br />}
-          />
-        ),
-      }))
-    ) {
-      actionManager.executeAction(actionLoadScene);
-    }
-  };
+  // const handleSelect = async () => {
+  //   if (
+  //     !elements.length ||
+  //     (await openConfirmModal({
+  //       title: t("overwriteConfirm.modal.loadFromFile.title"),
+  //       actionLabel: t("overwriteConfirm.modal.loadFromFile.button"),
+  //       color: "warning",
+  //       description: (
+  //         <Trans
+  //           i18nKey="overwriteConfirm.modal.loadFromFile.description"
+  //           bold={(text) => <strong>{text}</strong>}
+  //           br={() => <br />}
+  //         />
+  //       ),
+  //     }))
+  //   ) {
+  //     actionManager.executeAction(actionLoadScene);
+  //   }
+  // };
 
   return (
-    <DropdownMenuItem
-      icon={LoadIcon}
-      onSelect={handleSelect}
-      data-testid="load-button"
-      shortcut={getShortcutFromShortcutName("loadScene")}
-      aria-label={t("buttons.load")}
-    >
-      {t("buttons.load")}
-    </DropdownMenuItem>
+    <>
+      {/* <DropdownMenuItem
+        icon={LoadIcon}
+        onSelect={handleSelect}
+        data-testid="load-button"
+        shortcut={getShortcutFromShortcutName("loadScene")}
+        aria-label={t("buttons.load")}
+      >
+        {t("buttons.load")}
+      </DropdownMenuItem> */}
+    </>
   );
 };
 LoadScene.displayName = "LoadScene";
@@ -340,31 +342,31 @@ export const Export = () => {
 Export.displayName = "Export";
 
 export const Socials = () => {
-  const { t } = useI18n();
+  // const { t } = useI18n();
 
   return (
     <>
-      <DropdownMenuItemLink
+      {/* <DropdownMenuItemLink
         icon={GithubIcon}
         href="https://github.com/excalidraw/excalidraw"
         aria-label="GitHub"
       >
         GitHub
-      </DropdownMenuItemLink>
-      <DropdownMenuItemLink
+      </DropdownMenuItemLink> */}
+      {/* <DropdownMenuItemLink
         icon={XBrandIcon}
         href="https://x.com/excalidraw"
         aria-label="X"
       >
         {t("labels.followUs")}
-      </DropdownMenuItemLink>
-      <DropdownMenuItemLink
+      </DropdownMenuItemLink> */}
+      {/* <DropdownMenuItemLink
         icon={DiscordIcon}
         href="https://discord.gg/UexuTaE"
         aria-label="Discord"
       >
         {t("labels.discordChat")}
-      </DropdownMenuItemLink>
+      </DropdownMenuItemLink> */}
     </>
   );
 };
@@ -377,18 +379,20 @@ export const LiveCollaborationTrigger = ({
   onSelect: () => void;
   isCollaborating: boolean;
 }) => {
-  const { t } = useI18n();
+  // const { t } = useI18n();
   return (
-    <DropdownMenuItem
-      data-testid="collab-button"
-      icon={usersIcon}
-      className={clsx({
-        "active-collab": isCollaborating,
-      })}
-      onSelect={onSelect}
-    >
-      {t("labels.liveCollaboration")}
-    </DropdownMenuItem>
+    <>
+      {/* <DropdownMenuItem
+        data-testid="collab-button"
+        icon={usersIcon}
+        className={clsx({
+          "active-collab": isCollaborating,
+        })}
+        onSelect={onSelect}
+      >
+        {t("labels.liveCollaboration")}
+      </DropdownMenuItem> */}
+    </>
   );
 };
 
