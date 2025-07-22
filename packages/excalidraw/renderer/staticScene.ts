@@ -132,7 +132,8 @@ const frameClip = (
   } else {
     context.rect(0, 0, frame.width, frame.height);
   }
-  context.clip();
+  // stk - 禁止frame裁剪
+  // context.clip();
   context.translate(
     -(frame.x + appState.scrollX),
     -(frame.y + appState.scrollY),
