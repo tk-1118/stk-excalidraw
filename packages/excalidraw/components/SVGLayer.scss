@@ -3,11 +3,12 @@
 .excalidraw {
   .SVGLayer {
     pointer-events: none;
-    width: 100vw;
+    // stk - 减少宽度留给BusinessServiceProtoNav
+    width: calc(100vw - 300px);
     height: 100vh;
     position: fixed;
     top: 0;
-    left: 0;
+    left: 300px;
 
     z-index: var(--zIndex-svgLayer);
 

@@ -398,6 +398,8 @@ import ConvertElementTypePopup, {
   convertElementTypes,
 } from "./ConvertElementTypePopup";
 
+// stk - 引入BusinessServiceProtoNav组件
+import { BusinessServiceProtoNav } from "./BusinessServiceProtoNav/BusinessServiceProtoNav"
 import { activeConfirmDialogAtom } from "./ActiveConfirmDialog";
 import BraveMeasureTextError from "./BraveMeasureTextError";
 import { ContextMenu, CONTEXT_MENU_SEPARATOR } from "./ContextMenu";
@@ -1554,7 +1556,8 @@ class App extends React.Component<AppProps, AppState> {
           ["--ui-pointerEvents" as any]: shouldBlockPointerEvents
             ? POINTER_EVENTS.disabled
             : POINTER_EVENTS.enabled,
-          ["--right-sidebar-width" as any]: "302px",
+          ["--left-sidebar-width" as any]: "300px",
+          ["--right-sidebar-width" as any]: "360px",
         }}
         ref={this.excalidrawContainerRef}
         onDrop={this.handleAppOnDrop}
@@ -1579,6 +1582,8 @@ class App extends React.Component<AppProps, AppState> {
                       <ExcalidrawActionManagerContext.Provider
                         value={this.actionManager}
                       >
+                        <BusinessServiceProtoNav></BusinessServiceProtoNav>
+
                         <LayerUI
                           canvas={this.canvas}
                           appState={this.state}
@@ -1613,7 +1618,7 @@ class App extends React.Component<AppProps, AppState> {
                         >
                           {this.props.children}
                         </LayerUI>
-
+                        
                         <div className="excalidraw-textEditorContainer" />
                         <div className="excalidraw-contextMenuContainer" />
                         <div className="excalidraw-eye-dropper-container" />

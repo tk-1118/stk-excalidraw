@@ -57,6 +57,13 @@ const StaticCanvas = (props: StaticCanvasProps) => {
     if (canvas.style.height !== heightString) {
       canvas.style.height = heightString;
     }
+    // stk - 减少画布宽度留给BusinessServiceProtoNav
+    try {
+      canvas.style.width = (parseInt(canvas.style.width) - 300) + 'px'
+      canvas.style.left = '300px'
+    } catch (error) {
+      console.log(error);
+    }
 
     const scaledWidth = props.appState.width * props.scale;
     const scaledHeight = props.appState.height * props.scale;

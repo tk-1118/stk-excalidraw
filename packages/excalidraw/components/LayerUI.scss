@@ -12,7 +12,9 @@
     // then we also need to disable pointer events else the canvas below
     // wouldn't be interactive.
     position: absolute;
-    width: 100%;
+    // stk - 减少宽度留给BusinessServiceProtoNav
+    left: 300px;
+    width: calc(100% - 300px);
     height: 100%;
     pointer-events: none;
     z-index: var(--zIndex-layerUI);

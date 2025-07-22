@@ -1,0 +1,53 @@
+@import "open-color/open-color";
+@import "../../css/variables.module.scss";
+
+.business-service-proto-nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 9;
+    width: 300px;
+    height: 100%;
+
+    box-sizing: border-box;
+
+    background-color: var(--sidebar-bg-color);
+    box-shadow: var(--sidebar-shadow);
+
+    pointer-events: var(--ui-pointerEvents);
+
+    :root[dir="rtl"] & {
+      left: 0;
+      right: auto;
+    }
+
+    &--docked {
+      box-shadow: none;
+    }
+
+    overflow: hidden;
+    border-radius: 0;
+    width: calc(var(--left-sidebar-width) - var(--space-factor) * 2);
+
+    border-left: 1px solid var(--sidebar-border-color);
+
+    :root[dir="rtl"] & {
+      border-right: 1px solid var(--sidebar-border-color);
+      border-left: 0;
+    }
+}
+
+.business-service-proto-nav-header {
+    border-bottom: 1px solid var(--color-primary);
+    .business-service-proto-design {
+        color: var(--color-primary);
+        text-indent: 20px;
+        margin: 20px 0 10px;
+    }
+    .business-service-proto-name {
+        color: var(--text-primary-color);
+        text-indent: 20px;
+        font-weight: 600;
+        margin: 10px 0;
+    }
+}
