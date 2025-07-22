@@ -4,11 +4,11 @@
   .SVGLayer {
     pointer-events: none;
     // stk - 减少宽度留给BusinessServiceProtoNav
-    width: calc(100vw - 300px);
+    width: calc(100vw - var(--left-sidebar-width));
     height: 100vh;
     position: fixed;
     top: 0;
-    left: 300px;
+    left: var(--left-sidebar-width);
 
     z-index: var(--zIndex-svgLayer);
 

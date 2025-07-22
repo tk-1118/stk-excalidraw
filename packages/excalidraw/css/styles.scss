@@ -103,6 +103,8 @@ body.excalidraw-cursor-resize * {
 
   &__canvas {
     position: absolute;
+    // left: var(--left-sidebar-width);
+    // width: var(--left-sidebar-width);
   }
 
   &__embeddable {

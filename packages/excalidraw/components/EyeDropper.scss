@@ -3,8 +3,8 @@
   .excalidraw-eye-dropper-backdrop {
     position: absolute;
     // stk - 减少宽度留给BusinessServiceProtoNav
-    left: 300px;
-    width: calc(100% - 300px);
+    left: var(--left-sidebar-width);
+    width: calc(100% - var(--left-sidebar-width));
     height: 100%;
     z-index: var(--zIndex-eyeDropperBackdrop);
     touch-action: none;
