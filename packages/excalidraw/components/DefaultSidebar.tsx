@@ -4,6 +4,7 @@ import {
   CANVAS_SEARCH_TAB,
   DEFAULT_SIDEBAR,
   LIBRARY_SIDEBAR_TAB,
+  STANDARD_COMPONENT_LIBRARY,
   composeEventHandlers,
 } from "@excalidraw/common";
 
@@ -99,11 +100,17 @@ export const DefaultSidebar = Object.assign(
           <Sidebar.Tabs>
             <Sidebar.Header>
               <Sidebar.TabTriggers>
-                <Sidebar.TabTrigger tab={CANVAS_SEARCH_TAB}>
+                {/* <Sidebar.TabTrigger tab={CANVAS_SEARCH_TAB}>
                   {searchIcon}
+                </Sidebar.TabTrigger> */}
+                {/* <Sidebar.TabTrigger tab={LIBRARY_SIDEBAR_TAB}>
+                  {LibraryIcon}
+                </Sidebar.TabTrigger> */}
+                <Sidebar.TabTrigger tab={STANDARD_COMPONENT_LIBRARY}>
+                  标准组件库
                 </Sidebar.TabTrigger>
                 <Sidebar.TabTrigger tab={LIBRARY_SIDEBAR_TAB}>
-                  {LibraryIcon}
+                  用户素材库
                 </Sidebar.TabTrigger>
                 <DefaultSidebarTabTriggersTunnel.Out />
               </Sidebar.TabTriggers>
