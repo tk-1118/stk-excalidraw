@@ -18,9 +18,11 @@ import "../components/dropdownMenu/DropdownMenu.scss";
 import { useExcalidrawSetAppState } from "./App";
 import { LibraryMenu } from "./LibraryMenu";
 import { SearchMenu } from "./SearchMenu";
+import { StandardComponentLibraeyMenu } from "./StandardComponentLibraeyMenu";
+
 import { Sidebar } from "./Sidebar/Sidebar";
 import { withInternalFallback } from "./hoc/withInternalFallback";
-import { LibraryIcon, searchIcon } from "./icons";
+// import { LibraryIcon, searchIcon } from "./icons";
 
 import type { SidebarProps, SidebarTriggerProps } from "./Sidebar/common";
 
@@ -106,6 +108,9 @@ export const DefaultSidebar = Object.assign(
                 {/* <Sidebar.TabTrigger tab={LIBRARY_SIDEBAR_TAB}>
                   {LibraryIcon}
                 </Sidebar.TabTrigger> */}
+                <Sidebar.TabTrigger tab={CANVAS_SEARCH_TAB}>
+                  搜索
+                </Sidebar.TabTrigger>
                 <Sidebar.TabTrigger tab={STANDARD_COMPONENT_LIBRARY}>
                   标准组件库
                 </Sidebar.TabTrigger>
@@ -120,6 +125,9 @@ export const DefaultSidebar = Object.assign(
             </Sidebar.Tab>
             <Sidebar.Tab tab={CANVAS_SEARCH_TAB}>
               <SearchMenu />
+            </Sidebar.Tab>
+            <Sidebar.Tab tab={STANDARD_COMPONENT_LIBRARY}>
+              <StandardComponentLibraeyMenu />
             </Sidebar.Tab>
             {children}
           </Sidebar.Tabs>
