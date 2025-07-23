@@ -11,7 +11,7 @@ import {
   getLineHeight,
 } from "@excalidraw/common";
 
-import { isElementCompletelyInViewport } from "@excalidraw/element";
+import { isElementCompletelyInViewport, ShapeCache } from "@excalidraw/element";
 
 import { measureText } from "@excalidraw/element";
 
@@ -28,7 +28,18 @@ import { isTextElement, isFrameLikeElement } from "@excalidraw/element";
 import { getDefaultFrameName } from "@excalidraw/element/frame";
 
 import type {
+  ExcalidrawDiamondElement,
+  ExcalidrawEllipseElement,
+  ExcalidrawEmbeddableElement,
+  ExcalidrawFrameElement,
   ExcalidrawFrameLikeElement,
+  ExcalidrawFreeDrawElement,
+  ExcalidrawIframeElement,
+  ExcalidrawImageElement,
+  ExcalidrawLinearElement,
+  ExcalidrawMagicFrameElement,
+  ExcalidrawRectangleElement,
+  ExcalidrawSelectionElement,
   ExcalidrawTextElement,
 } from "@excalidraw/element/types";
 
@@ -46,6 +57,7 @@ import {
   searchIcon,
   frameToolIcon,
   TextIcon,
+  EllipseIcon,
 } from "./icons";
 
 import "./SearchMenu.scss";
@@ -82,8 +94,12 @@ export const SearchMenu = () => {
   const setAppState = useExcalidrawSetAppState();
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+
 
   const [inputValue, setInputValue] = useAtom(searchQueryAtom);
+  const [replaceInputValue, setReplaceInputValue] = useState("");
+
   const searchQuery = inputValue.trim() as SearchQuery;
 
   const [isSearching, setIsSearching] = useState(false);
@@ -137,6 +153,87 @@ export const SearchMenu = () => {
     setFocusIndex,
     lastSceneNonceRef,
   ]);
+
+  const goReplaceItemText = () => {
+    if (typeof focusIndex === "number") {
+      const element = searchMatches.items[focusIndex]?.element;
+      if (isFrameLikeElement(element)) {
+        const nameRegx = new RegExp(searchQuery, "g");
+        const name = element.name?.replace(nameRegx, replaceInputValue);
+        app.scene.mutateElement(element, { name });
+      } else if (isTextElement(element)) {
+        const nameRegx = new RegExp(searchQuery, "g");
+        const text = element.text?.replace(nameRegx, replaceInputValue);
+        app.scene.mutateElement(element, {
+          originalText: text,
+          text,
+        });
+        ShapeCache.delete(element);
+      }
+      searchMatches.items.splice(focusIndex, 1);
+      setAppState({
+        searchMatches: {
+          focusedId: null,
+          matches: searchMatches.items.map((searchMatch) => ({
+            id: searchMatch.element.id,
+            focus: false,
+            matchedLines: searchMatch.matchedLines,
+          })),
+        }
+      });
+      app.scene.triggerUpdate();
+    }
+    if (searchMatches.items.length > 0) {
+      setFocusIndex((focusIndex) => {
+        if (focusIndex === null) {
+          return 0;
+        }
+        return (focusIndex + 1) % searchMatches.items.length;
+      });
+    }
+  };
+
+  const goReplaceAllItemText = () => {
+    const elementsToUpdate = searchMatches.items.map((match) => match.element);
+
+    elementsToUpdate.forEach(
+      (
+        element:
+          | ExcalidrawSelectionElement
+          | ExcalidrawRectangleElement
+          | ExcalidrawDiamondElement
+          | ExcalidrawEllipseElement
+          | ExcalidrawTextElement
+          | ExcalidrawLinearElement
+          | ExcalidrawFreeDrawElement
+          | ExcalidrawImageElement
+          | ExcalidrawFrameElement
+          | ExcalidrawMagicFrameElement
+          | ExcalidrawIframeElement
+          | ExcalidrawEmbeddableElement
+          | null,
+      ) => {
+        if (isFrameLikeElement(element)) {
+          const nameRegx = new RegExp(searchQuery, "g");
+          const name = element.name?.replace(nameRegx, replaceInputValue);
+          app.scene.mutateElement(element, { name });
+        } else if (isTextElement(element)) {
+          const nameRegx = new RegExp(searchQuery, "g");
+          const text = element.text?.replace(nameRegx, replaceInputValue);
+          app.scene.mutateElement(element, {
+            originalText: text,
+            text,
+          });
+          ShapeCache.delete(element);
+        }
+      },
+    );
+    setAppState({   
+      searchMatches: null,  
+      elementsToHighlight: null   
+    }); 
+    app.scene.triggerUpdate();
+  };
 
   const goToNextItem = () => {
     if (searchMatches.items.length > 0) {
@@ -386,6 +483,33 @@ export const SearchMenu = () => {
           }}
           selectOnRender
         />
+      </div>
+
+      <div className="layer-ui__replace-header">
+        <TextField
+          className={CLASSES.SEARCH_MENU_INPUT_WRAPPER}
+          value={replaceInputValue}
+          ref={replaceInputRef}
+          placeholder={"replace with text"}
+          icon={EllipseIcon}
+          onChange={(value) => {
+            setReplaceInputValue(value);
+          }}
+        />
+        <button
+          onClick={() => {
+            goReplaceItemText();
+          }}
+        >
+          替换
+        </button>
+        <button
+          onClick={() => {
+            goReplaceAllItemText();
+          }}
+        >
+          全部替换
+        </button>
       </div>
 
       <div className="layer-ui__search-count">
