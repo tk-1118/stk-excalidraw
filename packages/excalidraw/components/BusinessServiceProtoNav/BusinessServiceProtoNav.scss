@@ -12,8 +12,8 @@
     box-sizing: border-box;
 
     background-color: var(--sidebar-bg-color);
-    box-shadow: var(--sidebar-shadow);
-
+    // box-shadow: var(--sidebar-shadow);
+    border-right: 1px solid var(--sidebar-border-color);
     pointer-events: var(--ui-pointerEvents);
 
     :root[dir="rtl"] & {
