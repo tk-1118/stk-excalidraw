@@ -618,6 +618,7 @@ const generateElementShape = (
   switch (element.type) {
     case "rectangle":
     case "iframe":
+    case "annotation":
     case "embeddable": {
       let shape: ElementShapes[typeof element.type];
       // this is for rendering the stroke/bg of the embeddable, especially
@@ -920,6 +921,7 @@ export const getElementShape = <Point extends GlobalPoint | LocalPoint>(
     case "embeddable":
     case "image":
     case "iframe":
+    case "annotation":
     case "text":
     case "selection":
       return getPolygonShape(element);

@@ -11,6 +11,7 @@ import {
   TextIcon,
   ImageIcon,
   EraserIcon,
+  AnnotationIcon,
 } from "./icons";
 
 export const SHAPES = [
@@ -83,6 +84,13 @@ export const SHAPES = [
     key: KEYS.E,
     numericKey: KEYS["0"],
     fillable: false,
+  },
+  {
+    icon: AnnotationIcon,
+    value: "annotation",
+    key: null,
+    numericKey: null,
+    fillable: true,
   },
 ] as const;
 

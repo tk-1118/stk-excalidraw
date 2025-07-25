@@ -196,7 +196,19 @@ export type ExcalidrawRectanguloidElement =
   | ExcalidrawIframeLikeElement
   | ExcalidrawFrameLikeElement
   | ExcalidrawEmbeddableElement
-  | ExcalidrawSelectionElement;
+  | ExcalidrawSelectionElement
+  | ExcalidrawAnnotationElement;
+
+export type ExcalidrawAnnotationElement = _ExcalidrawElementBase &
+  Readonly<{
+    type: "annotation";
+    text: string;
+    fontSize: number;
+    fontFamily: FontFamilyValues;
+    textAlign: TextAlign;
+    verticalAlign: VerticalAlign;
+    lineHeight: number & { _brand: "unitlessLineHeight" };
+  }>;
 
 /**
  * ExcalidrawElement should be JSON serializable and (eventually) contain
@@ -213,7 +225,8 @@ export type ExcalidrawElement =
   | ExcalidrawFrameElement
   | ExcalidrawMagicFrameElement
   | ExcalidrawIframeElement
-  | ExcalidrawEmbeddableElement;
+  | ExcalidrawEmbeddableElement
+  | ExcalidrawAnnotationElement;
 
 export type ExcalidrawNonSelectionElement = Exclude<
   ExcalidrawElement,

@@ -253,6 +253,7 @@
     "embeddable": "嵌入网页",
     "laser": "激光笔",
     "hand": "抓手（平移工具）",
+    "annotation": "标注",
     "extraTools": "更多工具",
     "mermaidToExcalidraw": "Mermaid 至 Excalidraw",
     "magicSettings": "AI 设置"

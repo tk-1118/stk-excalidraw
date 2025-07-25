@@ -68,6 +68,7 @@ import type {
   ExcalidrawFrameLikeElement,
   NonDeletedSceneElementsMap,
   ElementsMap,
+  ExcalidrawAnnotationElement,
 } from "./types";
 
 import type { StrokeOptions } from "perfect-freehand";
@@ -713,6 +714,77 @@ export const renderSelectionElement = (
   context.restore();
 };
 
+const renderAnnotation = (
+  element: ExcalidrawAnnotationElement,
+  context: CanvasRenderingContext2D,
+  appState: StaticCanvasAppState,
+) => {
+  // 渲染标注图标（一个圆形）
+  const centerX = element.x + element.width / 2;
+  const centerY = element.y + element.height / 2;
+  const radius = Math.min(element.width, element.height) / 2;
+
+  // 绘制标注图标
+  context.beginPath();
+  context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  context.fillStyle = element.backgroundColor;
+  context.fill();
+  context.lineWidth = element.strokeWidth / appState.zoom.value;
+  context.strokeStyle = element.strokeColor;
+  context.stroke();
+
+  // 绘制标注图标内的感叹号
+  context.fillStyle = element.strokeColor;
+  context.font = `bold ${radius * 1.2}px sans-serif`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText("!", centerX, centerY);
+
+  // 如果标注处于展开状态，绘制标注内容
+  if (element.customData?.isExpanded) {
+    const padding = 10;
+    const textBoxWidth = 200;
+    const textBoxHeight = 100;
+    const textBoxX = centerX + radius + padding;
+    const textBoxY = centerY - textBoxHeight / 2;
+
+    // 绘制文本框背景
+    context.beginPath();
+    context.rect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
+    context.fillStyle = "white";
+    context.fill();
+    context.lineWidth = 1 / appState.zoom.value;
+    context.strokeStyle = element.strokeColor;
+    context.stroke();
+
+    // 绘制文本内容
+    context.fillStyle = "black";
+    context.font = `${element.fontSize}px ${getFontString(element)}`;
+    context.textAlign = "left";
+    context.textBaseline = "top";
+
+    // 简单的文本换行处理
+    const words = element.text.split(" ");
+    let line = "";
+    let lineY = textBoxY + padding;
+    const lineHeight = element.fontSize * 1.2;
+
+    for (let i = 0; i < words.length; i++) {
+      const testLine = `${line + words[i]} `;
+      const testWidth = context.measureText(testLine).width;
+
+      if (testWidth > textBoxWidth - padding * 2 && i > 0) {
+        context.fillText(line, textBoxX + padding, lineY);
+        line = `${words[i]} `;
+        lineY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    context.fillText(line, textBoxX + padding, lineY);
+  }
+};
+
 export const renderElement = (
   element: NonDeletedExcalidrawElement,
   elementsMap: RenderableElementsMap,
@@ -1009,6 +1081,13 @@ export const renderElement = (
         // reset
         context.imageSmoothingEnabled = currentImageSmoothingStatus;
       }
+      break;
+    }
+    case "annotation": {
+      context.save();
+      context.translate(appState.scrollX, appState.scrollY);
+      renderAnnotation(element, context, appState);
+      context.restore();
       break;
     }
     default: {

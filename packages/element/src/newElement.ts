@@ -48,6 +48,7 @@ import type {
   ExcalidrawArrowElement,
   ExcalidrawElbowArrowElement,
   ExcalidrawLineElement,
+  ExcalidrawAnnotationElement,
 } from "./types";
 
 export type ElementConstructorOpts = MarkOptional<
@@ -288,6 +289,39 @@ export const newTextElement = (
   );
 
   return textElement;
+};
+
+export const newAnnotationElement = (
+  opts: {
+    text: string;
+    fontSize?: number;
+    fontFamily?: FontFamilyValues;
+    textAlign?: TextAlign;
+    verticalAlign?: VerticalAlign;
+    lineHeight?: ExcalidrawAnnotationElement["lineHeight"];
+  } & ElementConstructorOpts,
+): NonDeleted<ExcalidrawAnnotationElement> => {
+  const fontFamily = opts.fontFamily || DEFAULT_FONT_FAMILY;
+  const fontSize = opts.fontSize || DEFAULT_FONT_SIZE;
+  const lineHeight = opts.lineHeight || getLineHeight(fontFamily);
+  const textAlign = opts.textAlign || DEFAULT_TEXT_ALIGN;
+  const verticalAlign = opts.verticalAlign || DEFAULT_VERTICAL_ALIGN;
+
+  const annotationElementProps: ExcalidrawAnnotationElement = {
+    ..._newElementBase<ExcalidrawAnnotationElement>("annotation", opts),
+    text: opts.text,
+    fontSize,
+    fontFamily,
+    textAlign,
+    verticalAlign,
+    lineHeight,
+    customData: {
+      ...opts.customData,
+      isExpanded: false,
+    },
+  };
+
+  return annotationElementProps;
 };
 
 const getAdjustedDimensions = (

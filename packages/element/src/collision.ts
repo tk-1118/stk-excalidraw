@@ -230,6 +230,7 @@ export const intersectElementWithLineSegment = (
     case "iframe":
     case "embeddable":
     case "frame":
+    case "annotation":
     case "selection":
     case "magicframe":
       return intersectRectanguloidWithLineSegment(

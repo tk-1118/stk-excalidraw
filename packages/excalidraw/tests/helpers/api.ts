@@ -7,6 +7,7 @@ import { pointFrom, type LocalPoint, type Radians } from "@excalidraw/math";
 import { DEFAULT_VERTICAL_ALIGN, ROUNDNESS, assertNever } from "@excalidraw/common";
 
 import {
+  newAnnotationElement,
   newArrowElement,
   newElement,
   newEmbeddableElement,
@@ -361,6 +362,12 @@ export class API {
       case "magicframe":
         element = newMagicFrameElement({ ...base, width, height });
         break;
+      case "annotation":
+        element = newAnnotationElement({
+          ...base, width, height,
+          text: "test"
+        });
+      break;
       default:
         assertNever(
           type,

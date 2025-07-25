@@ -32,6 +32,7 @@ import type {
   FixedPointBinding,
   ExcalidrawFlowchartNodeElement,
   ExcalidrawLinearElementSubType,
+  ExcalidrawAnnotationElement,
 } from "./types";
 
 export const isInitializedImageElement = (
@@ -264,6 +265,7 @@ export const isExcalidrawElement = (
     case "frame":
     case "magicframe":
     case "image":
+    case "annotation":
     case "selection": {
       return true;
     }
@@ -412,4 +414,10 @@ export const canBecomePolygon = (
     // 3-point polygons can't have all points in a single line
     (points.length === 3 && !pointsEqual(points[0], points[points.length - 1]))
   );
+};
+
+export const isAnnotationElement = (
+  element: ExcalidrawElement | null,
+): element is ExcalidrawAnnotationElement => {
+  return element != null && element.type === "annotation";
 };

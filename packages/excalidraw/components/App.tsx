@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import throttle from "lodash.throttle";
 import React, { useContext } from "react";
+import { isAnnotationElement } from "@excalidraw/element";
 import { flushSync } from "react-dom";
 import rough from "roughjs/bin/rough";
 import { nanoid } from "nanoid";
@@ -126,6 +127,7 @@ import {
   newImageElement,
   newLinearElement,
   newTextElement,
+  newAnnotationElement,
   refreshTextDimensions,
   deepCopyElement,
   duplicateElements,
@@ -6236,6 +6238,46 @@ class App extends React.Component<AppProps, AppState> {
         hoveredElementIds: updateStable(prevState.hoveredElementIds, {}),
       }));
     }
+
+    // 检查是否悬停在标注元素上，如果是则展开标注
+    const hoveredAnnotationElement = this.getElementAtPosition(
+      scenePointer.x,
+      scenePointer.y,
+      {
+        includeLockedElements: true,
+      },
+    );
+
+    if (
+      isAnnotationElement(hoveredAnnotationElement) &&
+      !hoveredAnnotationElement.customData?.isExpanded
+    ) {
+      this.mutateElement(hoveredAnnotationElement, {
+        customData: {
+          ...hoveredAnnotationElement.customData,
+          isExpanded: true,
+        },
+      });
+    }
+
+    // 检查之前展开的标注是否不再被悬停，如果是则收起标注
+    const expandedAnnotations = this.scene
+      .getNonDeletedElements()
+      .filter(
+        (element) =>
+          isAnnotationElement(element) && element.customData?.isExpanded,
+      );
+
+    for (const annotation of expandedAnnotations) {
+      if (annotation !== hoveredAnnotationElement) {
+        this.mutateElement(annotation, {
+          customData: {
+            ...annotation.customData,
+            isExpanded: false,
+          },
+        });
+      }
+    }
   };
 
   private handleEraser = (
@@ -7586,6 +7628,43 @@ class App extends React.Component<AppProps, AppState> {
   };
 
   //create rectangle element with youtube top left on nearest grid point width / hight 640/360
+  private createAnnotationElement = (pointerDownState: PointerDownState) => {
+    const {
+      currentItemStrokeColor,
+      currentItemBackgroundColor,
+      currentItemFillStyle,
+    } = this.state;
+
+    const annotationElement = newAnnotationElement({
+      x: pointerDownState.origin.x,
+      y: pointerDownState.origin.y,
+      strokeColor: currentItemStrokeColor,
+      backgroundColor: currentItemBackgroundColor,
+      fillStyle: currentItemFillStyle,
+      strokeWidth: this.state.currentItemStrokeWidth,
+      strokeStyle: this.state.currentItemStrokeStyle,
+      roughness: this.state.currentItemRoughness,
+      opacity: this.state.currentItemOpacity,
+      text: "添加标注内容",
+      fontSize: this.state.currentItemFontSize,
+      fontFamily: this.state.currentItemFontFamily,
+      textAlign: this.state.currentItemTextAlign,
+      verticalAlign: DEFAULT_VERTICAL_ALIGN,
+      width: 30,
+      height: 30,
+      customData: {
+        isExpanded: false
+      }
+    });
+
+    this.scene.replaceAllElements([
+      ...this.scene.getElementsIncludingDeleted(),
+      annotationElement,
+    ]);
+
+    return annotationElement;
+  };
+
   public insertEmbeddableElement = ({
     sceneX,
     sceneY,
@@ -7868,7 +7947,8 @@ class App extends React.Component<AppProps, AppState> {
       | "diamond"
       | "ellipse"
       | "iframe"
-      | "embeddable",
+      | "embeddable"
+      | "annotation",
   ) {
     return this.state.currentItemRoundness === "round"
       ? {
@@ -7880,7 +7960,7 @@ class App extends React.Component<AppProps, AppState> {
   }
 
   private createGenericElementOnPointerDown = (
-    elementType: ExcalidrawGenericElement["type"] | "embeddable",
+    elementType: ExcalidrawGenericElement["type"] | "embeddable" | "iframe" | "annotation",
     pointerDownState: PointerDownState,
   ): void => {
     const [gridX, gridY] = getGridPoint(
@@ -7917,9 +7997,11 @@ class App extends React.Component<AppProps, AppState> {
         type: "embeddable",
         ...baseElementAttributes,
       });
+    } else if (elementType === "annotation") {
+      element = this.createAnnotationElement(pointerDownState);
     } else {
       element = newElement({
-        type: elementType,
+        type: elementType as "rectangle" | "diamond" | "ellipse" | "selection",
         ...baseElementAttributes,
       });
     }
@@ -10945,7 +11027,7 @@ class App extends React.Component<AppProps, AppState> {
         )
       ) {
         // prevent zooming the browser (but allow scrolling DOM)
-        if (event[KEYS.CTRL_OR_CMD]) {
+        if (event.metaKey || event.ctrlKey) {
           event.preventDefault();
         }
 
