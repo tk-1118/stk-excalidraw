@@ -2,6 +2,7 @@ import { isFiniteNumber, pointFrom } from "@excalidraw/math";
 
 import {
   DEFAULT_FONT_FAMILY,
+  DEFAULT_FONT_SIZE,
   DEFAULT_TEXT_ALIGN,
   DEFAULT_VERTICAL_ALIGN,
   FONT_FAMILY,
@@ -404,6 +405,21 @@ const restoreElement = (
     case "frame":
       return restoreElementWithProperties(element, {
         name: element.name ?? null,
+      });
+    case "annotation":
+      return restoreElementWithProperties(element, {
+        text: element.text || "",
+        fontSize: element.fontSize || DEFAULT_FONT_SIZE,
+        fontFamily: element.fontFamily || DEFAULT_FONT_FAMILY,
+        textAlign: element.textAlign || DEFAULT_TEXT_ALIGN,
+        verticalAlign: element.verticalAlign || DEFAULT_VERTICAL_ALIGN,
+        lineHeight:
+          element.lineHeight ||
+          getLineHeight(element.fontFamily || DEFAULT_FONT_FAMILY),
+        customData: {
+          ...element.customData,
+          isExpanded: element.customData?.isExpanded || false,
+        },
       });
 
     // Don't use default case so as to catch a missing an element type case.
