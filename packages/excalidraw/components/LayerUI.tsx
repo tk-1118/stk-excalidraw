@@ -58,6 +58,7 @@ import { ImageExportDialog } from "./ImageExportDialog";
 import { Island } from "./Island";
 import { JSONExportDialog } from "./JSONExportDialog";
 import { LaserPointerButton } from "./LaserPointerButton";
+import { AnnotationDialog } from "./AnnotationDialog/AnnotationDialog";
 
 import "./LayerUI.scss";
 import "./Toolbar.scss";
@@ -493,6 +494,13 @@ const LayerUI = ({
           scene={app.scene}
           appState={appState}
           generateLinkForSelection={generateLinkForSelection}
+        />
+      )}
+      {appState.openDialog?.name === "annotation" && (
+        <AnnotationDialog
+          onClose={appState.openDialog.onClose}
+          onConfirm={appState.openDialog.onConfirm}
+          defaultValue=""
         />
       )}
       <tunnels.OverwriteConfirmDialogTunnel.Out />

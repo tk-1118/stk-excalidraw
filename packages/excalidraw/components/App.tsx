@@ -1621,7 +1621,7 @@ class App extends React.Component<AppProps, AppState> {
                         >
                           {this.props.children}
                         </LayerUI>
-                        
+
                         <div className="excalidraw-textEditorContainer" />
                         <div className="excalidraw-contextMenuContainer" />
                         <div className="excalidraw-eye-dropper-container" />
@@ -7632,34 +7632,55 @@ class App extends React.Component<AppProps, AppState> {
       currentItemFillStyle,
     } = this.state;
 
-    const annotationElement = newAnnotationElement({
-      x: pointerDownState.origin.x,
-      y: pointerDownState.origin.y,
-      strokeColor: currentItemStrokeColor,
-      backgroundColor: currentItemBackgroundColor,
-      fillStyle: currentItemFillStyle,
-      strokeWidth: this.state.currentItemStrokeWidth,
-      strokeStyle: this.state.currentItemStrokeStyle,
-      roughness: this.state.currentItemRoughness,
-      opacity: this.state.currentItemOpacity,
-      text: "添加标注内容",
-      fontSize: this.state.currentItemFontSize,
-      fontFamily: this.state.currentItemFontFamily,
-      textAlign: this.state.currentItemTextAlign,
-      verticalAlign: DEFAULT_VERTICAL_ALIGN,
-      width: 30,
-      height: 30,
-      customData: {
-        isExpanded: false
-      }
+    // 设置标注元素的初始位置和样式
+    const createAnnotation = (text: string) => {
+      const annotationElement = newAnnotationElement({
+        x: pointerDownState.origin.x,
+        y: pointerDownState.origin.y,
+        strokeColor: currentItemStrokeColor,
+        backgroundColor: currentItemBackgroundColor,
+        fillStyle: currentItemFillStyle,
+        strokeWidth: this.state.currentItemStrokeWidth,
+        strokeStyle: this.state.currentItemStrokeStyle,
+        roughness: this.state.currentItemRoughness,
+        opacity: this.state.currentItemOpacity,
+        text: text,
+        fontSize: this.state.currentItemFontSize,
+        fontFamily: this.state.currentItemFontFamily,
+        textAlign: this.state.currentItemTextAlign,
+        verticalAlign: DEFAULT_VERTICAL_ALIGN,
+        width: 30,
+        height: 30,
+        customData: {
+          isExpanded: false
+        }
+      });
+
+      this.scene.replaceAllElements([
+        ...this.scene.getElementsIncludingDeleted(),
+        annotationElement,
+      ]);
+
+      return annotationElement;
+    };
+
+    // 设置对话框状态
+    this.setState({
+      openDialog: {
+        name: "annotation",
+        onClose: () => {
+          this.setOpenDialog(null);
+        },
+        onConfirm: (text: string) => {
+          if (text.trim()) {
+            createAnnotation(text);
+          }
+          this.setOpenDialog(null);
+        },
+      },
     });
 
-    this.scene.replaceAllElements([
-      ...this.scene.getElementsIncludingDeleted(),
-      annotationElement,
-    ]);
-
-    return annotationElement;
+    return null;
   };
 
   public insertEmbeddableElement = ({
@@ -8003,15 +8024,15 @@ class App extends React.Component<AppProps, AppState> {
       });
     }
 
-    if (element.type === "selection") {
+    if (element && element.type === "selection") {
       this.setState({
         selectionElement: element,
       });
     } else {
-      this.scene.insertElement(element);
+      this.scene.insertElement(element as any);
       this.setState({
         multiElement: null,
-        newElement: element,
+        newElement: element as any,
       });
     }
   };
