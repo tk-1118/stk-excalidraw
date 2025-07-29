@@ -727,38 +727,63 @@ const renderAnnotation = (
   // 渲染标注图标（一个圆形）
   const centerX = element.x + element.width / 2;
   const centerY = element.y + element.height / 2;
-  const radius = Math.min(element.width, element.height) / 2;
 
-  // 绘制标注图标
-  context.beginPath();
-  context.arc(centerX, centerY, radius, 0, Math.PI * 2);
-  context.fillStyle = element.backgroundColor;
-  context.fill();
-  context.lineWidth = element.strokeWidth / appState.zoom.value;
+  // 设置固定大小的图标（不受元素大小影响）
+  const fixedIconSize = 24; // 固定图标大小为24px
+
+  // 使用SVG路径绘制气泡图标
+  context.save();
+
+  // 将坐标系移动到图标中心位置
+  context.translate(centerX, centerY);
+
+  // 应用缩放因子，使图标大小在任何缩放级别下保持固定
+  // 除以 appState.zoom.value 来抵消画布缩放的影响
+  const scaleFactor = 1 / appState.zoom.value;
+  context.scale(scaleFactor, scaleFactor);
+
+  // 将坐标系移动到图标左上角
+  context.translate(-fixedIconSize / 2, -fixedIconSize / 2);
+
+  // 创建Path2D对象，使用提供的SVG路径
+  const path = new Path2D(
+    "M4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12C20 14.5264 18.8289 16.7792 17 18.2454V22L13 20C12.6711 20 12.3423 19.9779 12.0196 19.9358C7.91322 19.4775 4 16.1178 4 12Z",
+  );
+
+  // 绘制路径
+  context.fillStyle = "transparent";
+  context.fill(path);
+  context.lineWidth = element.strokeWidth; // 保持线宽不受缩放影响
   context.strokeStyle = element.strokeColor;
-  context.stroke();
+  context.stroke(path);
 
-  // 绘制标注图标内的感叹号
-  context.fillStyle = element.strokeColor;
-  context.font = `bold ${radius * 1.2}px sans-serif`;
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.fillText("!", centerX, centerY);
+  context.restore();
 
-  // 如果标注处于展开状态，绘制标注内容
   if (element.customData?.isExpanded) {
+    // 保存当前上下文状态
+    context.save();
+
+    // 将坐标系移动到图标中心位置
+    context.translate(centerX, centerY);
+
+    // 应用缩放因子，使文本框大小在任何缩放级别下保持固定
+    const scaleFactor = 1 / appState.zoom.value;
+    context.scale(scaleFactor, scaleFactor);
+
     const padding = 10;
     const textBoxWidth = 200;
     const textBoxHeight = 100;
-    const textBoxX = centerX + radius + padding;
-    const textBoxY = centerY - textBoxHeight / 2;
+
+    // 调整文本框位置，使其与固定大小的图标正确对齐，显示在图标右侧
+    const textBoxX = fixedIconSize / 2 + padding;
+    const textBoxY = -textBoxHeight / 2;
 
     // 绘制文本框背景
     context.beginPath();
     context.rect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
     context.fillStyle = "white";
     context.fill();
-    context.lineWidth = 1 / appState.zoom.value;
+    context.lineWidth = 1;
     context.strokeStyle = element.strokeColor;
     context.stroke();
 
