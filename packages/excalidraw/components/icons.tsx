@@ -2272,32 +2272,14 @@ export const elementLinkIcon = createIcon(
 
 export const AnnotationIcon = createIcon(
   <g>
-    <circle
-      cx="12"
-      cy="12"
-      r="10"
+    <path
+      d="M4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12C20 14.5264 18.8289 16.7792 17 18.2454V22L13 20C12.6711 20 12.3423 19.9779 12.0196 19.9358C7.91322 19.4775 4 16.1178 4 12Z"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
-    />
-    <line
-      x1="12"
-      y1="8"
-      x2="12"
-      y2="12"
-      stroke="currentColor"
-      strokeWidth="2"
       strokeLinecap="round"
-    />
-    <line
-      x1="12"
-      y1="16"
-      x2="12.01"
-      y2="16"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </g>,
-  { width: 24, height: 24 }
+  { width: 24, height: 24 },
 );
