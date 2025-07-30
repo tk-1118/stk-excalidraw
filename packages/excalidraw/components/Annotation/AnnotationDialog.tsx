@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 import { Dialog } from "../Dialog";
 
@@ -11,18 +11,31 @@ interface AnnotationDialogProps {
   onConfirm: (text: string) => void;
   defaultValue?: string;
 }
-
 export const AnnotationDialog = ({
   onClose,
   onConfirm,
   defaultValue = "",
 }: AnnotationDialogProps) => {
   const [text, setText] = useState(defaultValue);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleConfirm = () => {
     onConfirm(text);
     onClose();
   };
+
+  // 使用多种策略确保文本域获取焦点
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, []);
 
   return (
     <Dialog
@@ -30,16 +43,20 @@ export const AnnotationDialog = ({
       title="添加标注"
       className="annotation-dialog"
       size="small"
+      autofocus={false}
     >
       <div className="annotation-dialog-content">
         <div className="annotation-dialog-row">
           <textarea
+            id="annotation-text"
             className="annotation-text"
-            autoFocus
+            ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="请输入标注内容"
             rows={5}
+            autoFocus
+            tabIndex={0}
           />
         </div>
         <div className="annotation-dialog-buttons">
