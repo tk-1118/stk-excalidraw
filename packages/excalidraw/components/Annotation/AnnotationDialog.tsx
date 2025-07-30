@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+
 import { Dialog } from "../Dialog";
+
 import { t } from "../../i18n";
+
 import "./AnnotationDialog.scss";
 
 interface AnnotationDialogProps {

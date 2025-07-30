@@ -31,6 +31,20 @@ export const distanceToElement = (
   elementsMap: ElementsMap,
   p: GlobalPoint,
 ): number => {
+  // 对标注元素进行特殊处理，增大碰撞检测区域
+  if (element.type === "annotation") {
+    const center = elementCenterPoint(element, elementsMap);
+    // 计算点到中心的距离
+    const dx = p[0] - center[0];
+    const dy = p[1] - center[1];
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // 增大标注元素的碰撞检测半径为24px（与图标大小相同）
+    if (distance <= 16) {
+      return 0;
+    }
+  }
+
   switch (element.type) {
     case "selection":
     case "rectangle":
@@ -70,6 +84,19 @@ const distanceToRectanguloidElement = (
   // To emulate a rotated rectangle we rotate the point in the inverse angle
   // instead. It's all the same distance-wise.
   const rotatedPoint = pointRotateRads(p, center, -element.angle as Radians);
+
+  // 为标注元素增加特殊处理，增大碰撞检测区域
+  if (element.type === "annotation") {
+    // 计算点到中心的距离
+    const dx = rotatedPoint[0] - center[0];
+    const dy = rotatedPoint[1] - center[1];
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // 增大标注元素的碰撞检测半径为24px（与图标大小相同）
+    if (distance <= 12) {
+      return 0;
+    }
+  }
 
   // Get the element's building components we can test against
   const [sides, corners] = deconstructRectanguloidElement(element);

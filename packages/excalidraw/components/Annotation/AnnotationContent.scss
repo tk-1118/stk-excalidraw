@@ -1,0 +1,63 @@
+
+.annotation-content {
+  position: relative;
+  z-index: 100;
+  pointer-events: auto;
+
+  .annotation-content-box {
+    position: relative;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 12px;
+    min-width: 150px;
+    max-width: 300px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+
+    &:before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-right: 6px solid #fff;
+      filter: drop-shadow(-1px 0 0 #ddd);
+    }
+  }
+
+  .annotation-content-text {
+    font-size: 14px;
+    line-height: 1.4;
+    color: #333;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .annotation-content-close {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 1;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+  }
+}

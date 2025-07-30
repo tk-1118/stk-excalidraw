@@ -742,12 +742,10 @@ const renderAnnotation = (
   const scaleFactor = 1 / appState.zoom.value;
   context.scale(scaleFactor, scaleFactor);
 
-  // 将坐标系移动到图标左上角
-  // context.translate(-fixedIconSize / 2, -fixedIconSize / 2);
-
-  // 创建Path2D对象，使用提供的SVG路径
+  // 不再将坐标系移动到图标左上角，而是保持在中心点
+  // 创建Path2D对象，使用提供的SVG路径，但需要调整路径使其以中心点为原点
   const path = new Path2D(
-    "M4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12C20 14.5264 18.8289 16.7792 17 18.2454V22L13 20C12.6711 20 12.3423 19.9779 12.0196 19.9358C7.91322 19.4775 4 16.1178 4 12Z",
+    "M-8 0C-8 -4.41828 -4.41828 -8 0 -8C4.4183 -8 8 -4.41828 8 0C8 2.5264 6.8289 4.7792 5 6.2454V10L1 8C0.6711 8 0.3423 7.9779 0.0196 7.9358C-4.08678 7.4775 -8 4.1178 -8 0Z",
   );
 
   // 绘制路径
@@ -759,60 +757,7 @@ const renderAnnotation = (
 
   context.restore();
 
-  if (element.customData?.isExpanded) {
-    // 保存当前上下文状态
-    context.save();
-
-    // 将坐标系移动到图标中心位置
-    context.translate(centerX, centerY);
-
-    // 应用缩放因子，使文本框大小在任何缩放级别下保持固定
-    const scaleFactor = 1 / appState.zoom.value;
-    context.scale(scaleFactor, scaleFactor);
-
-    const padding = 10;
-    const textBoxWidth = 200;
-    const textBoxHeight = 100;
-
-    // 调整文本框位置，使其与固定大小的图标正确对齐，显示在图标右侧
-    const textBoxX = fixedIconSize / 2 + padding;
-    const textBoxY = -textBoxHeight / 2;
-
-    // 绘制文本框背景
-    context.beginPath();
-    context.rect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
-    context.fillStyle = "white";
-    context.fill();
-    context.lineWidth = 1;
-    context.strokeStyle = element.strokeColor;
-    context.stroke();
-
-    // 绘制文本内容
-    context.fillStyle = "black";
-    context.font = `${element.fontSize}px ${getFontString(element)}`;
-    context.textAlign = "left";
-    context.textBaseline = "top";
-
-    // 简单的文本换行处理
-    const words = element.text.split(" ");
-    let line = "";
-    let lineY = textBoxY + padding;
-    const lineHeight = element.fontSize * 1.2;
-
-    for (let i = 0; i < words.length; i++) {
-      const testLine = `${line + words[i]} `;
-      const testWidth = context.measureText(testLine).width;
-
-      if (testWidth > textBoxWidth - padding * 2 && i > 0) {
-        context.fillText(line, textBoxX + padding, lineY);
-        line = `${words[i]} `;
-        lineY += lineHeight;
-      } else {
-        line = testLine;
-      }
-    }
-    context.fillText(line, textBoxX + padding, lineY);
-  }
+  // 不再在Canvas中渲染文本内容，改为使用React组件
 };
 
 export const renderElement = (

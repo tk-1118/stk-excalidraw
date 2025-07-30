@@ -395,6 +395,8 @@ import { LassoTrail } from "../lasso";
 
 import { EraserTrail } from "../eraser";
 
+import { AnnotationLayer } from "./Annotation/AnnotationLayer";
+
 import ConvertElementTypePopup, {
   getConversionTypeFromElements,
   convertElementTypePopupAtom,
@@ -1835,6 +1837,35 @@ class App extends React.Component<AppProps, AppState> {
                         {showShapeSwitchPanel && (
                           <ConvertElementTypePopup app={this} />
                         )}
+                        <AnnotationLayer
+                          elements={this.scene.getNonDeletedElements()}
+                          appState={this.state}
+                          setAppState={this.setAppState}
+                          onCloseAnnotation={(elementId) => {
+                            const element = this.scene.getElement(elementId);
+                            if (element && isAnnotationElement(element)) {
+                              this.scene.replaceAllElements(
+                                this.scene
+                                  .getElementsIncludingDeleted()
+                                  .map((el) => {
+                                    if (
+                                      el.id === elementId &&
+                                      isAnnotationElement(el)
+                                    ) {
+                                      return {
+                                        ...el,
+                                        customData: {
+                                          ...el.customData,
+                                          isExpanded: false,
+                                        },
+                                      };
+                                    }
+                                    return el;
+                                }),
+                              );
+                            }
+                          }}
+                        />
                       </ExcalidrawActionManagerContext.Provider>
                       {this.renderEmbeddables()}
                     </ExcalidrawElementsContext.Provider>
@@ -6242,36 +6273,43 @@ class App extends React.Component<AppProps, AppState> {
     }
 
     // 检查是否悬停在标注元素上，如果是则展开标注
-    const hoveredAnnotationElement = this.getElementAtPosition(
-      scenePointer.x,
-      scenePointer.y,
-      {
-        includeLockedElements: true,
-      },
-    );
+    // 特别检查标注元素
+    const allElements = this.scene.getNonDeletedElements();
+    const annotationElements = allElements.filter(isAnnotationElement);
 
-    if (
-      isAnnotationElement(hoveredAnnotationElement) &&
-      !hoveredAnnotationElement.customData?.isExpanded
-    ) {
-      this.mutateElement(hoveredAnnotationElement, {
+    // 检查鼠标是否在任何标注元素附近
+    let hoveredAnnotation = null;
+    for (const element of annotationElements) {
+      const centerX = element.x + element.width / 2;
+      const centerY = element.y + element.height / 2;
+      const dx = scenePointer.x - centerX;
+      const dy = scenePointer.y - centerY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // 使用更大的检测范围
+      if (distance <= 20) {
+        hoveredAnnotation = element;
+        break;
+      }
+    }
+
+    // 如果找到悬停的标注元素，设置其isExpanded为true
+    if (hoveredAnnotation && !hoveredAnnotation.customData?.isExpanded) {
+      this.mutateElement(hoveredAnnotation, {
         customData: {
-          ...hoveredAnnotationElement.customData,
+          ...hoveredAnnotation.customData,
           isExpanded: true,
         },
       });
     }
 
     // 检查之前展开的标注是否不再被悬停，如果是则收起标注
-    const expandedAnnotations = this.scene
-      .getNonDeletedElements()
-      .filter(
-        (element) =>
-          isAnnotationElement(element) && element.customData?.isExpanded,
-      );
+    const expandedAnnotations = annotationElements.filter(
+      (element) => element.customData?.isExpanded,
+    );
 
     for (const annotation of expandedAnnotations) {
-      if (annotation !== hoveredAnnotationElement) {
+      if (annotation !== hoveredAnnotation) {
         this.mutateElement(annotation, {
           customData: {
             ...annotation.customData,
@@ -6398,6 +6436,32 @@ class App extends React.Component<AppProps, AppState> {
   private handleCanvasPointerDown = (
     event: React.PointerEvent<HTMLElement>,
   ) => {
+    // 检查是否点击了标注元素
+    const scenePointer = viewportCoordsToSceneCoords(event, this.state);
+    const annotationElements = this.scene.getNonDeletedElements().filter(isAnnotationElement);
+
+    for (const element of annotationElements) {
+      const centerX = element.x + element.width / 2;
+      const centerY = element.y + element.height / 2;
+      const dx = scenePointer.x - centerX;
+      const dy = scenePointer.y - centerY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // 使用更大的检测范围
+      if (distance <= 16) {
+        console.log("点击标注元素:", element.id);
+        // 切换展开/收起状态
+        this.mutateElement(element, {
+          customData: {
+            ...element.customData,
+            isExpanded: !element.customData?.isExpanded,
+          },
+        });
+        // 阻止事件继续传播，避免创建新元素
+        event.stopPropagation();
+        return;
+      }
+    }
     const target = event.target as HTMLElement;
     // capture subsequent pointer events to the canvas
     // this makes other elements non-interactive until pointer up
@@ -7634,9 +7698,21 @@ class App extends React.Component<AppProps, AppState> {
 
     // 设置标注元素的初始位置和样式
     const createAnnotation = (text: string) => {
+      // 确保文本内容不为空
+      const annotationText = text.trim() || "标注内容";
+
+      // 获取网格点，如果按住Ctrl则不对齐网格
+      const [gridX, gridY] = getGridPoint(
+        pointerDownState.origin.x,
+        pointerDownState.origin.y,
+        this.lastPointerDownEvent?.[KEYS.CTRL_OR_CMD]
+          ? null
+          : this.getEffectiveGridSize(),
+      );
+
       const annotationElement = newAnnotationElement({
-        x: pointerDownState.origin.x,
-        y: pointerDownState.origin.y,
+        x: gridX,
+        y: gridY,
         strokeColor: currentItemStrokeColor,
         backgroundColor: currentItemBackgroundColor,
         fillStyle: currentItemFillStyle,
@@ -7644,15 +7720,15 @@ class App extends React.Component<AppProps, AppState> {
         strokeStyle: this.state.currentItemStrokeStyle,
         roughness: this.state.currentItemRoughness,
         opacity: this.state.currentItemOpacity,
-        text: text,
+        text: annotationText,
         fontSize: this.state.currentItemFontSize,
         fontFamily: this.state.currentItemFontFamily,
         textAlign: this.state.currentItemTextAlign,
         verticalAlign: DEFAULT_VERTICAL_ALIGN,
-        width: 30,
-        height: 30,
+        width: 24, // 固定大小为24px
+        height: 24, // 固定大小为24px
         customData: {
-          isExpanded: false
+          isExpanded: true // 创建时默认展开
         }
       });
 
@@ -9779,7 +9855,7 @@ class App extends React.Component<AppProps, AppState> {
         !(hitElement && isElbowArrow(hitElement)) &&
         // not dragged
         !pointerDownState.drag.hasOccurred &&
-        // not resized
+        // not resizing
         !this.state.isResizing &&
         // only hitting the bounding box of the previous hit element
         ((hitElement &&
