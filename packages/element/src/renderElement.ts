@@ -743,7 +743,7 @@ const renderAnnotation = (
   context.scale(scaleFactor, scaleFactor);
 
   // 将坐标系移动到图标左上角
-  context.translate(-fixedIconSize / 2, -fixedIconSize / 2);
+  // context.translate(-fixedIconSize / 2, -fixedIconSize / 2);
 
   // 创建Path2D对象，使用提供的SVG路径
   const path = new Path2D(
