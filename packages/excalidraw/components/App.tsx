@@ -8105,6 +8105,9 @@ class App extends React.Component<AppProps, AppState> {
         selectionElement: element,
       });
     } else {
+      if (!element) {
+        return;
+      }
       this.scene.insertElement(element as any);
       this.setState({
         multiElement: null,

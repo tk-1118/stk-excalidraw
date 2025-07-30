@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { KEYS } from "@excalidraw/common";
 
 import { isAnnotationElement } from "../../../element/src/typeChecks";
+import { sceneCoordsToViewportCoords } from "@excalidraw/common";
 
 import { AnnotationContent } from "./AnnotationContent";
 
@@ -47,27 +48,27 @@ export const AnnotationLayer = ({
     <>
       {elements.map((element) => {
         if (isAnnotationElement(element) && element.customData?.isExpanded) {
-          // 计算标注内容的位置
+          // 计算标注内容的位置（场景坐标）
           const centerX = element.x + element.width / 2;
           const centerY = element.y + element.height / 2;
 
-          // 放在图标右侧
-          const x = centerX + 24; // 24px是图标大小
-          const y = centerY - 50; // 垂直居中
+          // 添加偏移量（场景坐标中）
+          const annotationX = centerX + 24 / appState.zoom.value; // 调整偏移量以适应缩放
+          const annotationY = centerY - 25 / appState.zoom.value;
 
-          // 计算屏幕坐标
-          const screenX = x + appState.scrollX;
-          const screenY = y + appState.scrollY;
+          // 使用sceneCoordsToViewportCoords将场景坐标转换为视口坐标
+          const { x: viewportX, y: viewportY } = sceneCoordsToViewportCoords(
+            { sceneX: annotationX, sceneY: annotationY },
+            appState
+          );
 
           return (
             <div
               key={element.id}
               style={{
                 position: "absolute",
-                left: `${screenX}px`,
-                top: `${screenY}px`,
-                transform: `scale(${appState.zoom.value})`,
-                transformOrigin: "left top",
+                left: `${viewportX}px`,
+                top: `${viewportY}px`,
                 zIndex: 100, // 确保在其他元素之上
                 pointerEvents: "auto", // 确保可以点击
               }}
