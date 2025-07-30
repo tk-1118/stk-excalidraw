@@ -7710,6 +7710,11 @@ class App extends React.Component<AppProps, AppState> {
           : this.getEffectiveGridSize(),
       );
 
+      const topLayerFrame = this.getTopLayerFrameAtSceneCoords({
+        x: gridX,
+        y: gridY,
+      });
+
       const annotationElement = newAnnotationElement({
         x: gridX,
         y: gridY,
@@ -7720,6 +7725,7 @@ class App extends React.Component<AppProps, AppState> {
         strokeStyle: this.state.currentItemStrokeStyle,
         roughness: this.state.currentItemRoughness,
         opacity: this.state.currentItemOpacity,
+        frameId: topLayerFrame ? topLayerFrame.id : null,
         text: annotationText,
         fontSize: this.state.currentItemFontSize,
         fontFamily: this.state.currentItemFontFamily,
