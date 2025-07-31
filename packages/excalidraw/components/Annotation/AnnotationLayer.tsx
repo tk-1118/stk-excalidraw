@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { KEYS } from "@excalidraw/common";
 
-import { isAnnotationElement } from "../../../element/src/typeChecks";
 import { sceneCoordsToViewportCoords } from "@excalidraw/common";
+
+import { isAnnotationElement } from "../../../element/src/typeChecks";
 
 import { AnnotationContent } from "./AnnotationContent";
 

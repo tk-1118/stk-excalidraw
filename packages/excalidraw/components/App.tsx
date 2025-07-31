@@ -6438,7 +6438,9 @@ class App extends React.Component<AppProps, AppState> {
   ) => {
     // 检查是否点击了标注元素
     const scenePointer = viewportCoordsToSceneCoords(event, this.state);
-    const annotationElements = this.scene.getNonDeletedElements().filter(isAnnotationElement);
+    const annotationElements = this.scene
+      .getNonDeletedElements()
+      .filter(isAnnotationElement);
 
     for (const element of annotationElements) {
       const centerX = element.x + element.width / 2;
@@ -6458,8 +6460,8 @@ class App extends React.Component<AppProps, AppState> {
           },
         });
         // 阻止事件继续传播，避免创建新元素
-        event.stopPropagation();
-        return;
+        // event.stopPropagation();
+        // return;
       }
     }
     const target = event.target as HTMLElement;
@@ -7699,7 +7701,7 @@ class App extends React.Component<AppProps, AppState> {
     // 设置标注元素的初始位置和样式
     const createAnnotation = (text: string) => {
       // 确保文本内容不为空
-      const annotationText = text.trim() || "标注内容";
+      const annotationText = text.trim() || "";
 
       // 获取网格点，如果按住Ctrl则不对齐网格
       const [gridX, gridY] = getGridPoint(
@@ -7734,8 +7736,8 @@ class App extends React.Component<AppProps, AppState> {
         width: 24, // 固定大小为24px
         height: 24, // 固定大小为24px
         customData: {
-          isExpanded: true // 创建时默认展开
-        }
+          isExpanded: true, // 创建时默认展开
+        },
       });
 
       this.scene.replaceAllElements([

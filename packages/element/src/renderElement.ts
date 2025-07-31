@@ -728,9 +728,6 @@ const renderAnnotation = (
   const centerX = element.x + element.width / 2;
   const centerY = element.y + element.height / 2;
 
-  // 设置固定大小的图标（不受元素大小影响）
-  const fixedIconSize = 24; // 固定图标大小为24px
-
   // 使用SVG路径绘制气泡图标
   context.save();
 
