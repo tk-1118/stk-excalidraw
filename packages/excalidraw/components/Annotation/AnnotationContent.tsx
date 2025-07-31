@@ -42,26 +42,10 @@ export const AnnotationContent = ({
 
   return (
     <div className={contentClasses}>
-      <div
-        className="annotation-content-box"
-        onClick={handleContentClick}
-      >
+      <div className="annotation-content-box" onClick={handleContentClick}>
         <div className="annotation-content-text">
           {element.text || "无内容"}
         </div>
-        {onClose && (
-          <button
-            className="annotation-content-close"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClose();
-            }}
-            aria-label="关闭标注"
-            title="关闭"
-          >
-            ×
-          </button>
-        )}
       </div>
     </div>
   );
