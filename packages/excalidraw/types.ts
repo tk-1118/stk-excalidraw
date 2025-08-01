@@ -528,6 +528,7 @@ export type OnUserFollowedPayload = {
 };
 
 export interface ExcalidrawProps {
+  onHemaButtonClick?: (type: string, data: any) => void;
   onChange?: (
     elements: readonly OrderedExcalidrawElement[],
     appState: AppState,
@@ -709,6 +710,7 @@ export type AppClassProperties = {
   id: App["id"];
   onInsertElements: App["onInsertElements"];
   onExportImage: App["onExportImage"];
+  onHemaButtonClick: App["onHemaButtonClick"];
   lastViewportPosition: App["lastViewportPosition"];
   scrollToContent: App["scrollToContent"];
   addFiles: App["addFiles"];
@@ -833,6 +835,9 @@ export interface ExcalidrawImperativeAPI {
    * used in conjunction with view mode (props.viewModeEnabled).
    */
   updateFrameRendering: InstanceType<typeof App>["updateFrameRendering"];
+  onHemaButtonClick: (
+    callback: (type: string, data: any) => void,
+  ) => UnsubscribeCallback;
   onChange: (
     callback: (
       elements: readonly ExcalidrawElement[],

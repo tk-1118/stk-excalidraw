@@ -623,6 +623,8 @@ class App extends React.Component<AppProps, AppState> {
   eraserTrail = new EraserTrail(this.animationFrameHandler, this);
   lassoTrail = new LassoTrail(this.animationFrameHandler, this);
 
+  onHemaButtonClickEmitter = new Emitter<[type: string, data: any]>();
+
   onChangeEmitter = new Emitter<
     [
       elements: readonly ExcalidrawElement[],
@@ -729,6 +731,7 @@ class App extends React.Component<AppProps, AppState> {
         resetCursor: this.resetCursor,
         updateFrameRendering: this.updateFrameRendering,
         toggleSidebar: this.toggleSidebar,
+        onHemaButtonClick: (cb) => this.onHemaButtonClickEmitter.on(cb),
         onChange: (cb) => this.onChangeEmitter.on(cb),
         onIncrement: (cb) => this.store.onStoreIncrementEmitter.on(cb),
         onPointerDown: (cb) => this.onPointerDownEmitter.on(cb),
@@ -1562,7 +1565,7 @@ class App extends React.Component<AppProps, AppState> {
             ? POINTER_EVENTS.disabled
             : POINTER_EVENTS.enabled,
           ["--left-sidebar-width" as any]: "300px",
-          ["--right-sidebar-width" as any]: "360px",
+          ["--right-sidebar-width" as any]: "400px",
         }}
         ref={this.excalidrawContainerRef}
         onDrop={this.handleAppOnDrop}
@@ -1893,6 +1896,11 @@ class App extends React.Component<AppProps, AppState> {
 
   public getSceneElements = () => {
     return this.scene.getNonDeletedElements();
+  };
+
+  public onHemaButtonClick = (type: string, data: any) => {
+    console.log("onHemaButtonClick", type, data);
+    this.props.onHemaButtonClick && this.props.onHemaButtonClick(type, data);
   };
 
   public onInsertElements = (elements: readonly ExcalidrawElement[]) => {
@@ -2607,6 +2615,7 @@ class App extends React.Component<AppProps, AppState> {
     this.library.destroy();
     this.laserTrails.stop();
     this.eraserTrail.stop();
+    this.onHemaButtonClickEmitter.clear();
     this.onChangeEmitter.clear();
     this.store.onStoreIncrementEmitter.clear();
     this.store.onDurableIncrementEmitter.clear();

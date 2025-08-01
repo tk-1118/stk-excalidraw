@@ -17,6 +17,11 @@
     bottom: var(--editor-container-padding);
   }
 
+  .FixedSideContainer_side_top .App-menu_top {
+    grid-template-columns: 1fr 1fr 1fr 28fr 1fr;
+    gap: 1rem;
+  }
+
   .FixedSideContainer_side_top.zen-mode {
     right: 42px;
   }
