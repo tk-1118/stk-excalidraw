@@ -23,10 +23,33 @@ export const actionAddRemark = register({
   name: "addRemark",
   label: "labels.addRemark",
   trackEvent: { category: "element" },
-  perform: (elements, appState, value) => {
-    console.log("addRemark:", elements, appState, value);
+  perform: (elements, appState, event: ClipboardEvent | null, app) => {
+    const selectedElements = app.scene.getSelectedElements({
+      selectedElementIds: appState.selectedElementIds,
+      includeBoundTextElement: true,
+      includeElementsInFrames: true,
+    });
+
+    if (selectedElements.length === 0) {
+      // 如果没有选中元素，直接返回
+      return {
+        captureUpdate: CaptureUpdateAction.EVENTUALLY,
+      };
+    }
+
+    // 设置应用状态以打开备注对话框
     return {
-      captureUpdate: CaptureUpdateAction.EVENTUALLY,
+      appState: {
+        ...appState,
+        openDialog: {
+          name: "remark",
+          data: {
+            elementIds: selectedElements.map(el => el.id),
+            remark: selectedElements[0].customData?.remark || "",
+          }
+        }
+      },
+      captureUpdate: CaptureUpdateAction.IMMEDIATELY,
     };
   },
   keyTest: undefined,

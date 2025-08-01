@@ -359,8 +359,8 @@ export interface AppState {
     | { name: "ttd"; tab: "text-to-diagram" | "mermaid" }
     | { name: "commandPalette" }
     | { name: "elementLinkSelector"; sourceElementId: ExcalidrawElement["id"] }
-    | { name: "annotation"; onClose: () => void; onConfirm: (text: string) => void };
-
+    | { name: "annotation"; onClose: () => void; onConfirm: (text: string) => void }
+    | { name: "remark"; data: { elementIds: string[]; remark: string } };
   /**
    * Reflects user preference for whether the default sidebar should be docked.
    *
@@ -946,3 +946,5 @@ export type Offsets = Partial<{
   bottom: number;
   left: number;
 }>;
+
+

@@ -59,6 +59,7 @@ import { Island } from "./Island";
 import { JSONExportDialog } from "./JSONExportDialog";
 import { LaserPointerButton } from "./LaserPointerButton";
 import { AnnotationDialog } from "./Annotation/AnnotationDialog";
+import { RemarkDialog } from "./RemarkDialog";
 
 import "./LayerUI.scss";
 import "./Toolbar.scss";
@@ -551,6 +552,29 @@ const LayerUI = ({
           onClose={appState.openDialog.onClose}
           onConfirm={appState.openDialog.onConfirm}
           defaultValue=""
+        />
+      )}
+      {appState.openDialog?.name === "remark" && (
+        <RemarkDialog
+          remark={appState.openDialog.data.remark}
+          onSubmit={(remark) => {
+            if (appState.openDialog?.name === "remark") {
+              const elementIds = appState.openDialog.data.elementIds;
+              elementIds.forEach((id: string) => {
+                const element = app.scene.getNonDeletedElementsMap().get(id);
+                if (element) {
+                  app.scene.mutateElement(element, {
+                    customData: {
+                      ...element.customData,
+                      remark
+                    }
+                  });
+                }
+              });
+              setAppState({ openDialog: null });
+            }
+          }}
+          onClose={() => setAppState({ openDialog: null })}
         />
       )}
       <tunnels.OverwriteConfirmDialogTunnel.Out />
