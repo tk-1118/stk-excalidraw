@@ -21,11 +21,11 @@ import { activeConfirmDialogAtom } from "../ActiveConfirmDialog";
 import {
   useExcalidrawSetAppState,
   useExcalidrawActionManager,
-  // useExcalidrawElements,
+  useExcalidrawElements,
   useAppProps,
 } from "../App";
-// import { openConfirmModal } from "../OverwriteConfirm/OverwriteConfirmState";
-// import Trans from "../Trans";
+import { openConfirmModal } from "../OverwriteConfirm/OverwriteConfirmState";
+import Trans from "../Trans";
 import DropdownMenuItem from "../dropdownMenu/DropdownMenuItem";
 import DropdownMenuItemContentRadio from "../dropdownMenu/DropdownMenuItemContentRadio";
 // import DropdownMenuItemLink from "../dropdownMenu/DropdownMenuItemLink";
@@ -36,7 +36,7 @@ import {
   ExportIcon,
   ExportImageIcon,
   HelpIcon,
-  // LoadIcon,
+  LoadIcon,
   MoonIcon,
   save,
   searchIcon,
@@ -48,37 +48,37 @@ import {
 import "./DefaultItems.scss";
 
 export const LoadScene = () => {
-  // const { t } = useI18n();
+  const { t } = useI18n();
   const actionManager = useExcalidrawActionManager();
-  // const elements = useExcalidrawElements();
+  const elements = useExcalidrawElements();
 
   if (!actionManager.isActionEnabled(actionLoadScene)) {
     return null;
   }
 
-  // const handleSelect = async () => {
-  //   if (
-  //     !elements.length ||
-  //     (await openConfirmModal({
-  //       title: t("overwriteConfirm.modal.loadFromFile.title"),
-  //       actionLabel: t("overwriteConfirm.modal.loadFromFile.button"),
-  //       color: "warning",
-  //       description: (
-  //         <Trans
-  //           i18nKey="overwriteConfirm.modal.loadFromFile.description"
-  //           bold={(text) => <strong>{text}</strong>}
-  //           br={() => <br />}
-  //         />
-  //       ),
-  //     }))
-  //   ) {
-  //     actionManager.executeAction(actionLoadScene);
-  //   }
-  // };
+  const handleSelect = async () => {
+    if (
+      !elements.length ||
+      (await openConfirmModal({
+        title: t("overwriteConfirm.modal.loadFromFile.title"),
+        actionLabel: t("overwriteConfirm.modal.loadFromFile.button"),
+        color: "warning",
+        description: (
+          <Trans
+            i18nKey="overwriteConfirm.modal.loadFromFile.description"
+            bold={(text) => <strong>{text}</strong>}
+            br={() => <br />}
+          />
+        ),
+      }))
+    ) {
+      actionManager.executeAction(actionLoadScene);
+    }
+  };
 
   return (
     <>
-      {/* <DropdownMenuItem
+      <DropdownMenuItem
         icon={LoadIcon}
         onSelect={handleSelect}
         data-testid="load-button"
@@ -86,7 +86,7 @@ export const LoadScene = () => {
         aria-label={t("buttons.load")}
       >
         {t("buttons.load")}
-      </DropdownMenuItem> */}
+      </DropdownMenuItem>
     </>
   );
 };

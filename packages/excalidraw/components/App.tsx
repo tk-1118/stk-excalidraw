@@ -299,7 +299,7 @@ import {
 } from "../actions";
 import { actionWrapTextInContainer } from "../actions/actionBoundText";
 import { actionToggleHandTool, zoomToFit } from "../actions/actionCanvas";
-import { actionPaste } from "../actions/actionClipboard";
+import { actionAddRemark, actionPaste } from "../actions/actionClipboard";
 import { actionCopyElementLink } from "../actions/actionElementLink";
 import { actionUnlockAllElements } from "../actions/actionElementLock";
 import {
@@ -11101,6 +11101,7 @@ class App extends React.Component<AppProps, AppState> {
     }
 
     return [
+      actionAddRemark,
       CONTEXT_MENU_SEPARATOR,
       actionCut,
       actionCopy,

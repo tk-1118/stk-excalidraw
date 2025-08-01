@@ -19,6 +19,18 @@ import { t } from "../i18n";
 
 import { actionDeleteSelected } from "./actionDeleteSelected";
 import { register } from "./register";
+export const actionAddRemark = register({
+  name: "addRemark",
+  label: "labels.addRemark",
+  trackEvent: { category: "element" },
+  perform: (elements, appState, value) => {
+    console.log("addRemark:", elements, appState, value);
+    return {
+      captureUpdate: CaptureUpdateAction.EVENTUALLY,
+    };
+  },
+  keyTest: undefined,
+});
 
 export const actionCopy = register({
   name: "copy",
