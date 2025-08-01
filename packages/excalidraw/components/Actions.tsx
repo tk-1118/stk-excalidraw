@@ -366,7 +366,7 @@ export const ShapesSwitcher = ({
         <DropdownMenu.Trigger
           className={clsx("App-toolbar__extra-tools-trigger", {
             "App-toolbar__extra-tools-trigger--selected":
-              frameToolSelected ||
+              // frameToolSelected ||
               embeddableToolSelected ||
               lassoToolSelected ||
               // in collab we're already highlighting the laser button
@@ -377,7 +377,14 @@ export const ShapesSwitcher = ({
           onToggle={() => setIsExtraToolsMenuOpen(!isExtraToolsMenuOpen)}
           title={t("toolBar.extraTools")}
         >
-          {frameToolSelected
+          {embeddableToolSelected
+            ? EmbedIcon
+            : laserToolSelected && !app.props.isCollaborating
+            ? laserPointerToolIcon
+            : lassoToolSelected
+            ? LassoIcon
+            : extraToolsIcon}
+          {/* {frameToolSelected
             ? frameToolIcon
             : embeddableToolSelected
             ? EmbedIcon
@@ -385,14 +392,14 @@ export const ShapesSwitcher = ({
             ? laserPointerToolIcon
             : lassoToolSelected
             ? LassoIcon
-            : extraToolsIcon}
+            : extraToolsIcon} */}
         </DropdownMenu.Trigger>
         <DropdownMenu.Content
           onClickOutside={() => setIsExtraToolsMenuOpen(false)}
           onSelect={() => setIsExtraToolsMenuOpen(false)}
           className="App-toolbar__extra-tools-dropdown"
         >
-          <DropdownMenu.Item
+          {/* <DropdownMenu.Item
             onSelect={() => app.setActiveTool({ type: "frame" })}
             icon={frameToolIcon}
             shortcut={KEYS.F.toLocaleUpperCase()}
@@ -400,7 +407,7 @@ export const ShapesSwitcher = ({
             selected={frameToolSelected}
           >
             {t("toolBar.frame")}
-          </DropdownMenu.Item>
+          </DropdownMenu.Item> */}
           <DropdownMenu.Item
             onSelect={() => app.setActiveTool({ type: "embeddable" })}
             icon={EmbedIcon}

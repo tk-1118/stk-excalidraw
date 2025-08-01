@@ -12,6 +12,7 @@ import {
   ImageIcon,
   EraserIcon,
   AnnotationIcon,
+  frameToolIcon,
 } from "./icons";
 
 export const SHAPES = [
@@ -84,6 +85,13 @@ export const SHAPES = [
     key: KEYS.E,
     numericKey: KEYS["0"],
     fillable: false,
+  },
+  {
+    icon: frameToolIcon,
+    value: "frame",
+    key: null,
+    numericKey: null,
+    fillable: true,
   },
   {
     icon: AnnotationIcon,
