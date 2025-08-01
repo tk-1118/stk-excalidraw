@@ -4,9 +4,13 @@ import { exportToCanvas } from "@excalidraw/utils/export";
 
 import { useState } from "react";
 
-import { isFrameLikeElement } from "@excalidraw/element";
+import { getNonDeletedElements, isFrameLikeElement } from "@excalidraw/element";
 
-import { getDefaultFrameName, getElementsOverlappingFrame } from "@excalidraw/element/frame";
+import {
+  getDefaultFrameName,
+  // getElementsOverlappingFrame,
+  getFrameChildren,
+} from "@excalidraw/element/frame";
 
 import type { ExcalidrawFrameLikeElement } from "@excalidraw/element/types";
 
@@ -34,16 +38,21 @@ export const BusinessServiceProtoNav = () => {
   };
 
   const frameExportPng = async (exportingFrame: ExcalidrawFrameLikeElement) => {
-    const exportedElements = getElementsOverlappingFrame(
-      elements,
-      exportingFrame,
-    );
+    const elementsInFrame = getFrameChildren(
+      getNonDeletedElements(elements),
+      exportingFrame.id,
+    ).filter((element) => !(element.type === "text" && element.containerId));
+
+    // const exportedElements = getElementsOverlappingFrame(
+    //   elements,
+    //   exportingFrame,
+    // );
     const canvas = exportToCanvas({
-      elements: exportedElements,
+      elements: elementsInFrame,
       appState: app.state,
       files: app.files,
-      exportingFrame, // 关键参数
-      exportPadding: 0,
+      // exportingFrame, // 关键参数
+      // exportPadding: 0,
     });
     // 转换为 PNG blob
     const blob = await new Promise<Blob>(async (resolve) => {
