@@ -518,6 +518,16 @@ export const HelpIconThin = createIcon(
   tablerIconProps,
 );
 
+// more icons:
+export const moreIcon = createIcon(
+  <g>
+    <circle cx="12" cy="6" r="1" />
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="12" cy="18" r="1" />
+  </g>,
+  modifiedTablerIconProps,
+);
+
 export const ExternalLinkIcon = createIcon(
   <path
     strokeWidth="1.25"

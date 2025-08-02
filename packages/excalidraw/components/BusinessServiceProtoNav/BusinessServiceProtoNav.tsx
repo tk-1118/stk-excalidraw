@@ -2,7 +2,7 @@ import "./BusinessServiceProtoNav.scss";
 
 import { exportToCanvas } from "@excalidraw/utils/export";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 import { getNonDeletedElements, isFrameLikeElement } from "@excalidraw/element";
 
@@ -14,7 +14,7 @@ import {
 
 import type { ExcalidrawFrameLikeElement } from "@excalidraw/element/types";
 
-import { frameToolIcon, ExportIcon } from "../icons";
+import { frameToolIcon, moreIcon, ExportIcon } from "../icons";
 
 import { useApp } from "../App";
 
@@ -31,9 +31,14 @@ export const BusinessServiceProtoNav = () => {
 
   const [selectedFrame, setSelectedFrame] =
     useState<ExcalidrawFrameLikeElement | null>(null);
+
+  const [activeMenuFrameId, setActiveMenuFrameId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
   const frameClick = (frame: ExcalidrawFrameLikeElement) => {
     // console.log("frame:", frame);
     setSelectedFrame(frame);
+    setActiveMenuFrameId(null);
     app.scrollToContent(frame, { animate: true });
   };
 
@@ -75,6 +80,29 @@ export const BusinessServiceProtoNav = () => {
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
+
+  const deleteFrame = (frame: ExcalidrawFrameLikeElement) => {
+    app.scene.replaceAllElements(
+      app.scene.getElementsIncludingDeleted().map((el) => {
+        if (el.id === frame.id) {
+          return {
+            ...el,
+            isDeleted: true,
+          };
+        }
+        // Also delete all elements in the frame
+        if (el.frameId === frame.id) {
+          return {
+            ...el,
+            isDeleted: true,
+          };
+        }
+        return el;
+      }),
+    );
+    setActiveMenuFrameId(null);
+  };
+
   return (
     <>
       <div className="business-service-proto-nav">
@@ -102,13 +130,33 @@ export const BusinessServiceProtoNav = () => {
                 </div>
                 <div className="frames-item-right">
                   <div
-                    className="export-icon"
-                    onClick={() => {
-                      frameExportPng(frame);
+                    className="more-icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedFrame(frame);
+                      setActiveMenuFrameId(
+                        activeMenuFrameId === frame.id ? null : frame.id,
+                      );
                     }}
                   >
-                    {ExportIcon}
+                    {moreIcon}
                   </div>
+                  {activeMenuFrameId === frame.id && (
+                    <div className="frame-more-menu" ref={menuRef}>
+                      <div
+                        className="frame-more-menu-item"
+                        onClick={() => frameExportPng(frame)}
+                      >
+                        导出页面PNG
+                      </div>
+                      <div 
+                        className="frame-more-menu-item delete"
+                        onClick={() => deleteFrame(frame)}
+                      >
+                        删除页面
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
