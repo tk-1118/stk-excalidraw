@@ -86,13 +86,13 @@ export const SHAPES = [
     numericKey: KEYS["0"],
     fillable: false,
   },
-  {
-    icon: frameToolIcon,
-    value: "frame",
-    key: null,
-    numericKey: null,
-    fillable: true,
-  },
+  // {
+  //   icon: frameToolIcon,
+  //   value: "frame",
+  //   key: null,
+  //   numericKey: null,
+  //   fillable: true,
+  // },
   {
     icon: AnnotationIcon,
     value: "annotation",
