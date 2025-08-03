@@ -25,6 +25,8 @@ import { frameToolIcon, moreIcon } from "../icons";
 
 import { useApp } from "../App";
 
+import excalidrawTemplate from "./excalidraw-template.json";
+
 export const BusinessServiceProtoNav = () => {
   const app = useApp();
   const elements = app.scene.getNonDeletedElements();
@@ -144,6 +146,12 @@ export const BusinessServiceProtoNav = () => {
           height: 1024,
         });
         break;
+      case "excalidraw":
+        newFrame = newElementWith(newFrame, {
+          width: 800,
+          height: 600,
+        });
+        break;
       default:
         break;
     }
@@ -157,10 +165,20 @@ export const BusinessServiceProtoNav = () => {
       });
     }
 
-    app.scene.replaceAllElements([
-      ...app.scene.getElementsIncludingDeleted(),
-      newFrame,
-    ]);
+    // 如果是excalidraw模板，添加模板元素
+    let newElements = [...app.scene.getElementsIncludingDeleted(), newFrame];
+    if (templateType === "excalidraw" && excalidrawTemplate.elements) {
+      const templateElements = excalidrawTemplate.elements.map((el: any) => ({
+        ...el,
+        id: el.id,
+        frameId: newFrame.id,
+        x: el.x + newFrame.x,
+        y: el.y + newFrame.y,
+      }));
+      newElements = [...newElements, ...templateElements];
+    }
+
+    app.scene.replaceAllElements(newElements);
 
     setShowTemplateModal(false);
     setSelectedFrame(newFrame);
@@ -247,6 +265,39 @@ export const BusinessServiceProtoNav = () => {
               </button>
             </div>
             <div className="template-modal-body">
+              {excalidrawTemplate.map((template, index) => (
+                <>
+                  <div className="template-modal-body-area" key={index}>
+                    <h4>{template.tempTitle}</h4>
+                    <div className="template-option-list">
+                      {template.tempData.map((tempDataItem, index2) => (
+                        <>
+                          <div className="template-option" key={index2}>
+                            <div className="template-preview">
+                              <img src={tempDataItem.cover} alt="" />
+                            </div>
+                            <div className="template-name">
+                              {/* {template.tempTitle}项 */}
+                            </div>
+                          </div>
+                        </>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ))}
+              {/* 渲染excalidraw模板内容 */}
+              {/* <div className="template-option">
+                <div className="template-preview">
+                  <div
+                    className="excalidraw-template-preview"
+                    onClick={() => createFrameWithTemplate("excalidraw")}
+                  >
+                    Excalidraw模板
+                  </div>
+                </div>
+                <div className="template-name">Excalidraw模板</div>
+              </div>
               <div 
                 className="template-option"
                 onClick={() => createFrameWithTemplate("mobile")}
@@ -267,7 +318,7 @@ export const BusinessServiceProtoNav = () => {
               >
                 <div className="template-preview desktop-preview"></div>
                 <div className="template-name">桌面端</div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

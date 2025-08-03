@@ -15,7 +15,7 @@
   background: var(--popup-bg-color);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--popup-shadow);
-  width: 500px;
+  width: 50vw;
   max-width: 90vw;
   
   .template-modal-header {
@@ -55,44 +55,60 @@
     display: flex;
     gap: 1rem;
     justify-content: center;
-    
-    .template-option {
-      text-align: center;
-      cursor: pointer;
-      padding: 0.5rem;
-      border-radius: var(--border-radius-md);
-      
-      &:hover {
-        background-color: var(--color-surface-high);
-      }
-      
-      .template-preview {
-        width: 100px;
-        height: 150px;
-        background-color: var(--color-surface-high);
-        border: 1px solid var(--sidebar-border-color);
-        margin: 0 auto 0.5rem;
-        position: relative;
-        
-        &.mobile-preview {
-          width: 60px;
-          height: 120px;
-        }
-        
-        &.tablet-preview {
-          width: 80px;
-          height: 120px;
-        }
-        
-        &.desktop-preview {
-          width: 140px;
-          height: 100px;
+    .template-modal-body-area {
+      width: 100%;
+      h4 {
+        &::before {
+          content: " ";
+          display: block;
+          height: 2px;
+
         }
       }
-      
-      .template-name {
-        font-size: 0.875rem;
-        color: var(--text-primary-color);
+      .template-option-list {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        .template-option {
+          text-align: center;
+          cursor: pointer;
+          padding: 0.5rem;
+          border-radius: var(--border-radius-md);
+          
+          &:hover {
+            background-color: var(--color-surface-high);
+          }
+          
+          .template-preview {
+            width: 100px;
+            margin: 0 auto 0.5rem;
+            position: relative;
+            
+            &.mobile-preview {
+              width: 60px;
+              height: 120px;
+            }
+            
+            &.tablet-preview {
+              width: 80px;
+              height: 120px;
+            }
+            
+            &.desktop-preview {
+              width: 140px;
+              height: 100px;
+            }
+  
+            img {
+              width: 100%;
+            }
+          }
+          
+          .template-name {
+            font-size: 0.875rem;
+            color: var(--text-primary-color);
+          }
+        }
       }
     }
   }
