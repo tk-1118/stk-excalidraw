@@ -282,14 +282,24 @@ export const BusinessServiceProtoNav = () => {
                       {template.tempData.map((tempDataItem, index2) => (
                         <>
                           <div className="template-option" key={index2}>
-                            <div 
+                            <div
                               className="template-preview"
-                              onClick={() => handleImagePreview(tempDataItem.cover)}
+                              onClick={() =>
+                                handleImagePreview(tempDataItem.cover)
+                              }
                             >
                               <img src={tempDataItem.cover} alt="" />
                             </div>
-                            <div className="template-name">
-                              {/* {template.tempTitle}项 */}
+                            <div className="template-opearte">
+                              <button
+                                className="preview-button"
+                                onClick={() =>
+                                  handleImagePreview(tempDataItem.cover)
+                                }
+                              >
+                                预览
+                              </button>
+                              <button className="use-button">使用</button>
                             </div>
                           </div>
                         </>

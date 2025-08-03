@@ -108,6 +108,41 @@
             font-size: 0.875rem;
             color: var(--text-primary-color);
           }
+
+          .template-opearte {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            button {
+              cursor: pointer;
+              padding: 0 0.5rem;
+            }
+            .preview-button {
+              box-sizing: border-box;
+              border-width: 1px;
+              border-style: solid;
+              border-color: var(--button-border, var(--default-border-color));
+              border-radius: var(--border-radius-lg);
+              background-color: var(--button-bg, var(--island-bg-color));
+              color: var(--button-color, var(--color-on-surface));
+              font-family: var(--ui-font);
+              border: none;
+              box-shadow: 0 0 0 1px var(--color-surface-lowest);
+              background-color: var(--color-surface-low);
+            }
+            .use-button {
+              box-sizing: border-box;
+              border-width: 1px;
+              border-style: solid;
+              border-color: var(--button-border, var(--default-border-color));
+              border-radius: var(--border-radius-lg);
+              background-color: var(--color-primary);
+              color: var(--button-color, var(--color-on-surface));
+              color: #fff;
+              font-family: var(--ui-font);
+            }
+          }
         }
       }
     }

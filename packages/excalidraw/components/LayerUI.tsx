@@ -269,7 +269,7 @@ const LayerUI = ({
             onClick={() => goHome()}
           >
             <svg
-              className="icon"
+              className="hema-button-icon"
               viewBox="0 0 1033 1024"
               version="1.1"
               xmlns="http://www.w3.org/2000/svg"
@@ -288,7 +288,7 @@ const LayerUI = ({
             onClick={() => goAIGenerate()}
           >
             <svg
-              className="icon"
+              className="hema-button-icon"
               viewBox="0 0 1024 1024"
               version="1.1"
               xmlns="http://www.w3.org/2000/svg"
