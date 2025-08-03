@@ -43,6 +43,7 @@ export const BusinessServiceProtoNav = () => {
 
   const [activeMenuFrameId, setActiveMenuFrameId] = useState<string | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const frameClick = (frame: ExcalidrawFrameLikeElement) => {
@@ -185,6 +186,14 @@ export const BusinessServiceProtoNav = () => {
     app.scrollToContent(newFrame, { animate: true });
   };
 
+  const handleImagePreview = (imageUrl: string) => {
+    setImagePreviewUrl(imageUrl);
+  };
+
+  const closeImagePreview = () => {
+    setImagePreviewUrl(null);
+  };
+
   return (
     <>
       <div className="business-service-proto-nav">
@@ -273,7 +282,10 @@ export const BusinessServiceProtoNav = () => {
                       {template.tempData.map((tempDataItem, index2) => (
                         <>
                           <div className="template-option" key={index2}>
-                            <div className="template-preview">
+                            <div 
+                              className="template-preview"
+                              onClick={() => handleImagePreview(tempDataItem.cover)}
+                            >
                               <img src={tempDataItem.cover} alt="" />
                             </div>
                             <div className="template-name">
@@ -320,6 +332,24 @@ export const BusinessServiceProtoNav = () => {
                 <div className="template-name">桌面端</div>
               </div> */}
             </div>
+          </div>
+        </div>
+      )}
+
+      {imagePreviewUrl && (
+        <div className="image-preview-overlay" onClick={closeImagePreview}>
+          <div
+            className="image-preview-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="image-preview-close" onClick={closeImagePreview}>
+              ×
+            </button>
+            <img
+              src={imagePreviewUrl}
+              alt="Preview"
+              className="image-preview-content"
+            />
           </div>
         </div>
       )}
