@@ -127,50 +127,21 @@ export const BusinessServiceProtoNav = () => {
     setShowTemplateModal(true);
   };
 
-  const createFrameWithTemplate = (templateType: string) => {
+  const createFrameWithTemplate = (templateType: string, templateData: any) => {
     let newFrame = newFrameElement({
       name: "新建页面",
       x: 0,
       y: 0,
-      width: 300,
-      height: 600,
+      width: 1920,
+      height: 1080,
     }) as ExcalidrawFrameElement;
 
-    // 根据模板类型添加不同的默认元素
-    switch (templateType) {
-      case "mobile":
-        newFrame = newElementWith(newFrame, {
-          width: 375,
-          height: 812,
-        });
-        break;
-      case "desktop":
-        newFrame = newElementWith(newFrame, {
-          width: 1440,
-          height: 900,
-        });
-        break;
-      case "tablet":
-        newFrame = newElementWith(newFrame, {
-          width: 768,
-          height: 1024,
-        });
-        break;
-      case "excalidraw":
-        newFrame = newElementWith(newFrame, {
-          width: 800,
-          height: 600,
-        });
-        break;
-      case "BLANK":
-        // 空白模板使用默认尺寸
-        newFrame = newElementWith(newFrame, {
-          width: 800,
-          height: 600,
-        });
-        break;
-      default:
-        break;
+    if (templateType === "BLANK") {
+      // 空白模板使用默认尺寸
+      newFrame = newElementWith(newFrame, {
+        width: 1920,
+        height: 1080,
+      });
     }
 
     // 确保新frame不会与其他frame重叠
@@ -182,17 +153,41 @@ export const BusinessServiceProtoNav = () => {
       });
     }
 
-    // 如果是excalidraw模板，添加模板元素
-    let newElements = [...app.scene.getElementsIncludingDeleted(), newFrame];
-    if (templateType === "excalidraw" && excalidrawTemplate.elements) {
-      const templateElements = excalidrawTemplate.elements.map((el: any) => ({
-        ...el,
-        id: el.id,
-        frameId: newFrame.id,
-        x: el.x + newFrame.x,
-        y: el.y + newFrame.y,
-      }));
-      newElements = [...newElements, ...templateElements];
+    let newElements;
+
+    if (templateType !== "BLANK" && templateData?.elements) {
+      let maxWidth = 0;
+      let maxHeight = 0;
+      let minTop = 0;
+      let minLeft = 0;
+      const templateElements = templateData?.elements?.map((el: any) => {
+        maxWidth = Math.max(maxWidth, el.width);
+        maxHeight = Math.max(maxHeight, el.height);
+        if (minTop === 0 && minLeft === 0) {
+          minTop = el.y;
+          minLeft = el.x;
+        } else {
+          minTop = Math.min(minTop, el.y);
+          minLeft = Math.min(minLeft, el.x);
+        }
+        return {
+          ...el,
+          frameId: newFrame.id,
+        };
+      });
+      newFrame = newElementWith(newFrame, {
+        width: maxWidth,
+        height: maxHeight,
+        x: minLeft,
+        y: minTop,
+      });
+      newElements = [
+        ...app.scene.getElementsIncludingDeleted(),
+        newFrame,
+        ...templateElements,
+      ];
+    } else {
+      newElements = [...app.scene.getElementsIncludingDeleted(), newFrame];
     }
 
     app.scene.replaceAllElements(newElements);
@@ -385,7 +380,7 @@ export const BusinessServiceProtoNav = () => {
                                     className="use-button"
                                     onClick={() =>
                                       createFrameWithTemplate(
-                                        selectedTemplateType,
+                                        selectedTemplateType,tempDataItem
                                       )
                                     }
                                   >
