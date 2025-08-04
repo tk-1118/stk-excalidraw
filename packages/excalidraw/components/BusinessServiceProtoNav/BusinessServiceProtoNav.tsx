@@ -50,7 +50,7 @@ export const BusinessServiceProtoNav = () => {
   // 模板类型数据
   const templateTypes = [
     {
-      tempTitle: "表格页面",
+      tempTitle: "表格模版",
       tempType: "TABLE_PAGE",
     },
   ];
@@ -157,6 +157,13 @@ export const BusinessServiceProtoNav = () => {
         });
         break;
       case "excalidraw":
+        newFrame = newElementWith(newFrame, {
+          width: 800,
+          height: 600,
+        });
+        break;
+      case "BLANK":
+        // 空白模板使用默认尺寸
         newFrame = newElementWith(newFrame, {
           width: 800,
           height: 600,
@@ -286,6 +293,15 @@ export const BusinessServiceProtoNav = () => {
               <div className="template-modal-layout">
                 {/* 左侧模板类型切换侧边栏 */}
                 <div className="template-sidebar">
+                  {/* 添加创建空白模板的选项 */}
+                  <div
+                    className={`template-type-item ${
+                      selectedTemplateType === "BLANK" ? "active" : ""
+                    }`}
+                    onClick={() => setSelectedTemplateType("BLANK")}
+                  >
+                    空白模板
+                  </div>
                   {templateTypes.map((templateType, index) => (
                     <div 
                       key={index}
@@ -305,48 +321,83 @@ export const BusinessServiceProtoNav = () => {
 
                 {/* 右侧模板内容区域 */}
                 <div className="template-content">
-                  {excalidrawTemplate
-                    .filter(
-                      (template) => template.tempType === selectedTemplateType,
-                    )
-                    .map((template, index) => (
-                      <div className="template-modal-body-area" key={index}>
-                        <div className="template-option-list">
-                          {template.tempData.map((tempDataItem, index2) => (
-                            <div className="template-option" key={index2}>
-                              <div
-                                className="template-preview"
-                                onClick={() =>
-                                  handleImagePreview(tempDataItem.cover)
-                                }
-                              >
-                                <img src={tempDataItem.cover} alt="" />
-                              </div>
-                              <div className="template-opearte">
-                                <button
-                                  className="preview-button"
+                  {selectedTemplateType === "BLANK" ? (
+                    <div className="template-modal-body-area">
+                      <div className="template-option-list">
+                        <div className="template-option">
+                          <div className="template-preview desktop-preview">
+                            <div
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                backgroundColor: "#f0f0f0",
+                                border: "1px solid #ccc",
+                                borderRadius: "4px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "#999",
+                              }}
+                            >
+                              空白页面
+                            </div>
+                          </div>
+                          <div className="template-opearte">
+                            <button 
+                              className="use-button"
+                              onClick={() => createFrameWithTemplate("BLANK")}
+                            >
+                              创建
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    excalidrawTemplate
+                      .filter(
+                        (template) =>
+                          template.tempType === selectedTemplateType,
+                      )
+                      .map((template, index) => (
+                        <div className="template-modal-body-area" key={index}>
+                          <div className="template-option-list">
+                            {template.tempData.map((tempDataItem, index2) => (
+                              <div className="template-option" key={index2}>
+                                <div
+                                  className="template-preview"
                                   onClick={() =>
                                     handleImagePreview(tempDataItem.cover)
                                   }
                                 >
-                                  预览
-                                </button>
-                                <button 
-                                  className="use-button"
-                                  onClick={() =>
-                                    createFrameWithTemplate(
-                                      selectedTemplateType,
-                                    )
-                                  }
-                                >
-                                  使用
-                                </button>
+                                  <img src={tempDataItem.cover} alt="" />
+                                </div>
+                                <div className="template-opearte">
+                                  <button
+                                    className="preview-button"
+                                    onClick={() =>
+                                      handleImagePreview(tempDataItem.cover)
+                                    }
+                                  >
+                                    预览
+                                  </button>
+                                  <button 
+                                    className="use-button"
+                                    onClick={() =>
+                                      createFrameWithTemplate(
+                                        selectedTemplateType,
+                                      )
+                                    }
+                                  >
+                                    使用
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                  )}
                 </div>
               </div>
             </div>
