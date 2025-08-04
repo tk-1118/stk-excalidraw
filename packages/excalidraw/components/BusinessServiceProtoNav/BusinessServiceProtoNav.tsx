@@ -44,14 +44,19 @@ export const BusinessServiceProtoNav = () => {
   const [activeMenuFrameId, setActiveMenuFrameId] = useState<string | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-  const [selectedTemplateType, setSelectedTemplateType] = useState<string>("TABLE_PAGE");
+  const [selectedTemplateType, setSelectedTemplateType] = useState<string>("BLANK");
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   // 模板类型数据
-  const templateTypes = [
+  const templateTypes = excalidrawTemplate?.map((temp) => {
+    return {
+      tempTitle: temp.tempTitle,
+      tempType: temp.tempType,
+    };
+  }) || [
     {
       tempTitle: "表格模版",
-      tempType: "TABLE_PAGE",
+      tempType: "TABLE_TEMP",
     },
   ];
 
@@ -127,9 +132,14 @@ export const BusinessServiceProtoNav = () => {
     setShowTemplateModal(true);
   };
 
-  const createFrameWithTemplate = (templateType: string, templateData: any) => {
+  const createFrameWithTemplate = (
+    templateType: string,
+    tempTitle?: string,
+    templateData?: any,
+  ) => {
+    console.log(templateType, tempTitle, templateData);
     let newFrame = newFrameElement({
-      name: "新建页面",
+      name: `新建${tempTitle || ""}页面`,
       x: 0,
       y: 0,
       width: 1920,
@@ -149,7 +159,7 @@ export const BusinessServiceProtoNav = () => {
       const lastFrame = frames[frames.length - 1];
       newFrame = newElementWith(newFrame, {
         x: lastFrame.x,
-        y: lastFrame.y + lastFrame.height + 50,
+        y: lastFrame.y + lastFrame.height + 100,
       });
     }
 
@@ -376,11 +386,13 @@ export const BusinessServiceProtoNav = () => {
                                   >
                                     预览
                                   </button>
-                                  <button 
+                                  <button
                                     className="use-button"
                                     onClick={() =>
                                       createFrameWithTemplate(
-                                        selectedTemplateType,tempDataItem
+                                        template.tempType,
+                                        template.tempTitle,
+                                        tempDataItem,
                                       )
                                     }
                                   >

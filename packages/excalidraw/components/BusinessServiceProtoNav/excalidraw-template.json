@@ -1,7 +1,7 @@
 [
     {
-        "tempTitle": "表格页面",
-        "tempType": "TABLE_PAGE",
+        "tempTitle": "表格模版",
+        "tempType": "TABLE_TEMP",
         "tempData": [
             {
                 "type": "excalidraw/clipboard",
@@ -62812,8 +62812,8 @@
         ]
     },
     {
-        "tempTitle": "表单页面",
-        "tempType": "FROM_PAGE",
+        "tempTitle": "表单模版",
+        "tempType": "FROM_TEMP",
         "tempData": [
 
         ]
