@@ -44,7 +44,16 @@ export const BusinessServiceProtoNav = () => {
   const [activeMenuFrameId, setActiveMenuFrameId] = useState<string | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [selectedTemplateType, setSelectedTemplateType] = useState<string>("TABLE_PAGE");
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // 模板类型数据
+  const templateTypes = [
+    {
+      tempTitle: "表格页面",
+      tempType: "TABLE_PAGE",
+    },
+  ];
 
   const frameClick = (frame: ExcalidrawFrameLikeElement) => {
     // console.log("frame:", frame);
@@ -274,73 +283,72 @@ export const BusinessServiceProtoNav = () => {
               </button>
             </div>
             <div className="template-modal-body">
-              {excalidrawTemplate.map((template, index) => (
-                <>
-                  <div className="template-modal-body-area" key={index}>
-                    <h4>{template.tempTitle}</h4>
-                    <div className="template-option-list">
-                      {template.tempData.map((tempDataItem, index2) => (
-                        <>
-                          <div className="template-option" key={index2}>
-                            <div
-                              className="template-preview"
-                              onClick={() =>
-                                handleImagePreview(tempDataItem.cover)
-                              }
-                            >
-                              <img src={tempDataItem.cover} alt="" />
-                            </div>
-                            <div className="template-opearte">
-                              <button
-                                className="preview-button"
+              <div className="template-modal-layout">
+                {/* 左侧模板类型切换侧边栏 */}
+                <div className="template-sidebar">
+                  {templateTypes.map((templateType, index) => (
+                    <div 
+                      key={index}
+                      className={`template-type-item ${
+                        selectedTemplateType === templateType.tempType
+                          ? "active"
+                          : ""
+                      }`}
+                      onClick={() =>
+                        setSelectedTemplateType(templateType.tempType)
+                      }
+                    >
+                      {templateType.tempTitle}
+                    </div>
+                  ))}
+                </div>
+
+                {/* 右侧模板内容区域 */}
+                <div className="template-content">
+                  {excalidrawTemplate
+                    .filter(
+                      (template) => template.tempType === selectedTemplateType,
+                    )
+                    .map((template, index) => (
+                      <div className="template-modal-body-area" key={index}>
+                        <div className="template-option-list">
+                          {template.tempData.map((tempDataItem, index2) => (
+                            <div className="template-option" key={index2}>
+                              <div
+                                className="template-preview"
                                 onClick={() =>
                                   handleImagePreview(tempDataItem.cover)
                                 }
                               >
-                                预览
-                              </button>
-                              <button className="use-button">使用</button>
+                                <img src={tempDataItem.cover} alt="" />
+                              </div>
+                              <div className="template-opearte">
+                                <button
+                                  className="preview-button"
+                                  onClick={() =>
+                                    handleImagePreview(tempDataItem.cover)
+                                  }
+                                >
+                                  预览
+                                </button>
+                                <button 
+                                  className="use-button"
+                                  onClick={() =>
+                                    createFrameWithTemplate(
+                                      selectedTemplateType,
+                                    )
+                                  }
+                                >
+                                  使用
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        </>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              ))}
-              {/* 渲染excalidraw模板内容 */}
-              {/* <div className="template-option">
-                <div className="template-preview">
-                  <div
-                    className="excalidraw-template-preview"
-                    onClick={() => createFrameWithTemplate("excalidraw")}
-                  >
-                    Excalidraw模板
-                  </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                 </div>
-                <div className="template-name">Excalidraw模板</div>
               </div>
-              <div 
-                className="template-option"
-                onClick={() => createFrameWithTemplate("mobile")}
-              >
-                <div className="template-preview mobile-preview"></div>
-                <div className="template-name">移动端</div>
-              </div>
-              <div 
-                className="template-option"
-                onClick={() => createFrameWithTemplate("tablet")}
-              >
-                <div className="template-preview tablet-preview"></div>
-                <div className="template-name">平板端</div>
-              </div>
-              <div 
-                className="template-option"
-                onClick={() => createFrameWithTemplate("desktop")}
-              >
-                <div className="template-preview desktop-preview"></div>
-                <div className="template-name">桌面端</div>
-              </div> */}
             </div>
           </div>
         </div>

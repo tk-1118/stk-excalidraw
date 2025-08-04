@@ -15,8 +15,11 @@
   background: var(--popup-bg-color);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--popup-shadow);
-  width: 50vw;
-  max-width: 90vw;
+  width: 80vw;
+  max-width: 1200px;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
   
   .template-modal-header {
     display: flex;
@@ -55,25 +58,71 @@
     display: flex;
     gap: 1rem;
     justify-content: center;
+    flex: 1;
+    overflow: hidden;
+    
+    .template-modal-layout {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      gap: 1rem;
+    }
+    
+    .template-sidebar {
+      width: 200px;
+      border-right: 1px solid var(--sidebar-border-color);
+      padding: 0.5rem;
+      overflow-y: auto;
+      
+      .template-type-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-radius: var(--border-radius-md);
+        margin-bottom: 0.25rem;
+        
+        &:hover {
+          background-color: var(--color-surface-high);
+        }
+        
+        &.active {
+          background-color: var(--color-primary);
+          color: white;
+        }
+      }
+    }
+    
+    .template-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+    
     .template-modal-body-area {
       width: 100%;
       h4 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--sidebar-border-color);
         &::before {
           content: " ";
           display: block;
           height: 2px;
-
         }
       }
       .template-option-list {
         width: 100%;
         display: flex;
-        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
         .template-option {
           text-align: center;
           cursor: pointer;
           padding: 0.5rem;
           border-radius: var(--border-radius-md);
+          flex: 1;
+          min-width: 120px;
+          max-width: calc(50% - 0.5rem);
           
           &:hover {
             background-color: var(--color-surface-high);
