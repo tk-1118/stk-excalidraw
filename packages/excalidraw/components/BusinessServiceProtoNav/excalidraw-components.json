@@ -7,6 +7,96 @@
         "componentType": "BASE_COMPONENT",
         "componentData": [
             {
+                "type": "excalidraw/clipboard",
+                "elements": [
+                    {
+                        "type": "rectangle",
+                        "version": 1293,
+                        "versionNonce": 1290310787,
+                        "isDeleted": false,
+                        "id": "puJVzVB-FIV2AaBFBBQQG",
+                        "fillStyle": "solid",
+                        "strokeWidth": 1,
+                        "strokeStyle": "solid",
+                        "roughness": 0,
+                        "opacity": 100,
+                        "angle": 0,
+                        "x": -220,
+                        "y": 4280,
+                        "strokeColor": "#ffffff",
+                        "backgroundColor": "#4dabf7",
+                        "width": 135.27591309119504,
+                        "height": 40.70821569516272,
+                        "seed": 750548018,
+                        "groupIds": [
+                            "9nAlArMv3ye5n46JSwiS1",
+                            "njl-Z6T_0X_W0KA1XL8fE"
+                        ],
+                        "frameId": null,
+                        "roundness": {
+                            "type": 3
+                        },
+                        "boundElements": [],
+                        "updated": 1754460531213,
+                        "link": null,
+                        "locked": false,
+                        "index": "b2d",
+                        "customData": {
+                            "componentType": "111",
+                            "componentBehavior": "222",
+                            "componentInteraction": "333"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "version": 1771,
+                        "versionNonce": 1552485411,
+                        "isDeleted": false,
+                        "id": "AVb-rFDM7bL2iQPhIOK3H",
+                        "fillStyle": "solid",
+                        "strokeWidth": 1,
+                        "strokeStyle": "solid",
+                        "roughness": 0,
+                        "opacity": 100,
+                        "angle": 0,
+                        "x": -193.56202514385564,
+                        "y": 4287.854107847581,
+                        "strokeColor": "#ffffff",
+                        "backgroundColor": "#4dabf7",
+                        "width": 82.39996337890625,
+                        "height": 25,
+                        "seed": 1698897394,
+                        "groupIds": [
+                            "M_1pV4SV0PuNBofyweCrj",
+                            "njl-Z6T_0X_W0KA1XL8fE"
+                        ],
+                        "frameId": null,
+                        "roundness": null,
+                        "boundElements": [],
+                        "updated": 1754460531213,
+                        "link": null,
+                        "locked": false,
+                        "fontSize": 20,
+                        "fontFamily": 1,
+                        "text": "主题按钮",
+                        "textAlign": "left",
+                        "verticalAlign": "top",
+                        "containerId": null,
+                        "originalText": "主题按钮",
+                        "lineHeight": 1.25,
+                        "baseline": 20,
+                        "index": "b2e",
+                        "autoResize": true,
+                        "customData": {
+                            "componentType": "111",
+                            "componentBehavior": "222",
+                            "componentInteraction": "333"
+                        }
+                    }
+                ],
+                "files": {}
+            }
+            {
                 "id": "default-button",
                 "type": "excalidraw/clipboard",
                 "componentName": "默认按钮",

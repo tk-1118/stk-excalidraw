@@ -8,30 +8,55 @@ import { TextField } from "./TextField";
 import { FilledButton } from "./FilledButton";
 
 interface RemarkDialogProps {
-  remark: string;
-  onSubmit: (remark: string) => void;
+  customData: {
+    componentType: string;
+    componentBehavior: string;
+    componentInteraction: string;
+  };
+  onSubmit: (customData: ComponentDescription) => void;
   onClose: () => void;
 }
 
+interface ComponentDescription {
+  componentType: string;
+  componentBehavior: string;
+  componentInteraction: string;
+}
+
 export const RemarkDialog = ({
-  remark,
+  customData,
   onSubmit,
   onClose,
 }: RemarkDialogProps) => {
   const { t } = useI18n();
-  const [inputValue, setInputValue] = useState(remark);
-  const textFieldRef = useRef<HTMLInputElement>(null);
+
+  const initialDescription = customData;
+  const [componentType, setComponentType] = useState(
+    initialDescription.componentType,
+  );
+  const [componentBehavior, setComponentBehavior] = useState(
+    initialDescription.componentBehavior,
+  );
+  const [componentInteraction, setComponentInteraction] = useState(
+    initialDescription.componentInteraction,
+  );
+
+  const firstFieldRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // 自动聚焦到输入框
-    if (textFieldRef.current) {
-      textFieldRef.current.focus();
-      textFieldRef.current.select();
+    // 自动聚焦到第一个输入框
+    if (firstFieldRef.current) {
+      firstFieldRef.current.focus();
     }
   }, []);
 
   const handleSubmit = () => {
-    onSubmit(inputValue);
+    const customData: ComponentDescription = {
+      componentType,
+      componentBehavior,
+      componentInteraction,
+    };
+    onSubmit(customData);
     onClose();
   };
 
@@ -53,12 +78,29 @@ export const RemarkDialog = ({
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
         <TextField
-          ref={textFieldRef}
-          value={inputValue}
-          onChange={setInputValue}
+          ref={firstFieldRef}
+          value={componentType}
+          onChange={setComponentType}
           onKeyDown={handleKeyDown}
           fullWidth
-          placeholder={t("labels.addRemark")}
+          label="组件类型"
+          placeholder="请输入组件类型"
+        />
+        <TextField
+          value={componentBehavior}
+          onChange={setComponentBehavior}
+          onKeyDown={handleKeyDown}
+          fullWidth
+          label="组件功能"
+          placeholder="请输入组件功能"
+        />
+        <TextField
+          value={componentInteraction}
+          onChange={setComponentInteraction}
+          onKeyDown={handleKeyDown}
+          fullWidth
+          label="组件交互"
+          placeholder="请输入组件交互方式"
         />
         <div
           style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}

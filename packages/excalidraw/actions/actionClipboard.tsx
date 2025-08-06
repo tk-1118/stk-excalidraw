@@ -44,10 +44,10 @@ export const actionAddRemark = register({
         openDialog: {
           name: "remark",
           data: {
-            elementIds: selectedElements.map(el => el.id),
-            remark: selectedElements[0].customData?.remark || "",
-          }
-        }
+            elementIds: selectedElements.map((el) => el.id),
+            customData: selectedElements[0].customData,
+          },
+        },
       },
       captureUpdate: CaptureUpdateAction.IMMEDIATELY,
     };

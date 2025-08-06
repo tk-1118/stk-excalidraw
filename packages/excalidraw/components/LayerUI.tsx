@@ -556,18 +556,15 @@ const LayerUI = ({
       )}
       {appState.openDialog?.name === "remark" && (
         <RemarkDialog
-          remark={appState.openDialog.data.remark}
-          onSubmit={(remark) => {
+          customData={appState.openDialog.data.customData}
+          onSubmit={(customData) => {
             if (appState.openDialog?.name === "remark") {
               const elementIds = appState.openDialog.data.elementIds;
               elementIds.forEach((id: string) => {
                 const element = app.scene.getNonDeletedElementsMap().get(id);
                 if (element) {
                   app.scene.mutateElement(element, {
-                    customData: {
-                      ...element.customData,
-                      remark
-                    }
+                    customData,
                   });
                 }
               });
