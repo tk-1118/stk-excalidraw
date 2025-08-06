@@ -45,7 +45,7 @@ export const actionAddRemark = register({
           name: "remark",
           data: {
             elementIds: selectedElements.map((el) => el.id),
-            customData: selectedElements[0].customData,
+            customData: selectedElements[0].customData || {},
           },
         },
       },
