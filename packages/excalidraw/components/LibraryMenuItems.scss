@@ -39,6 +39,10 @@
 
     position: relative;
 
+    &::-webkit-scrollbar { 
+      width: 10px;
+    }
+
     & > div {
       padding-left: 0.75rem;
       padding-right: 0.75rem;
@@ -57,6 +61,9 @@
       overflow-y: auto;
       overflow-x: hidden;
       margin-bottom: 1rem;
+      &::-webkit-scrollbar { 
+        width: 0;
+      }
     }
 
     &__header {

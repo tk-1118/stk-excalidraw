@@ -252,13 +252,17 @@ export default function LibraryMenuItems({
   return (
     <div
       className="library-menu-items-container"
-      style={
-        pendingElements.length ||
-        unpublishedItems.length ||
-        publishedItems.length
-          ? { justifyContent: "flex-start" }
-          : { borderBottom: 0 }
-      }
+      style={{
+        display: "block",
+        overflowY: "auto",
+      }}
+      // style={
+      //   pendingElements.length ||
+      //   unpublishedItems.length ||
+      //   publishedItems.length
+      //     ? { justifyContent: "flex-start" }
+      //     : { borderBottom: 0 }
+      // }
     >
       {/* {!isLibraryEmpty && (
           <LibraryDropdownMenu
@@ -272,12 +276,22 @@ export default function LibraryMenuItems({
         align="start"
         gap={1}
         style={{
-          flex: publishedItems.length > 0 ? 1 : "0 1 auto",
+          position: "relative",
+          height: "300px",
           marginBottom: 0,
         }}
         ref={libraryContainerRef}
       >
-        <div className="library-menu-items-container__header">基础组件</div>
+        <div
+          className="library-menu-items-container__header"
+          style={{
+            position: "sticky",
+            top: "0px",
+            zIndex: 1000,
+          }}
+        >
+          基础组件
+        </div>
         <LibraryMenuSectionGrid>
           <LibraryMenuSection
             itemsRenderedPerBatch={itemsRenderedPerBatch}
@@ -295,105 +309,165 @@ export default function LibraryMenuItems({
         align="start"
         gap={1}
         style={{
-          flex: publishedItems.length > 0 ? 1 : "0 1 auto",
+          position: "relative",
+          height: "300px",
           marginBottom: 0,
         }}
         ref={libraryContainerRef}
       >
-        <div className="library-menu-items-container__header">表单组件</div>
-        <LibraryMenuSection
-          itemsRenderedPerBatch={itemsRenderedPerBatch}
-          items={formLibraryItems as any[]}
-          onItemSelectToggle={onItemSelectToggle}
-          onItemDrag={onItemDrag}
-          onClick={onItemClick}
-          isItemSelected={isItemSelected}
-          svgCache={svgCache}
-        />
+        <div
+          className="library-menu-items-container__header"
+          style={{
+            position: "sticky",
+            top: "0px",
+            zIndex: 1000,
+          }}
+        >
+          表单组件
+        </div>
+        <LibraryMenuSectionGrid>
+          <LibraryMenuSection
+            itemsRenderedPerBatch={itemsRenderedPerBatch}
+            items={formLibraryItems as any[]}
+            onItemSelectToggle={onItemSelectToggle}
+            onItemDrag={onItemDrag}
+            onClick={onItemClick}
+            isItemSelected={isItemSelected}
+            svgCache={svgCache}
+          />
+        </LibraryMenuSectionGrid>
       </Stack.Col>
       <Stack.Col
         className="library-menu-items-container__items"
         align="start"
         gap={1}
         style={{
-          flex: publishedItems.length > 0 ? 1 : "0 1 auto",
+          position: "relative",
+          height: "300px",
           marginBottom: 0,
         }}
         ref={libraryContainerRef}
       >
-        <div className="library-menu-items-container__header">数据组件</div>
-        <LibraryMenuSection
-          itemsRenderedPerBatch={itemsRenderedPerBatch}
-          items={dataLibraryItems as any[]}
-          onItemSelectToggle={onItemSelectToggle}
-          onItemDrag={onItemDrag}
-          onClick={onItemClick}
-          isItemSelected={isItemSelected}
-          svgCache={svgCache}
-        />
+        <div
+          className="library-menu-items-container__header"
+          style={{
+            position: "sticky",
+            top: "0px",
+            zIndex: 1000,
+          }}
+        >
+          数据组件
+        </div>
+        <LibraryMenuSectionGrid>
+          <LibraryMenuSection
+            itemsRenderedPerBatch={itemsRenderedPerBatch}
+            items={dataLibraryItems as any[]}
+            onItemSelectToggle={onItemSelectToggle}
+            onItemDrag={onItemDrag}
+            onClick={onItemClick}
+            isItemSelected={isItemSelected}
+            svgCache={svgCache}
+          />
+        </LibraryMenuSectionGrid>
       </Stack.Col>
       <Stack.Col
         className="library-menu-items-container__items"
         align="start"
         gap={1}
         style={{
-          flex: publishedItems.length > 0 ? 1 : "0 1 auto",
+          position: "relative",
+          height: "300px",
           marginBottom: 0,
         }}
         ref={libraryContainerRef}
       >
-        <div className="library-menu-items-container__header">消息组件</div>
-        <LibraryMenuSection
-          itemsRenderedPerBatch={itemsRenderedPerBatch}
-          items={messageLibraryItems as any[]}
-          onItemSelectToggle={onItemSelectToggle}
-          onItemDrag={onItemDrag}
-          onClick={onItemClick}
-          isItemSelected={isItemSelected}
-          svgCache={svgCache}
-        />
+        <div
+          className="library-menu-items-container__header"
+          style={{
+            position: "sticky",
+            top: "0px",
+            zIndex: 1000,
+          }}
+        >
+          消息组件
+        </div>
+        <LibraryMenuSectionGrid>
+          <LibraryMenuSection
+            itemsRenderedPerBatch={itemsRenderedPerBatch}
+            items={messageLibraryItems as any[]}
+            onItemSelectToggle={onItemSelectToggle}
+            onItemDrag={onItemDrag}
+            onClick={onItemClick}
+            isItemSelected={isItemSelected}
+            svgCache={svgCache}
+          />
+        </LibraryMenuSectionGrid>
       </Stack.Col>
       <Stack.Col
         className="library-menu-items-container__items"
         align="start"
         gap={1}
         style={{
-          flex: publishedItems.length > 0 ? 1 : "0 1 auto",
+          position: "relative",
+          height: "300px",
           marginBottom: 0,
         }}
         ref={libraryContainerRef}
       >
-        <div className="library-menu-items-container__header">向导组件</div>
-        <LibraryMenuSection
-          itemsRenderedPerBatch={itemsRenderedPerBatch}
-          items={guideLibraryItems as any[]}
-          onItemSelectToggle={onItemSelectToggle}
-          onItemDrag={onItemDrag}
-          onClick={onItemClick}
-          isItemSelected={isItemSelected}
-          svgCache={svgCache}
-        />
+        <div
+          className="library-menu-items-container__header"
+          style={{
+            position: "sticky",
+            top: "0px",
+            zIndex: 1000,
+          }}
+        >
+          向导组件
+        </div>
+        <LibraryMenuSectionGrid>
+          <LibraryMenuSection
+            itemsRenderedPerBatch={itemsRenderedPerBatch}
+            items={guideLibraryItems as any[]}
+            onItemSelectToggle={onItemSelectToggle}
+            onItemDrag={onItemDrag}
+            onClick={onItemClick}
+            isItemSelected={isItemSelected}
+            svgCache={svgCache}
+          />
+        </LibraryMenuSectionGrid>
       </Stack.Col>
       <Stack.Col
         className="library-menu-items-container__items"
         align="start"
         gap={1}
         style={{
-          flex: publishedItems.length > 0 ? 1 : "0 1 auto",
+          position: "relative",
+          height: "300px",
           marginBottom: 0,
         }}
         ref={libraryContainerRef}
       >
-        <div className="library-menu-items-container__header">其他组件</div>
-        <LibraryMenuSection
-          itemsRenderedPerBatch={itemsRenderedPerBatch}
-          items={otherLibraryItems as any[]}
-          onItemSelectToggle={onItemSelectToggle}
-          onItemDrag={onItemDrag}
-          onClick={onItemClick}
-          isItemSelected={isItemSelected}
-          svgCache={svgCache}
-        />
+        <div
+          className="library-menu-items-container__header"
+          style={{
+            position: "sticky",
+            top: "0px",
+            zIndex: 1000,
+          }}
+        >
+          其他组件
+        </div>
+        <LibraryMenuSectionGrid>
+          <LibraryMenuSection
+            itemsRenderedPerBatch={itemsRenderedPerBatch}
+            items={otherLibraryItems as any[]}
+            onItemSelectToggle={onItemSelectToggle}
+            onItemDrag={onItemDrag}
+            onClick={onItemClick}
+            isItemSelected={isItemSelected}
+            svgCache={svgCache}
+          />
+        </LibraryMenuSectionGrid>
       </Stack.Col>
       {/* <Stack.Col
           className="library-menu-items-container__items"

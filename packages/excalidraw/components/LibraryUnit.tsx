@@ -58,51 +58,54 @@ export const LibraryUnit = memo(
     );
 
     return (
-      <div
-        className={clsx("library-unit", {
-          "library-unit__active": elements,
-          "library-unit--hover": elements && isHovered,
-          "library-unit--selected": selected,
-          "library-unit--skeleton": !svg,
-        })}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
+      <>
         <div
-          className={clsx("library-unit__dragger", {
-            "library-unit__pulse": !!isPending,
+          className={clsx("library-unit", {
+            "library-unit__active": elements,
+            "library-unit--hover": elements && isHovered,
+            "library-unit--selected": selected,
+            "library-unit--skeleton": !svg,
           })}
-          ref={ref}
-          draggable={!!elements}
-          onClick={
-            !!elements || !!isPending
-              ? (event) => {
-                  if (id && event.shiftKey) {
-                    onToggle(id, event);
-                  } else {
-                    onClick(id);
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <div
+            className={clsx("library-unit__dragger", {
+              "library-unit__pulse": !!isPending,
+            })}
+            ref={ref}
+            draggable={!!elements}
+            onClick={
+              !!elements || !!isPending
+                ? (event) => {
+                    if (id && event.shiftKey) {
+                      onToggle(id, event);
+                    } else {
+                      onClick(id);
+                    }
                   }
-                }
-              : undefined
-          }
-          onDragStart={(event) => {
-            if (!id) {
-              event.preventDefault();
-              return;
+                : undefined
             }
-            setIsHovered(false);
-            onDrag(id, event);
-          }}
-        />
-        {adder}
-        {id && elements && (isHovered || isMobile || selected) && (
-          <CheckboxItem
-            checked={selected}
-            onChange={(checked, event) => onToggle(id, event)}
-            className="library-unit__checkbox"
+            onDragStart={(event) => {
+              if (!id) {
+                event.preventDefault();
+                return;
+              }
+              setIsHovered(false);
+              onDrag(id, event);
+            }}
           />
-        )}
-      </div>
+          {adder}
+          {id && elements && (isHovered || isMobile || selected) && (
+            <CheckboxItem
+              checked={selected}
+              onChange={(checked, event) => onToggle(id, event)}
+              className="library-unit__checkbox"
+            />
+          )}
+        </div>
+          <p>{(elements || [])[0]?.customData?.componentType}</p>
+      </>
     );
   },
 );
