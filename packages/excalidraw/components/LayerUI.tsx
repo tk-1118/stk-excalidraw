@@ -560,14 +560,21 @@ const LayerUI = ({
           onSubmit={(customData) => {
             if (appState.openDialog?.name === "remark") {
               const elementIds = appState.openDialog.data.elementIds;
-              elementIds.forEach((id: string) => {
-                const element = app.scene.getNonDeletedElementsMap().get(id);
-                if (element) {
-                  app.scene.mutateElement(element, {
-                    customData,
-                  });
-                }
-              });
+              const id = elementIds[0];
+              const element = app.scene.getNonDeletedElementsMap().get(id);
+              if (element) {
+                app.scene.mutateElement(element, {
+                  customData,
+                });
+              }
+              // elementIds.forEach((id: string) => {
+              //   const element = app.scene.getNonDeletedElementsMap().get(id);
+              //   if (element) {
+              //     app.scene.mutateElement(element, {
+              //       customData,
+              //     });
+              //   }
+              // });
               setAppState({ openDialog: null });
             }
           }}
