@@ -50,12 +50,12 @@ export const BusinessServiceProtoNav = () => {
   // 模板类型数据
   const templateTypes = excalidrawTemplate?.map((temp) => {
     return {
-      tempTitle: temp.tempTitle,
+      tempTypeName: temp.tempTypeName,
       tempType: temp.tempType,
     };
   }) || [
     {
-      tempTitle: "表格模版",
+      tempTypeName: "表格模版",
       tempType: "TABLE_TEMP",
     },
   ];
@@ -134,12 +134,12 @@ export const BusinessServiceProtoNav = () => {
 
   const createFrameWithTemplate = (
     templateType: string,
-    tempTitle?: string,
+    tempTypeName?: string,
     templateData?: any,
   ) => {
-    console.log(templateType, tempTitle, templateData);
+    console.log(templateType, tempTypeName, templateData);
     let newFrame = newFrameElement({
-      name: `新建${tempTitle || ""}页面`,
+      name: `新建${tempTypeName || ""}页面`,
       x: 0,
       y: 0,
       width: 1920,
@@ -319,7 +319,7 @@ export const BusinessServiceProtoNav = () => {
                         setSelectedTemplateType(templateType.tempType)
                       }
                     >
-                      {templateType.tempTitle}
+                      {templateType.tempTypeName}
                     </div>
                   ))}
                 </div>
@@ -377,6 +377,9 @@ export const BusinessServiceProtoNav = () => {
                                 >
                                   <img src={tempDataItem.cover} alt="" />
                                 </div>
+                                <div className="template-name">
+                                  {tempDataItem.tempName}
+                                </div>
                                 <div className="template-opearte">
                                   <button
                                     className="preview-button"
@@ -391,7 +394,7 @@ export const BusinessServiceProtoNav = () => {
                                     onClick={() =>
                                       createFrameWithTemplate(
                                         template.tempType,
-                                        template.tempTitle,
+                                        template.tempTypeName,
                                         tempDataItem,
                                       )
                                     }
