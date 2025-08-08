@@ -359,9 +359,21 @@ export interface AppState {
     | { name: "ttd"; tab: "text-to-diagram" | "mermaid" }
     | { name: "commandPalette" }
     | { name: "elementLinkSelector"; sourceElementId: ExcalidrawElement["id"] }
-    | { name: "annotation"; onClose: () => void; onConfirm: (text: string) => void }
-    | { name: "remark"; data: {
-      customData: { componentType: string; componentBehavior: string; componentInteraction: string; }; elementIds: string[]; remark: string 
+    | {
+        name: "annotation";
+        onClose: () => void;
+        onConfirm: (text: string) => void;
+      }
+    | {
+        name: "remark";
+        data: {
+          customData: {
+            componentType: string;
+            componentBehavior: string;
+            componentInteraction: string;
+          };
+          elementIds: string[];
+          remark: string;
 } };
   /**
    * Reflects user preference for whether the default sidebar should be docked.
