@@ -43,7 +43,7 @@
                         "locked": false,
                         "index": "b2d",
                         "customData": {
-                            "componentType": "主题按钮",
+                            "componentName": "主题按钮",
                             "componentBehavior": "",
                             "componentInteraction": "",
                             "componentStyle": "",
@@ -131,7 +131,7 @@
                         "locked": false,
                         "index": "bKj",
                         "customData": {
-                            "componentType": "主题按钮",
+                            "componentName": "主题按钮",
                             "componentMapping": "主题按钮  => element-plus组件库的el-button组件，type=\"primary\"，disabled=\"true\""
                         }
                     },
@@ -216,7 +216,7 @@
                         "locked": false,
                         "index": "b2f",
                         "customData": {
-                            "componentType": "主题按钮",
+                            "componentName": "主题按钮",
                             "componentMapping": "主题按钮  => element-plus组件库的el-button组件，type=\"primary\"，plan=\"true\""
                         }
                     },
@@ -301,7 +301,7 @@
                         "locked": false,
                         "index": "b2h",
                         "customData": {
-                            "componentType": "成功按钮",
+                            "componentName": "成功按钮",
                             "componentMapping": "成功按钮  => element-plus组件库的el-button组件，type=\"success\""
                         }
                     },
@@ -386,7 +386,7 @@
                         "locked": false,
                         "index": "bKl",
                         "customData": {
-                            "componentType": "成功按钮",
+                            "componentName": "成功按钮",
                             "componentMapping": "成功按钮  => element-plus组件库的el-button组件，type=\"success\"，disabled=\"true\""
                         }
                     },
@@ -471,7 +471,7 @@
                         "locked": false,
                         "index": "b2j",
                         "customData": {
-                            "componentType": "成功按钮",
+                            "componentName": "成功按钮",
                             "componentMapping": "成功按钮  => element-plus组件库的el-button组件，type=\"success\"，plan=\"true\""
                         }
                     },
@@ -556,7 +556,7 @@
                         "locked": false,
                         "index": "b2l",
                         "customData": {
-                            "componentType": "失败按钮",
+                            "componentName": "失败按钮",
                             "componentMapping": "失败按钮  => element-plus组件库的el-button组件，type=\"danger\""
                         }
                     },
@@ -641,7 +641,7 @@
                         "locked": false,
                         "index": "bKn",
                         "customData": {
-                            "componentType": "失败按钮",
+                            "componentName": "失败按钮",
                             "componentMapping": "失败按钮  => element-plus组件库的el-button组件，type=\"danger\"，disabled=\"true\""
                         }
                     },
@@ -726,7 +726,7 @@
                         "locked": false,
                         "index": "b2n",
                         "customData": {
-                            "componentType": "失败按钮",
+                            "componentName": "失败按钮",
                             "componentMapping": "失败按钮  => element-plus组件库的el-button组件，type=\"danger\"，plan=\"true\""
                         }
                     },
@@ -811,7 +811,7 @@
                         "locked": false,
                         "index": "b2p",
                         "customData": {
-                            "componentType": "警告按钮",
+                            "componentName": "警告按钮",
                             "componentMapping": "警告按钮  => element-plus组件库的el-button组件，type=\"warning\"，disabled=\"true\""
                         }
                     },
@@ -896,7 +896,7 @@
                         "locked": false,
                         "index": "bKp",
                         "customData": {
-                            "componentType": "警告按钮",
+                            "componentName": "警告按钮",
                             "componentMapping": "警告按钮  => element-plus组件库的el-button组件，type=\"warning\"，disabled=\"true\""
                         }
                     },
@@ -981,7 +981,7 @@
                         "locked": false,
                         "index": "b2r",
                         "customData": {
-                            "componentType": "警告按钮",
+                            "componentName": "警告按钮",
                             "componentMapping": "警告按钮  => element-plus组件库的el-button组件，type=\"warning\"，plan=\"true\""
                         }
                     },
@@ -1074,7 +1074,7 @@
                         "locked": false,
                         "index": "bBpV",
                         "customData": {
-                            "componentType": "文本输入框",
+                            "componentName": "文本输入框",
                             "componentMapping": "文本输入框  => element-plus组件库的el-input组件"
                         }
                     },
@@ -1157,7 +1157,7 @@
                         "locked": false,
                         "index": "bBwV",
                         "customData": {
-                            "componentType": "文本输入框",
+                            "componentName": "文本输入框",
                             "componentMapping": "文本输入框  => element-plus组件库的el-input组件，disabled=\"true\""
                         }
                     },
@@ -1240,7 +1240,7 @@
                         "locked": false,
                         "index": "bBzV",
                         "customData": {
-                            "componentType": "文本输入框",
+                            "componentName": "文本输入框",
                             "componentMapping": "文本输入框  => element-plus组件库的el-input组件, 添加了rule校验的输入框"
                         }
                     },
@@ -1323,7 +1323,7 @@
                         "locked": false,
                         "index": "b7C",
                         "customData": {
-                            "componentType": "下拉选择框 ",
+                            "componentName": "下拉选择框 ",
                             "componentMapping": "下拉选择框  => element-plus组件库的el-select组件"
                         }
                     },
@@ -1472,7 +1472,7 @@
                         "locked": false,
                         "index": "b7MG",
                         "customData": {
-                            "componentType": "下拉选择框",
+                            "componentName": "下拉选择框",
                             "componentMapping": "下拉选择框  => element-plus组件库的el-select组件，disabled=\"true\""
                         }
                     },
@@ -1621,7 +1621,7 @@
                         "locked": false,
                         "index": "b7RG",
                         "customData": {
-                            "componentType": "下拉选择框",
+                            "componentName": "下拉选择框",
                             "componentMapping": "下拉选择框  => element-plus组件库的el-select组件，添加了rule校验的下拉选择框"
                         }
                     },
@@ -1770,7 +1770,7 @@
                         "locked": false,
                         "index": "bChG",
                         "customData": {
-                            "componentType": "时间选择器组件",
+                            "componentName": "时间选择器组件",
                             "componentMapping": "时间选择器组件  => element-plus组件库的el-time-picker组件"
                         }
                     },
@@ -1980,7 +1980,7 @@
                         "locked": false,
                         "index": "bCl",
                         "customData": {
-                            "componentType": "时间选择器组件",
+                            "componentName": "时间选择器组件",
                             "componentMapping": "时间选择器组件  => element-plus组件库的el-time-picker组件，disabled=\"true\""
                         }
                     },
@@ -2190,7 +2190,7 @@
                         "locked": false,
                         "index": "bD8G",
                         "customData": {
-                            "componentType": "时间区间选择器组件",
+                            "componentName": "时间区间选择器组件",
                             "componentMapping": "时间选择器组件  => element-plus组件库的el-time-picker组件\nis-range=\"true\"\nrange-separator=\"到\"\nstart-placeholder=\"开始时间\"\nend-placeholder=\"结束时间\""
                         }
                     },
@@ -2400,7 +2400,7 @@
                         "locked": false,
                         "index": "bDAG",
                         "customData": {
-                            "componentType": "时间区间选择器组件",
+                            "componentName": "时间区间选择器组件",
                             "componentMapping": "时间选择器组件  => element-plus组件库的el-time-picker组件\nis-range=\"true\"\nrange-separator=\"到\"\nstart-placeholder=\"开始时间\"\nend-placeholder=\"结束时间\""
                         }
                     },
@@ -2610,7 +2610,7 @@
                         "locked": false,
                         "index": "bGE",
                         "customData": {
-                            "componentType": "日期选择器组件",
+                            "componentName": "日期选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件"
                         }
                     },
@@ -3053,7 +3053,7 @@
                         "locked": false,
                         "index": "bGV8",
                         "customData": {
-                            "componentType": "日期选择器组件",
+                            "componentName": "日期选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件，disabled=\"true\""
                         }
                     },
@@ -3496,7 +3496,7 @@
                         "locked": false,
                         "index": "bGg8",
                         "customData": {
-                            "componentType": "日期区间选择器组件",
+                            "componentName": "日期区间选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件\ntype=\"daterange\"\nrange-separator=\"到\"\nstart-placeholder=\"开始日期\"\nend-placeholder=\"结束日期\""
                         }
                     },
@@ -3939,7 +3939,7 @@
                         "locked": false,
                         "index": "bGw8",
                         "customData": {
-                            "componentType": "日期区间选择器组件",
+                            "componentName": "日期区间选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件\ntype=\"daterange\"\ndisabled=\"true\"\nrange-separator=\"到\"\nstart-placeholder=\"开始日期\"\nend-placeholder=\"结束日期\"，disabled=\"true\""
                         }
                     },
@@ -3983,7 +3983,7 @@
                         "index": "bGwG",
                         "autoResize": true,
                         "customData": {
-                            "componentType": "日期选择器组件",
+                            "componentName": "日期选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件\ntype=\"daterange\"\ndisabled=\"true\"\nrange-separator=\"到\"\nstart-placeholder=\"开始日期\"\nend-placeholder=\"结束日期\""
                         }
                     },
@@ -4018,7 +4018,7 @@
                         "locked": false,
                         "index": "bGwV",
                         "customData": {
-                            "componentType": "日期选择器组件",
+                            "componentName": "日期选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件\ntype=\"daterange\"\ndisabled=\"true\"\nrange-separator=\"到\"\nstart-placeholder=\"开始日期\"\nend-placeholder=\"结束日期\""
                         }
                     },
@@ -4069,7 +4069,7 @@
                         "index": "bGwd",
                         "polygon": false,
                         "customData": {
-                            "componentType": "日期选择器组件",
+                            "componentName": "日期选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件\ntype=\"daterange\"\ndisabled=\"true\"\nrange-separator=\"到\"\nstart-placeholder=\"开始日期\"\nend-placeholder=\"结束日期\""
                         }
                     },
@@ -4120,7 +4120,7 @@
                         "index": "bGwl",
                         "polygon": false,
                         "customData": {
-                            "componentType": "日期选择器组件",
+                            "componentName": "日期选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件\ntype=\"daterange\"\ndisabled=\"true\"\nrange-separator=\"到\"\nstart-placeholder=\"开始日期\"\nend-placeholder=\"结束日期\""
                         }
                     },
@@ -4171,7 +4171,7 @@
                         "index": "bGx",
                         "polygon": false,
                         "customData": {
-                            "componentType": "日期选择器组件",
+                            "componentName": "日期选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件\ntype=\"daterange\"\ndisabled=\"true\"\nrange-separator=\"到\"\nstart-placeholder=\"开始日期\"\nend-placeholder=\"结束日期\""
                         }
                     },
@@ -4222,7 +4222,7 @@
                         "index": "bGxG",
                         "polygon": false,
                         "customData": {
-                            "componentType": "日期选择器组件",
+                            "componentName": "日期选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件\ntype=\"daterange\"\ndisabled=\"true\"\nrange-separator=\"到\"\nstart-placeholder=\"开始日期\"\nend-placeholder=\"结束日期\""
                         }
                     },
@@ -4273,7 +4273,7 @@
                         "index": "bGxV",
                         "polygon": false,
                         "customData": {
-                            "componentType": "日期选择器组件",
+                            "componentName": "日期选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件\ntype=\"daterange\"\ndisabled=\"true\"\nrange-separator=\"到\"\nstart-placeholder=\"开始日期\"\nend-placeholder=\"结束日期\""
                         }
                     },
@@ -4324,7 +4324,7 @@
                         "index": "bGy",
                         "polygon": false,
                         "customData": {
-                            "componentType": "日期选择器组件",
+                            "componentName": "日期选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件\ntype=\"daterange\"\ndisabled=\"true\"\nrange-separator=\"到\"\nstart-placeholder=\"开始日期\"\nend-placeholder=\"结束日期\""
                         }
                     },
@@ -4375,7 +4375,7 @@
                         "index": "bGz",
                         "polygon": false,
                         "customData": {
-                            "componentType": "日期选择器组件",
+                            "componentName": "日期选择器组件",
                             "componentMapping": "日期选择器组件  => element-plus组件库的el-date-picker\n组件\ntype=\"daterange\"\ndisabled=\"true\"\nrange-separator=\"到\"\nstart-placeholder=\"开始日期\"\nend-placeholder=\"结束日期\""
                         }
                     }
@@ -4416,7 +4416,7 @@
                         "locked": false,
                         "index": "bHK",
                         "customData": {
-                            "componentType": "开关组件",
+                            "componentName": "开关组件",
                             "componentMapping": "开关组件  => element-plus组件库的el-switch组件"
                         }
                     },
@@ -4553,7 +4553,7 @@
                         "locked": false,
                         "index": "bJd",
                         "customData": {
-                            "componentType": "开关组件",
+                            "componentName": "开关组件",
                             "componentMapping": "开关组件  => element-plus组件库的el-switch组件，disabled=\"true\""
                         }
                     },
@@ -4692,7 +4692,7 @@
                         "locked": false,
                         "index": "bHUG",
                         "customData": {
-                            "componentType": "单选框组件",
+                            "componentName": "单选框组件",
                             "componentMapping": "单选框组件  => element-plus组件库的el-radio-group && el-radio 组件"
                         }
                     },
@@ -4857,7 +4857,7 @@
                         "locked": false,
                         "index": "bING",
                         "customData": {
-                            "componentType": "单选框组件",
+                            "componentName": "单选框组件",
                             "componentMapping": "单选框组件  => element-plus组件库的el-radio-group && el-radio 组件，disabled=\"true\""
                         }
                     },
@@ -5020,7 +5020,7 @@
                         "locked": false,
                         "index": "bHWG",
                         "customData": {
-                            "componentType": "复选框组件",
+                            "componentName": "复选框组件",
                             "componentMapping": "复选框组件  => element-plus组件库的el-checkbox-group && el-checkbox组件"
                         }
                     },
@@ -5237,7 +5237,7 @@
                         "locked": false,
                         "index": "bIPG",
                         "customData": {
-                            "componentType": "复选框组件",
+                            "componentName": "复选框组件",
                             "componentMapping": "复选框组件  => element-plus组件库的el-checkbox-group && el-checkbox组件，disabled=\"true\""
                         }
                     },
@@ -5452,7 +5452,7 @@
                         "locked": false,
                         "index": "bHb",
                         "customData": {
-                            "componentType": "文本域输入框组件",
+                            "componentName": "文本域输入框组件",
                             "componentMapping": "文本域输入框组件  => element-plus组件库的el-input组件，type=\"textarea\""
                         }
                     },
@@ -5533,7 +5533,7 @@
                         "locked": false,
                         "index": "bIU",
                         "customData": {
-                            "componentType": "文本域输入框组件",
+                            "componentName": "文本域输入框组件",
                             "componentMapping": "文本域输入框组件  => element-plus组件库的el-input组件，type=\"textarea\"，disabled=\"true\""
                         }
                     },
@@ -5617,7 +5617,7 @@
                         "locked": false,
                         "index": "bHh",
                         "customData": {
-                            "componentType": "上传组件",
+                            "componentName": "上传组件",
                             "componentMapping": "上传组件  => element-plus组件库的el-upload组件"
                         }
                     },
@@ -6005,7 +6005,7 @@
                         "locked": false,
                         "index": "bIa",
                         "customData": {
-                            "componentType": "上传组件",
+                            "componentName": "上传组件",
                             "componentMapping": "上传组件  => element-plus组件库的el-upload组件，disabled=\"true\""
                         }
                     },
@@ -6363,7 +6363,7 @@
         "created": "2022-05-01T09:00:00.000Z",
         "status": "PUBLISHED",
         "componentTitle": "数据组件",
-        "componentType": "FORM_COMPONENT",
+        "componentType": "DATA_COMPONENT",
         "componentData": [
             {
                 "id": "hema-data-component-2",
@@ -6401,7 +6401,7 @@
                         "locked": false,
                         "index": "bwQ",
                         "customData": {
-                            "componentType": "表格组件",
+                            "componentName": "表格组件",
                             "componentMapping": "表格组件  => element-plus组件库的el-table"
                         }
                     },
@@ -18518,7 +18518,7 @@
                         "locked": false,
                         "index": "bmz4",
                         "customData": {
-                            "componentType": "分页组件",
+                            "componentName": "分页组件",
                             "componentMapping": "分页组件  => element-plus组件库的el-pagination组件"
                         }
                     },
@@ -19445,7 +19445,7 @@
                         "locked": false,
                         "index": "bUZ8",
                         "customData": {
-                            "componentType": "描述列表组件",
+                            "componentName": "描述列表组件",
                             "componentMapping": "描述列表组件 => element-plus组件库的el-descriptions组件"
                         }
                     },
@@ -20048,7 +20048,7 @@
                         "locked": false,
                         "index": "bq22",
                         "customData": {
-                            "componentType": "树形组件",
+                            "componentName": "树形组件",
                             "componentMapping": "树形组件  => element-plus组件库的el-tree组件"
                         }
                     },
@@ -21202,7 +21202,7 @@
         "created": "2022-05-01T09:00:00.000Z",
         "status": "PUBLISHED",
         "componentTitle": "信息组件",
-        "componentType": "FORM_COMPONENT",
+        "componentType": "MESSAGE_COMPONENT",
         "componentData": [
             {
                 "id": "hema-message-component-1",
@@ -21241,7 +21241,7 @@
                         "locked": false,
                         "index": "bZR",
                         "customData": {
-                            "componentType": "消息提示组件",
+                            "componentName": "消息提示组件",
                             "componentMapping": "消息提示组件  => element-plus组件库的ElMessage组，type: \"success\""
                         }
                     },
@@ -21463,7 +21463,7 @@
                         "locked": false,
                         "index": "bZb",
                         "customData": {
-                            "componentType": "消息提示组件",
+                            "componentName": "消息提示组件",
                             "componentMapping": "消息提示组件  => element-plus组件库的ElMessage组，type: \"primary\""
                         }
                     },
@@ -21667,7 +21667,7 @@
                         "locked": false,
                         "index": "bZM",
                         "customData": {
-                            "componentType": "消息提示组件",
+                            "componentName": "消息提示组件",
                             "componentMapping": "消息提示组件  => element-plus组件库的ElMessage组，type: \"error\""
                         }
                     },
@@ -21887,7 +21887,7 @@
                         "locked": false,
                         "index": "bZW",
                         "customData": {
-                            "componentType": "消息提示组件",
+                            "componentName": "消息提示组件",
                             "componentMapping": "消息提示组件  => element-plus组件库的ElMessage组，type: \"warning\""
                         }
                     },
@@ -22090,7 +22090,7 @@
                         "locked": false,
                         "index": "bbN8",
                         "customData": {
-                            "componentType": "对话组件",
+                            "componentName": "对话组件",
                             "componentMapping": "对话组件  => element-plus组件库的el-dialog组件"
                         }
                     },
@@ -22508,7 +22508,7 @@
         "created": "2022-05-01T09:00:00.000Z",
         "status": "PUBLISHED",
         "componentTitle": "向导组件",
-        "componentType": "FORM_COMPONENT",
+        "componentType": "GUIDE_COMPONENT",
         "componentData": [
             {
                 "id": "hema-guide-componen-1",
@@ -22562,7 +22562,7 @@
                         "index": "bkyG",
                         "polygon": false,
                         "customData": {
-                            "componentType": "Tabs 标签页组件",
+                            "componentName": "Tabs 标签页组件",
                             "componentMapping": "Tabs 标签页组件  => element-plus组件库的el-tabs组件"
                         }
                     },
@@ -22889,7 +22889,7 @@
                         "index": "bou2",
                         "polygon": false,
                         "customData": {
-                            "componentType": "步骤条组件",
+                            "componentName": "步骤条组件",
                             "componentMapping": "步骤条组件 => element-plus组件库的el-steps组件"
                         }
                     },
@@ -24073,7 +24073,7 @@
                         "index": "bpQ4",
                         "polygon": false,
                         "customData": {
-                            "componentType": "步骤条组件",
+                            "componentName": "步骤条组件",
                             "componentMapping": "步骤条组件  => element-plus组件库的el-steps组件"
                         }
                     },
@@ -24739,7 +24739,7 @@
         "created": "2022-05-01T09:00:00.000Z",
         "status": "PUBLISHED",
         "componentTitle": "其他组件",
-        "componentType": "FORM_COMPONENT",
+        "componentType": "OTHER_COMPONENT",
         "componentData": []
     }
 ]

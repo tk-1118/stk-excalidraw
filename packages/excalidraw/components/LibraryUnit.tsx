@@ -104,7 +104,7 @@ export const LibraryUnit = memo(
             />
           )}
         </div>
-          <p>{(elements || [])[0]?.customData?.componentType}</p>
+          <p>{(elements || [])[0]?.customData?.componentName}</p>
       </>
     );
   },

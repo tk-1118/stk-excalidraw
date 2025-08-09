@@ -368,7 +368,7 @@ export interface AppState {
         name: "remark";
         data: {
           customData: {
-            componentType: string;
+            componentName: string;
             componentBehavior: string;
             componentInteraction: string;
           };

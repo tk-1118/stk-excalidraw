@@ -8,22 +8,24 @@ import { FilledButton } from "./FilledButton";
 
 interface RemarkDialogProps {
   customData: {
-    componentType: string;
+    componentName: string;
     componentBehavior: string;
     componentInteraction: string;
     componentStyle: string;
     componentMapping: string;
+    componentStatute: string;
   };
   onSubmit: (customData: ComponentDescription) => void;
   onClose: () => void;
 }
 
 interface ComponentDescription {
-  componentType: string;
+  componentName: string;
   componentBehavior: string;
   componentInteraction: string;
   componentStyle: string;
   componentMapping: string;
+  componentStatute: string;
 }
 
 export const RemarkDialog = ({
@@ -35,8 +37,8 @@ export const RemarkDialog = ({
 
   const initialDescription = customData;
 
-  const [componentType, setComponentType] = useState(
-    initialDescription.componentType,
+  const [componentName, setComponentType] = useState(
+    initialDescription.componentName,
   );
 
   const [componentBehavior, setComponentBehavior] = useState(
@@ -55,6 +57,10 @@ export const RemarkDialog = ({
     initialDescription.componentMapping,
   );
 
+  const [componentStatute, setComponentStatute] = useState(
+    initialDescription.componentStatute,
+  );
+
   const firstFieldRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -66,11 +72,12 @@ export const RemarkDialog = ({
 
   const handleSubmit = () => {
     const submitData: ComponentDescription = {
-      componentType,
+      componentName,
       componentBehavior,
       componentInteraction,
       componentStyle,
       componentMapping,
+      componentStatute,
     };
     onSubmit(submitData);
     onClose();
@@ -93,7 +100,93 @@ export const RemarkDialog = ({
       size="small"
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <div
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
+          <label>组件名称</label>
+          <input
+            ref={firstFieldRef}
+            value={componentName}
+            onChange={(e) => setComponentType(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="请输入组件名称"
+            // disabled
+            style={{
+              width: "100%",
+              padding: "8px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              fontFamily: "inherit",
+              fontSize: "inherit",
+              backgroundColor: "#fff",
+              color: "#333",
+            }}
+          />
+        </div>
+        {/* <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
+          <label>组件功能</label>
+          <textarea
+            value={componentBehavior}
+            onChange={(e) => setComponentBehavior(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="请输入组件功能"
+            style={{
+              width: "100%",
+              minHeight: "100px",
+              padding: "8px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              fontFamily: "inherit",
+              fontSize: "inherit",
+              whiteSpace: "pre-wrap",
+            }}
+          />
+        </div> */}
+        {/* <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
+          <label>组件交互</label>
+          <textarea
+            value={componentInteraction}
+            onChange={(e) => setComponentInteraction(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="请输入组件交互方式"
+            style={{
+              width: "100%",
+              minHeight: "100px",
+              padding: "8px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              fontFamily: "inherit",
+              fontSize: "inherit",
+              whiteSpace: "pre-wrap",
+            }}
+          />
+        </div> */}
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
+          <label>组件规约</label>
+          <textarea
+            value={componentStatute}
+            onChange={(e) => setComponentStatute(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="请输入组件规约"
+            style={{
+              width: "100%",
+              minHeight: "100px",
+              padding: "8px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              fontFamily: "inherit",
+              fontSize: "inherit",
+              whiteSpace: "pre-wrap",
+            }}
+          />
+        </div>
+        <div
           style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
         >
           <label>组件映射</label>
@@ -114,72 +207,7 @@ export const RemarkDialog = ({
             }}
           />
         </div>
-        <div
-          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
-        >
-          <label>组件类型</label>
-          <input
-            ref={firstFieldRef}
-            value={componentType}
-            onChange={(e) => setComponentType(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="请输入组件类型"
-            // disabled
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              fontFamily: "inherit",
-              fontSize: "inherit",
-              backgroundColor: "#fff",
-              color: "#333",
-            }}
-          />
-        </div>
-        <div
-          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
-        >
-          <label>组件功能</label>
-          <textarea
-            value={componentBehavior}
-            onChange={(e) => setComponentBehavior(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="请输入组件功能"
-            style={{
-              width: "100%",
-              minHeight: "100px",
-              padding: "8px",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              fontFamily: "inherit",
-              fontSize: "inherit",
-              whiteSpace: "pre-wrap",
-            }}
-          />
-        </div>
-        <div
-          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
-        >
-          <label>组件交互</label>
-          <textarea
-            value={componentInteraction}
-            onChange={(e) => setComponentInteraction(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="请输入组件交互方式"
-            style={{
-              width: "100%",
-              minHeight: "100px",
-              padding: "8px",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              fontFamily: "inherit",
-              fontSize: "inherit",
-              whiteSpace: "pre-wrap",
-            }}
-          />
-        </div>
-        <div
+        {/* <div
           style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
         >
           <label>组件样式</label>
@@ -199,7 +227,7 @@ export const RemarkDialog = ({
               whiteSpace: "pre-wrap",
             }}
           />
-        </div>
+        </div> */}
         <div
           style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}
         >
