@@ -1380,107 +1380,159 @@ class App extends React.Component<AppProps, AppState> {
       const handleX = x1 - handleSize - handleOffset + 30;
       const handleY = y1 - handleSize - handleOffset - 20;
 
-      return (
-        <div
-          key={`drag-handle-${f.id}`}
-          style={{
-            position: "absolute",
-            left: `${handleX - this.state.offsetLeft}px`,
-            top: `${handleY - this.state.offsetTop}px`,
-            width: `${handleSize}px`,
-            height: `${handleSize}px`,
-            backgroundColor: "#ffffff",
-            border: "2px solid rgb(153, 153, 153)",
-            borderRadius: "4px",
-            cursor: CURSOR_TYPE.MOVE,
-            zIndex: 2,
-            pointerEvents: this.state.viewModeEnabled
-              ? POINTER_EVENTS.disabled
-              : POINTER_EVENTS.enabled,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          onPointerDown={(event) => {
-            // 先清空当前选中状态，防止与拉伸事件冲突
-            this.setState((prevState) => ({
-              selectedElementIds: makeNextSelectedElementIds({}, prevState),
-              selectedGroupIds: makeNextSelectedElementIds({}, prevState),
-              previousSelectedElementIds: prevState.selectedElementIds,
-            }));
+      // 规约按钮位置（在拖拽手把上方）
+      const specButtonWidth = 77;
+      const specButtonHeight = 28;
 
-            // 等待状态更新后，重新选中frame
-            setTimeout(() => {
+      const specButtonX = handleX + handleSize + 10;
+      const specButtonY = handleY;
+
+      return (
+        <React.Fragment key={`frame-controls-${f.id}`}>
+          {/* 拖拽手把 */}
+          <div
+            key={`drag-handle-${f.id}`}
+            style={{
+              position: "absolute",
+              left: `${handleX - this.state.offsetLeft}px`,
+              top: `${handleY - this.state.offsetTop}px`,
+              width: `${handleSize}px`,
+              height: `${handleSize}px`,
+              backgroundColor: "#ffffff",
+              border: "2px solid rgb(153, 153, 153)",
+              borderRadius: "4px",
+              cursor: CURSOR_TYPE.MOVE,
+              zIndex: 2,
+              pointerEvents: this.state.viewModeEnabled
+                ? POINTER_EVENTS.disabled
+                : POINTER_EVENTS.enabled,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onPointerDown={(event) => {
+              // 先清空当前选中状态，防止与拉伸事件冲突
               this.setState((prevState) => ({
-                selectedElementIds: makeNextSelectedElementIds(
-                  { [f.id]: true },
-                  prevState,
-                ),
+                selectedElementIds: makeNextSelectedElementIds({}, prevState),
+                selectedGroupIds: makeNextSelectedElementIds({}, prevState),
+                previousSelectedElementIds: prevState.selectedElementIds,
               }));
 
-              // 创建一个模拟的事件，坐标指向frame的中心
-              const frameTopLeft = sceneCoordsToViewportCoords(
-                { sceneX: f.x, sceneY: f.y },
-                this.state,
-              );
+              // 等待状态更新后，重新选中frame
+              setTimeout(() => {
+                this.setState((prevState) => ({
+                  selectedElementIds: makeNextSelectedElementIds(
+                    { [f.id]: true },
+                    prevState,
+                  ),
+                }));
 
-              // 创建模拟事件，使其看起来像是点击了frame的左上角
-              const simulatedEvent = {
-                ...event,
-                clientX: frameTopLeft.x,
-                clientY: frameTopLeft.y,
-              } as React.PointerEvent<HTMLElement>;
+                // 创建一个模拟的事件，坐标指向frame的中心
+                const frameTopLeft = sceneCoordsToViewportCoords(
+                  { sceneX: f.x, sceneY: f.y },
+                  this.state,
+                );
 
-              this.handleCanvasPointerDown(simulatedEvent);
-            }, 0);
-          }}
-          onWheel={(event) => this.handleWheel(event)}
-          onContextMenu={this.handleCanvasContextMenu}
-        >
-          {/* 绘制四个拖拽点 */}
-          <div
-            style={{
-              width: "8px",
-              height: "8px",
-              display: "grid",
-              gridTemplate: "1fr 1fr / 1fr 1fr",
-              gap: "1px",
+                // 创建模拟事件，使其看起来像是点击了frame的左上角
+                const simulatedEvent = {
+                  ...event,
+                  clientX: frameTopLeft.x,
+                  clientY: frameTopLeft.y,
+                } as React.PointerEvent<HTMLElement>;
+
+                this.handleCanvasPointerDown(simulatedEvent);
+              }, 0);
             }}
+            onWheel={(event) => this.handleWheel(event)}
+            onContextMenu={this.handleCanvasContextMenu}
           >
+            {/* 绘制四个拖拽点 */}
             <div
               style={{
-                width: "4px",
-                height: "4px",
-                borderRadius: "50%",
-                backgroundColor: "rgb(153, 153, 153)",
+                width: "8px",
+                height: "8px",
+                display: "grid",
+                gridTemplate: "1fr 1fr / 1fr 1fr",
+                gap: "1px",
               }}
-            ></div>
-            <div
-              style={{
-                width: "4px",
-                height: "4px",
-                borderRadius: "50%",
-                backgroundColor: "rgb(153, 153, 153)",
-              }}
-            ></div>
-            <div
-              style={{
-                width: "4px",
-                height: "4px",
-                borderRadius: "50%",
-                backgroundColor: "rgb(153, 153, 153)",
-              }}
-            ></div>
-            <div
-              style={{
-                width: "4px",
-                height: "4px",
-                borderRadius: "50%",
-                backgroundColor: "rgb(153, 153, 153)",
-              }}
-            ></div>
+            >
+              <div
+                style={{
+                  width: "4px",
+                  height: "4px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgb(153, 153, 153)",
+                }}
+              ></div>
+              <div
+                style={{
+                  width: "4px",
+                  height: "4px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgb(153, 153, 153)",
+                }}
+              ></div>
+              <div
+                style={{
+                  width: "4px",
+                  height: "4px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgb(153, 153, 153)",
+                }}
+              ></div>
+              <div
+                style={{
+                  width: "4px",
+                  height: "4px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgb(153, 153, 153)",
+                }}
+              ></div>
+            </div>
           </div>
-        </div>
+
+          {/* 构建前端规约按钮 */}
+          <div
+            key={`spec-button-${f.id}`}
+            style={{
+              position: "absolute",
+              left: `${specButtonX - this.state.offsetLeft}px`,
+              top: `${specButtonY - this.state.offsetTop}px`,
+              width: `${specButtonWidth}px`,
+              height: `${specButtonHeight}px`,
+              backgroundColor: "#007acc",
+              border: "2px solid #005a9c",
+              borderRadius: "4px",
+              cursor: "pointer",
+              zIndex: 2,
+              pointerEvents: this.state.viewModeEnabled
+                ? POINTER_EVENTS.disabled
+                : POINTER_EVENTS.enabled,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "12px",
+              color: "white",
+              fontWeight: "bold",
+              textAlign: "center",
+              lineHeight: "1",
+            }}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              // 打开规约构建弹框
+              this.setState({
+                openDialog: {
+                  name: "specification",
+                  frameId: f.id,
+                },
+              });
+            }}
+            title="构建前端规约"
+          >
+            构建前端规约
+          </div>
+        </React.Fragment>
       );
     });
   };
@@ -1979,7 +2031,7 @@ class App extends React.Component<AppProps, AppState> {
                         {showShapeSwitchPanel && (
                           <ConvertElementTypePopup app={this} />
                         )}
-                        <AnnotationLayer
+                                                <AnnotationLayer
                           elements={this.scene.getNonDeletedElements()}
                           appState={this.state}
                           setAppState={this.setAppState}
@@ -2003,11 +2055,12 @@ class App extends React.Component<AppProps, AppState> {
                                       };
                                     }
                                     return el;
-                                }),
+                                  }),
                               );
                             }
                           }}
                         />
+
                       </ExcalidrawActionManagerContext.Provider>
                       {this.renderEmbeddables()}
                     </ExcalidrawElementsContext.Provider>

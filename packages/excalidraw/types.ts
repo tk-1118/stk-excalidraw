@@ -374,7 +374,12 @@ export interface AppState {
           };
           elementIds: string[];
           remark: string;
-} };
+        };
+      }
+    | {
+        name: "specification";
+        frameId: ExcalidrawElement["id"];
+      };
   /**
    * Reflects user preference for whether the default sidebar should be docked.
    *

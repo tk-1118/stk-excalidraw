@@ -10,7 +10,7 @@ import {
   isShallowEqual,
 } from "@excalidraw/common";
 
-import { mutateElement } from "@excalidraw/element";
+import { mutateElement, isFrameLikeElement } from "@excalidraw/element";
 
 import { showSelectedShapeActions } from "@excalidraw/element";
 
@@ -60,6 +60,7 @@ import { JSONExportDialog } from "./JSONExportDialog";
 import { LaserPointerButton } from "./LaserPointerButton";
 import { AnnotationDialog } from "./Annotation/AnnotationDialog";
 import { RemarkDialog } from "./RemarkDialog";
+import { SpecificationDialog } from "./SpecificationDialog";
 
 import "./LayerUI.scss";
 import "./Toolbar.scss";
@@ -585,6 +586,20 @@ const LayerUI = ({
           onClose={() => setAppState({ openDialog: null })}
         />
       )}
+      {appState.openDialog?.name === "specification" && (() => {
+          const frameId = appState.openDialog.frameId;
+          const frame = app.scene.getElement(frameId);
+          return frame && isFrameLikeElement(frame) ? (
+            <SpecificationDialog
+              isOpen={true}
+              onClose={() => {
+                setAppState({ openDialog: null });
+              }}
+              frame={frame}
+              elements={elements}
+            />
+          ) : null;
+        })()}
       <tunnels.OverwriteConfirmDialogTunnel.Out />
       {renderImageExportDialog()}
       {renderJSONExportDialog()}
