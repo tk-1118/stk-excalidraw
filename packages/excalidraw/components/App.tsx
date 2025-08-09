@@ -1402,20 +1402,37 @@ class App extends React.Component<AppProps, AppState> {
             justifyContent: "center",
           }}
           onPointerDown={(event) => {
-            // 创建一个模拟的事件，坐标指向frame的中心
-            const frameTopLeft = sceneCoordsToViewportCoords(
-              { sceneX: f.x, sceneY: f.y },
-              this.state,
-            );
+            // 先清空当前选中状态，防止与拉伸事件冲突
+            this.setState((prevState) => ({
+              selectedElementIds: makeNextSelectedElementIds({}, prevState),
+              selectedGroupIds: makeNextSelectedElementIds({}, prevState),
+              previousSelectedElementIds: prevState.selectedElementIds,
+            }));
 
-            // 创建模拟事件，使其看起来像是点击了frame的左上角
-            const simulatedEvent = {
-              ...event,
-              clientX: frameTopLeft.x,
-              clientY: frameTopLeft.y,
-            } as React.PointerEvent<HTMLElement>;
+            // 等待状态更新后，重新选中frame
+            setTimeout(() => {
+              this.setState((prevState) => ({
+                selectedElementIds: makeNextSelectedElementIds(
+                  { [f.id]: true },
+                  prevState,
+                ),
+              }));
 
-            this.handleCanvasPointerDown(simulatedEvent);
+              // 创建一个模拟的事件，坐标指向frame的中心
+              const frameTopLeft = sceneCoordsToViewportCoords(
+                { sceneX: f.x, sceneY: f.y },
+                this.state,
+              );
+
+              // 创建模拟事件，使其看起来像是点击了frame的左上角
+              const simulatedEvent = {
+                ...event,
+                clientX: frameTopLeft.x,
+                clientY: frameTopLeft.y,
+              } as React.PointerEvent<HTMLElement>;
+
+              this.handleCanvasPointerDown(simulatedEvent);
+            }, 0);
           }}
           onWheel={(event) => this.handleWheel(event)}
           onContextMenu={this.handleCanvasContextMenu}
