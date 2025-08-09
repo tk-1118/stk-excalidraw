@@ -146,7 +146,7 @@ function generateSemanticTree(
   const customData = node.element.customData || {};
 
   const componentInfo = [
-    `${indent}组件层级${level + 1}:`,
+    `${indent}  组件层级: ${level + 1}`,
     `${indent}  组件名称: ${customData.componentName || "无描述"}`,
     `${indent}  组件代码映射: ${customData.componentMapping || "无描述"}`,
     `${indent}  组件规约: ${customData.componentStatute || "无描述"}`,
@@ -226,11 +226,8 @@ export const SpecificationDialog: React.FC<SpecificationDialogProps> = ({
               fontWeight: "600",
             }}
           >
-            Frame: {frame.name || frame.id}
+            {frame.name || frame.id}
           </h3>
-          <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
-            基于当前Frame及其子元素生成的组件描述，未来将发送给AI进行前端规约生成和评分
-          </p>
         </div>
 
         <div style={{ marginBottom: "16px" }}>
@@ -268,18 +265,22 @@ export const SpecificationDialog: React.FC<SpecificationDialogProps> = ({
             alignItems: "center",
           }}
         >
-          <div style={{ fontSize: "12px", color: "#666" }}>
-            AI规约生成 → 规约评分 → 发布（需评分≥80分）
+          <div style={{ fontSize: "12px", color: "var(--color-gray-60)" }}>
+            组件描述 → AI规约生成 → 规约评分 → 发布（需评分≥80分）
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
             <button
               onClick={onClose}
               style={{
                 padding: "8px 16px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-                backgroundColor: "white",
+                border: "1px solid var(--default-border-color)",
+                borderRadius: "var(--border-radius-lg)",
+                backgroundColor: "var(--island-bg-color)",
+                color: "var(--color-on-surface)",
                 cursor: "pointer",
+                fontFamily: "var(--ui-font)",
+                fontSize: "0.875rem",
+                fontWeight: "600",
               }}
             >
               关闭
@@ -287,12 +288,15 @@ export const SpecificationDialog: React.FC<SpecificationDialogProps> = ({
             <button
               style={{
                 padding: "8px 16px",
-                border: "1px solid #007acc",
-                borderRadius: "4px",
-                backgroundColor: "#007acc",
-                color: "white",
+                border: "1px solid var(--color-primary)",
+                borderRadius: "var(--border-radius-lg)",
+                backgroundColor: "var(--color-primary)",
+                color: "var(--color-icon-white)",
                 cursor: "pointer",
                 opacity: 0.6,
+                fontFamily: "var(--ui-font)",
+                fontSize: "0.875rem",
+                fontWeight: "600",
               }}
               disabled
               title="此功能将在未来版本中实现"
