@@ -210,9 +210,11 @@ export const BusinessServiceProtoNav = () => {
 
     setShowTemplateModal(false);
     setSelectedFrame(newFrame);
+    // 主动选中frame元素
+    setAppState({
+      selectedElementIds: { [newFrame.id]: true },
+    });
     app.scrollToContent(newFrame, { animate: true });
-
-    
   };
 
   const handleImagePreview = (imageUrl: string) => {
