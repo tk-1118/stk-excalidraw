@@ -23,12 +23,13 @@ import type {
 
 import { frameToolIcon, moreIcon } from "../icons";
 
-import { useApp } from "../App";
+import { useApp, useExcalidrawSetAppState } from "../App";
 
 import excalidrawTemplate from "./excalidraw-template.json";
 
 export const BusinessServiceProtoNav = () => {
   const app = useApp();
+  const setAppState = useExcalidrawSetAppState();
   const elements = app.scene.getNonDeletedElements();
   //   console.log("elements:", elements);
 
@@ -64,6 +65,11 @@ export const BusinessServiceProtoNav = () => {
     // console.log("frame:", frame);
     setSelectedFrame(frame);
     setActiveMenuFrameId(null);
+
+    // 主动选中frame元素
+    setAppState({
+      selectedElementIds: { [frame.id]: true },
+    });
     app.scrollToContent(frame, { animate: true });
   };
 
@@ -205,6 +211,8 @@ export const BusinessServiceProtoNav = () => {
     setShowTemplateModal(false);
     setSelectedFrame(newFrame);
     app.scrollToContent(newFrame, { animate: true });
+
+    
   };
 
   const handleImagePreview = (imageUrl: string) => {
