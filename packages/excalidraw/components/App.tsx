@@ -1377,8 +1377,8 @@ class App extends React.Component<AppProps, AppState> {
 
       const handleSize = 24;
       const handleOffset = 8;
-      const handleX = x1 - handleSize - handleOffset - 10;
-      const handleY = y1 - handleSize - handleOffset - 10;
+      const handleX = x1 - handleSize - handleOffset + 30;
+      const handleY = y1 - handleSize - handleOffset - 20;
 
       return (
         <div

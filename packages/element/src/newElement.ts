@@ -190,7 +190,7 @@ export const newFrameElement = (
     {
       ..._newElementBase<ExcalidrawFrameElement>("frame", opts),
       type: "frame",
-      name: "新建页面",
+      name: "▪️新建页面",
       // name: "新建页面" || opts?.name || null,
     },
     {},
@@ -208,7 +208,7 @@ export const newMagicFrameElement = (
     {
       ..._newElementBase<ExcalidrawMagicFrameElement>("magicframe", opts),
       type: "magicframe",
-      name: "新建页面",
+      name: "▪️新建页面",
       // name: opts?.name || null,
     },
     {},
