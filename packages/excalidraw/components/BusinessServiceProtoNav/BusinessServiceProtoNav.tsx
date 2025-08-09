@@ -214,7 +214,11 @@ export const BusinessServiceProtoNav = () => {
     setAppState({
       selectedElementIds: { [newFrame.id]: true },
     });
-    app.scrollToContent(newFrame, { animate: true });
+    app.scrollToContent(newFrame, {
+      fitToContent: true,
+      animate: true,
+      viewportZoomFactor: 0.4, // 缩放到画布的80%，留一些边距
+    });
   };
 
   const handleImagePreview = (imageUrl: string) => {
