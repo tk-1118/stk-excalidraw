@@ -1347,6 +1347,127 @@ class App extends React.Component<AppProps, AppState> {
     this.setState({ editingFrame: null });
   };
 
+  private renderFrameDragHandles = () => {
+    const nonDeletedFramesLikes = this.scene.getNonDeletedFramesLikes();
+
+    return nonDeletedFramesLikes.map((f) => {
+      if (
+        !isElementInViewport(
+          f,
+          this.canvas.width / window.devicePixelRatio,
+          this.canvas.height / window.devicePixelRatio,
+          {
+            offsetLeft: this.state.offsetLeft,
+            offsetTop: this.state.offsetTop,
+            scrollX: this.state.scrollX,
+            scrollY: this.state.scrollY,
+            zoom: this.state.zoom,
+          },
+          this.scene.getNonDeletedElementsMap(),
+        )
+      ) {
+        // if frame not visible, don't render its drag handle
+        return null;
+      }
+
+      const { x: x1, y: y1 } = sceneCoordsToViewportCoords(
+        { sceneX: f.x, sceneY: f.y },
+        this.state,
+      );
+
+      const handleSize = 24;
+      const handleOffset = 8;
+      const handleX = x1 - handleSize - handleOffset - 10;
+      const handleY = y1 - handleSize - handleOffset - 10;
+
+      return (
+        <div
+          key={`drag-handle-${f.id}`}
+          style={{
+            position: "absolute",
+            left: `${handleX - this.state.offsetLeft}px`,
+            top: `${handleY - this.state.offsetTop}px`,
+            width: `${handleSize}px`,
+            height: `${handleSize}px`,
+            backgroundColor: "#ffffff",
+            border: "2px solid rgb(153, 153, 153)",
+            borderRadius: "4px",
+            cursor: CURSOR_TYPE.MOVE,
+            zIndex: 2,
+            pointerEvents: this.state.viewModeEnabled
+              ? POINTER_EVENTS.disabled
+              : POINTER_EVENTS.enabled,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onPointerDown={(event) => {
+            // 创建一个模拟的事件，坐标指向frame的中心
+            const frameTopLeft = sceneCoordsToViewportCoords(
+              { sceneX: f.x, sceneY: f.y },
+              this.state,
+            );
+
+            // 创建模拟事件，使其看起来像是点击了frame的左上角
+            const simulatedEvent = {
+              ...event,
+              clientX: frameTopLeft.x,
+              clientY: frameTopLeft.y,
+            } as React.PointerEvent<HTMLElement>;
+
+            this.handleCanvasPointerDown(simulatedEvent);
+          }}
+          onWheel={(event) => this.handleWheel(event)}
+          onContextMenu={this.handleCanvasContextMenu}
+        >
+          {/* 绘制四个拖拽点 */}
+          <div
+            style={{
+              width: "8px",
+              height: "8px",
+              display: "grid",
+              gridTemplate: "1fr 1fr / 1fr 1fr",
+              gap: "1px",
+            }}
+          >
+            <div
+              style={{
+                width: "4px",
+                height: "4px",
+                borderRadius: "50%",
+                backgroundColor: "rgb(153, 153, 153)",
+              }}
+            ></div>
+            <div
+              style={{
+                width: "4px",
+                height: "4px",
+                borderRadius: "50%",
+                backgroundColor: "rgb(153, 153, 153)",
+              }}
+            ></div>
+            <div
+              style={{
+                width: "4px",
+                height: "4px",
+                borderRadius: "50%",
+                backgroundColor: "rgb(153, 153, 153)",
+              }}
+            ></div>
+            <div
+              style={{
+                width: "4px",
+                height: "4px",
+                borderRadius: "50%",
+                backgroundColor: "rgb(153, 153, 153)",
+              }}
+            ></div>
+          </div>
+        </div>
+      );
+    });
+  };
+
   private renderFrameNames = () => {
     if (!this.state.frameRendering.enabled || !this.state.frameRendering.name) {
       if (this.state.editingFrame) {
@@ -1831,6 +1952,7 @@ class App extends React.Component<AppProps, AppState> {
                           />
                         )}
                         {this.renderFrameNames()}
+                        {this.renderFrameDragHandles()}
                         {this.state.activeLockedId && (
                           <UnlockPopup
                             app={this}

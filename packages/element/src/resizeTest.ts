@@ -20,6 +20,8 @@ import {
 } from "./transformHandles";
 import { isImageElement, isLinearElement } from "./typeChecks";
 
+import { isFrameLikeElement } from "./typeChecks";
+
 import type { Bounds } from "./bounds";
 import type {
   TransformHandleType,
@@ -31,6 +33,7 @@ import type {
   PointerType,
   NonDeletedExcalidrawElement,
   ElementsMap,
+  ExcalidrawFrameLikeElement,
 } from "./types";
 
 const isInsideTransformHandle = (
@@ -288,4 +291,35 @@ const getSelectionBorders = <Point extends LocalPoint | GlobalPoint>(
     s: [bottomRight, bottomLeft],
     w: [bottomLeft, topLeft],
   };
+};
+
+export const getFrameDragHandleBounds = (
+  frame: ExcalidrawFrameLikeElement,
+  elementsMap: ElementsMap,
+  zoom: Zoom,
+): TransformHandle => {
+  const handleSize = 24 / zoom.value;
+  const handleOffset = 8 / zoom.value;
+
+  // 使用绝对坐标，与变换手柄保持一致
+  const [frameX1, frameY1] = getElementAbsoluteCoords(frame, elementsMap);
+  const handleX = frameX1 - handleSize - handleOffset;
+  const handleY = frameY1 - handleSize - handleOffset;
+
+  return [handleX, handleY, handleSize, handleSize];
+};
+
+export const isPointInFrameDragHandle = (
+  frame: ExcalidrawFrameLikeElement,
+  elementsMap: ElementsMap,
+  scenePointerX: number,
+  scenePointerY: number,
+  zoom: Zoom,
+): boolean => {
+  if (!isFrameLikeElement(frame)) {
+    return false;
+  }
+
+  const handleBounds = getFrameDragHandleBounds(frame, elementsMap, zoom);
+  return isInsideTransformHandle(handleBounds, scenePointerX, scenePointerY);
 };
