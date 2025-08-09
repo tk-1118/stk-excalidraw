@@ -269,7 +269,7 @@ export const SpecificationDialog: React.FC<SpecificationDialogProps> = ({
           }}
         >
           <div style={{ fontSize: "12px", color: "#666" }}>
-            未来功能：AI规约生成 → 规约评分 → 发布（需评分≥80分）
+            AI规约生成 → 规约评分 → 发布（需评分≥80分）
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
             <button
