@@ -556,7 +556,11 @@ const LayerUI = ({
       )}
       {appState.openDialog?.name === "remark" && (
         <RemarkDialog
-          customData={appState.openDialog.data.customData}
+          customData={
+            {
+              ...(appState.openDialog.data.customData || {}),
+            } as any
+          }
           onSubmit={(customData) => {
             if (appState.openDialog?.name === "remark") {
               const elementIds = appState.openDialog.data.elementIds;

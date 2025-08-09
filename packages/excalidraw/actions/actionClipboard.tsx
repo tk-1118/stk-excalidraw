@@ -23,7 +23,7 @@ export const actionAddRemark = register({
   name: "addRemark",
   label: "labels.addRemark",
   trackEvent: { category: "element" },
-  perform: (elements, appState, event: ClipboardEvent | null, app) => {
+  perform: (elements, appState, event: ClipboardEvent | null, app): any => {
     const selectedElements = app.scene.getSelectedElements({
       selectedElementIds: appState.selectedElementIds,
       includeBoundTextElement: true,
