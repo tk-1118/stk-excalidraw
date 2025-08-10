@@ -1,11 +1,7 @@
-import "./BusinessServiceProtoNav.scss";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 
 import { exportToCanvas } from "@excalidraw/utils/export";
-
-import { useState, useRef } from "react";
-
 import { getNonDeletedElements, isFrameLikeElement } from "@excalidraw/element";
-
 import {
   getDefaultFrameName,
   // getElementsOverlappingFrame,
@@ -19,13 +15,31 @@ import { newFrameElement } from "@excalidraw/element";
 import type {
   ExcalidrawFrameLikeElement,
   ExcalidrawFrameElement,
+  ExcalidrawElement,
 } from "@excalidraw/element/types";
 
 import { frameToolIcon, moreIcon } from "../icons";
-
 import { useApp, useExcalidrawSetAppState } from "../App";
+import { serializeAsJSON } from "../../data/json";
 
+import "./BusinessServiceProtoNav.scss";
 import excalidrawTemplate from "./excalidraw-template.json";
+
+// 定义单个Frame数据结构
+export interface FrameData {
+  frameId: string;
+  frameName: string;
+  frameElement: ExcalidrawFrameLikeElement;
+  childrenElements: ExcalidrawElement[];
+  excalidrawData: string; // 序列化的JSON数据
+}
+
+// 定义导出的数据结构
+export interface FramesExportData {
+  frames: FrameData[];
+  timestamp: number;
+  totalFrames: number;
+}
 
 export const BusinessServiceProtoNav = () => {
   const app = useApp();
@@ -42,11 +56,165 @@ export const BusinessServiceProtoNav = () => {
   const [selectedFrame, setSelectedFrame] =
     useState<ExcalidrawFrameLikeElement | null>(null);
 
-  const [activeMenuFrameId, setActiveMenuFrameId] = useState<string | null>(null);
+  const [activeMenuFrameId, setActiveMenuFrameId] = useState<string | null>(
+    null,
+  );
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-  const [selectedTemplateType, setSelectedTemplateType] = useState<string>("BLANK");
+  const [selectedTemplateType, setSelectedTemplateType] =
+    useState<string>("BLANK");
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // 存储上一次的frames状态，用于检测变化（在防抖函数中使用）
+  const [, setPrevFramesData] = useState<FramesExportData | null>(null);
+
+  // 防抖定时器引用
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // 存储上一次的frames快照，用于快速比较
+  const prevFramesSnapshot = useRef<string>("");
+
+  /**
+   * 生成快速的frames快照，用于初步变化检测
+   */
+  const generateFramesSnapshot = useMemo(() => {
+    return frames
+      .map((frame) => {
+        const children = getFrameChildren(elements, frame.id);
+        return `${frame.id}:${frame.name || ""}:${frame.x}:${frame.y}:${
+          frame.width
+        }:${frame.height}:${children.length}:${frame.versionNonce}`;
+      })
+      .join("|");
+  }, [frames, elements]);
+
+  /**
+   * 生成单个Frame的Excalidraw数据
+   */
+  const generateFrameData = useCallback(
+    (frame: ExcalidrawFrameLikeElement): FrameData => {
+      // 获取frame内的所有子元素
+      const childrenElements = getFrameChildren(elements, frame.id);
+
+      // 构建包含frame和其子元素的完整元素列表
+      const frameElements = [frame, ...childrenElements];
+
+      // 生成Excalidraw格式的JSON数据
+      const excalidrawData = serializeAsJSON(
+        frameElements,
+        app.state,
+        app.files,
+        "local",
+      );
+
+      return {
+        frameId: frame.id,
+        frameName: frame.name || getDefaultFrameName(frame),
+        frameElement: frame,
+        childrenElements,
+        excalidrawData,
+      };
+    },
+    [elements, app.state, app.files],
+  );
+
+  /**
+   * 生成所有Frames的导出数据
+   */
+  const generateFramesExportData = useCallback((): FramesExportData => {
+    const framesData: FrameData[] = frames.map((frame) =>
+      generateFrameData(frame),
+    );
+
+    return {
+      frames: framesData,
+      timestamp: Date.now(),
+      totalFrames: frames.length,
+    };
+  }, [frames, generateFrameData]);
+
+  /**
+   * 触发数据导出事件，类似onHemaButtonClick的机制
+   */
+  const exportFramesData = useCallback(
+    (framesData: FramesExportData) => {
+      // 通过onHemaButtonClick机制导出数据
+      app.onHemaButtonClick("framesDataExport", {
+        type: "FRAMES_DATA_CHANGED",
+        data: framesData,
+        timestamp: framesData.timestamp,
+      });
+
+      // eslint-disable-next-line no-console
+      console.log("Frames data exported:", framesData);
+    },
+    [app],
+  );
+
+  /**
+   * 快速检测frames是否发生变化（使用快照比较）
+   */
+  const hasFramesChangedQuick = useCallback(
+    (currentSnapshot: string): boolean => {
+      const hasChanged = currentSnapshot !== prevFramesSnapshot.current;
+      if (hasChanged) {
+        prevFramesSnapshot.current = currentSnapshot;
+      }
+      return hasChanged;
+    },
+    [],
+  );
+
+  /**
+   * 防抖导出函数
+   */
+  const debouncedExportFramesData = useCallback(
+    (framesData: FramesExportData) => {
+      // 清除之前的定时器
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+
+      // 设置新的定时器
+      debounceTimer.current = setTimeout(() => {
+        // exportFramesData(framesData);
+        setPrevFramesData(framesData);
+      }, 300); // 300ms 防抖延迟
+    },
+    [exportFramesData],
+  );
+
+  /**
+   * 监听frames变化的Effect（优化版本）
+   */
+  useEffect(() => {
+    // 首先进行快速检测
+    if (!hasFramesChangedQuick(generateFramesSnapshot)) {
+      return; // 没有变化，直接返回
+    }
+
+    // 有变化时才生成完整数据（延迟处理）
+    const currentFramesData = generateFramesExportData();
+
+    // 使用防抖导出
+    debouncedExportFramesData(currentFramesData);
+  }, [
+    generateFramesSnapshot,
+    hasFramesChangedQuick,
+    generateFramesExportData,
+    debouncedExportFramesData,
+  ]);
+
+  /**
+   * 组件卸载时清理定时器
+   */
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
 
   // 模板类型数据
   const templateTypes = excalidrawTemplate?.map((temp) => {
@@ -132,6 +300,16 @@ export const BusinessServiceProtoNav = () => {
       }),
     );
     setActiveMenuFrameId(null);
+
+    // 手动触发一次数据导出（删除操作使用较短的防抖延迟）
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    debounceTimer.current = setTimeout(() => {
+      const updatedFramesData = generateFramesExportData();
+      // exportFramesData(updatedFramesData);
+      setPrevFramesData(updatedFramesData);
+    }, 150); // 删除操作使用较短延迟
   };
 
   const addNewFrame = () => {
@@ -143,6 +321,7 @@ export const BusinessServiceProtoNav = () => {
     tempTypeName?: string,
     templateData?: any,
   ) => {
+    // eslint-disable-next-line no-console
     console.log(templateType, tempTypeName, templateData);
     let newFrame = newFrameElement({
       name: `新建${tempTypeName || ""}页面`,
@@ -219,7 +398,37 @@ export const BusinessServiceProtoNav = () => {
       animate: true,
       viewportZoomFactor: 0.4, // 缩放到画布的80%，留一些边距
     });
+
+    // 手动触发一次数据导出（新建frame使用较短延迟）
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    debounceTimer.current = setTimeout(() => {
+      const updatedFramesData = generateFramesExportData();
+      // exportFramesData(updatedFramesData);
+      setPrevFramesData(updatedFramesData);
+    }, 150); // 新建操作使用较短延迟
   };
+
+  /**
+   * 手动导出当前所有frames数据的函数
+   * 可以被外部调用或在特定事件时触发（立即执行，不使用防抖）
+   */
+  const manualExportFramesData = useCallback(() => {
+    // 清除防抖定时器，立即执行
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    const currentFramesData = generateFramesExportData();
+    exportFramesData(currentFramesData);
+    setPrevFramesData(currentFramesData);
+
+    // 更新快照以避免重复触发
+    prevFramesSnapshot.current = generateFramesSnapshot;
+
+    return currentFramesData;
+  }, [generateFramesExportData, exportFramesData, generateFramesSnapshot]);
 
   const handleImagePreview = (imageUrl: string) => {
     setImagePreviewUrl(imageUrl);
@@ -238,6 +447,9 @@ export const BusinessServiceProtoNav = () => {
         </div>
         <div className="business-service-proto-nav-body">
           <div className="business-service-proto-nav-body-frames">
+            <div className="export-all-button" onClick={manualExportFramesData}>
+              保存画布
+            </div>
             <div className="add-page-button" onClick={addNewFrame}>
               + 添加页面
             </div>
@@ -278,7 +490,22 @@ export const BusinessServiceProtoNav = () => {
                       >
                         导出页面PNG
                       </div>
-                      <div 
+                      <div
+                        className="frame-more-menu-item"
+                        onClick={() => {
+                          const frameData = generateFrameData(frame);
+                          app.onHemaButtonClick("singleFrameExport", {
+                            type: "SINGLE_FRAME_EXPORT",
+                            frameData,
+                            timestamp: Date.now(),
+                          });
+                          // eslint-disable-next-line no-console
+                          console.log("Single frame exported:", frameData);
+                        }}
+                      >
+                        导出页面数据
+                      </div>
+                      <div
                         className="frame-more-menu-item delete"
                         onClick={() => deleteFrame(frame)}
                       >
@@ -301,8 +528,8 @@ export const BusinessServiceProtoNav = () => {
           <div className="template-modal" onClick={(e) => e.stopPropagation()}>
             <div className="template-modal-header">
               <h3>选择页面模板</h3>
-              <button 
-                className="close-button" 
+              <button
+                className="close-button"
                 onClick={() => setShowTemplateModal(false)}
               >
                 ×
@@ -322,7 +549,7 @@ export const BusinessServiceProtoNav = () => {
                     空白模板
                   </div>
                   {templateTypes.map((templateType, index) => (
-                    <div 
+                    <div
                       key={index}
                       className={`template-type-item ${
                         selectedTemplateType === templateType.tempType
@@ -362,7 +589,7 @@ export const BusinessServiceProtoNav = () => {
                             </div>
                           </div>
                           <div className="template-opearte">
-                            <button 
+                            <button
                               className="use-button"
                               onClick={() => createFrameWithTemplate("BLANK")}
                             >

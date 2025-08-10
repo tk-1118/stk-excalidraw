@@ -266,9 +266,8 @@
   flex-direction: column;
   padding: 1rem 0.75rem;
 
-  .add-page-button {
+  .export-all-button, .add-page-button {
     position: sticky;
-    top: 0px;
     font-size: 0.875rem;
     margin-bottom: 0.5rem;
     padding: 0.5rem;
@@ -284,6 +283,12 @@
       background-color: var(--color-primary);
       color: white;
     }
+  }
+  .export-all-button {
+    top: 0px;
+  }
+  .add-page-button {
+    top: 40px;
   }
 
   .business-service-proto-nav-body-frames-item {
