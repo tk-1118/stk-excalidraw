@@ -147,11 +147,17 @@ function generateSemanticTree(
 
   const componentInfo = [
     `${indent}  组件层级: ${level + 1}`,
-    `${indent}  组件名称: ${customData.componentName || "无描述"}`,
-    `${indent}  组件代码映射: ${customData.componentMapping || "无描述"}`,
-    `${indent}  组件规约: ${customData.componentStatute || "无描述"}`,
-    `${indent}  组件样式:`,
-    `${indent}    基础样式: 宽度: ${
+    `${indent}  组件用途: ${customData.componentPurpose || "无描述"}`,
+    `${indent}  用户操作: ${customData.componentUserOperation || "无描述"}`,
+    `${indent}  操作结果: ${customData.componentOperationResult || "无描述"}`,
+    `${indent}  服务端交互: ${
+      customData.componentServerInteraction || "无描述"
+    }`,
+    `${indent}  特殊要求: ${
+      customData.componentSpecialRequirements || "无描述"
+    }`,
+    `${indent}  UI库映射: ${customData.componentMapping || "无描述"}`,
+    `${indent}  组件样式: 宽度: ${
       (node.element.width as number)?.toFixed(2) || 0
     }px, 高度: ${
       (node.element.height as number)?.toFixed(2) || 0
@@ -162,7 +168,8 @@ function generateSemanticTree(
 
   let childrenInfo = "";
   if (hasChildren) {
-    childrenInfo = `\n${indent}子组件 >\n${node.children
+    childrenInfo = `\n
+    ${indent}子组件 >\n${node.children
       .map((child) => generateSemanticTree(child, level + 1))
       .join("\n")}`;
   }
@@ -200,7 +207,7 @@ export const SpecificationDialog: React.FC<SpecificationDialogProps> = ({
         setSpecification(semanticDescription);
       } else {
         setSpecification(
-          "当前frame及其子元素中没有找到包含customData的组件。\n\n请为相关元素添加组件描述信息：\n- componentName: 组件名称\n- componentMapping: 组件代码映射\n- componentStatute: 组件规约",
+          "当前frame及其子元素中没有找到包含customData的组件。\n\n请为相关元素添加组件描述信息：\n- componentPurpose: 组件用途\n- componentUserOperation: 用户操作\n- componentOperationResult: 操作结果\n- componentServerInteraction: 服务端交互\n- componentSpecialRequirements: 特殊要求\n- componentMapping: UI库映射",
         );
       }
     }
