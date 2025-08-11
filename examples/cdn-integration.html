@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excalidraw CDN 集成示例</title>
+    
+    <!-- 引入 Excalidraw CSS -->
+    <link 
+        rel="stylesheet" 
+        href="https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/prod/index.css"
+    />
+    
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .header h1 {
+            margin: 0;
+            color: #495057;
+        }
+        .excalidraw-container {
+            flex: 1;
+            position: relative;
+        }
+        .controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 10px;
+        }
+        .controls button {
+            margin: 5px;
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background: #f8f9fa;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 18px;
+            color: #6c757d;
+        }
+    </style>
+    
+    <!-- 设置资源路径 -->
+    <script>
+        window.EXCALIDRAW_ASSET_PATH = "https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/prod/";
+    </script>
+    
+    <!-- 设置 import map 用于 React 依赖 -->
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@19.0.0",
+            "react/jsx-runtime": "https://esm.sh/react@19.0.0/jsx-runtime",
+            "react-dom": "https://esm.sh/react-dom@19.0.0"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Excalidraw CDN 集成示例</h1>
+            <p>通过 CDN 直接在浏览器中使用 Excalidraw，无需构建步骤</p>
+        </div>
+        
+        <div class="excalidraw-container">
+            <div id="loading" class="loading">
+                正在加载 Excalidraw...
+            </div>
+            <div id="app" style="height: 100%; display: none;"></div>
+            
+            <div class="controls">
+                <button onclick="exportAsPNG()">导出 PNG</button>
+                <button onclick="exportAsSVG()">导出 SVG</button>
+                <button onclick="clearCanvas()">清空画布</button>
+                <button onclick="addSampleElements()">添加示例元素</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        let excalidrawAPI = null;
+        let ExcalidrawLib = null;
+        
+        // 全局函数，供按钮调用
+        window.exportAsPNG = async () => {
+            if (!excalidrawAPI || !ExcalidrawLib) return;
+            
+            const canvas = await ExcalidrawLib.exportToCanvas({
+                elements: excalidrawAPI.getSceneElements(),
+                appState: excalidrawAPI.getAppState(),
+                files: excalidrawAPI.getFiles(),
+            });
+            
+            // 创建下载链接
+            const link = document.createElement('a');
+            link.download = 'excalidraw-export.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        };
+        
+        window.exportAsSVG = async () => {
+            if (!excalidrawAPI || !ExcalidrawLib) return;
+            
+            const svg = await ExcalidrawLib.exportToSvg({
+                elements: excalidrawAPI.getSceneElements(),
+                appState: excalidrawAPI.getAppState(),
+                files: excalidrawAPI.getFiles(),
+            });
+            
+            // 创建下载链接
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const link = document.createElement('a');
+            link.download = 'excalidraw-export.svg';
+            link.href = URL.createObjectURL(svgBlob);
+            link.click();
+        };
+        
+        window.clearCanvas = () => {
+            if (!excalidrawAPI) return;
+            excalidrawAPI.resetScene();
+        };
+        
+        window.addSampleElements = () => {
+            if (!excalidrawAPI || !ExcalidrawLib) return;
+            
+            const elements = ExcalidrawLib.convertToExcalidrawElements([
+                {
+                    type: "rectangle",
+                    x: 100,
+                    y: 100,
+                    width: 200,
+                    height: 100,
+                    backgroundColor: "#ffd43b",
+                    strokeColor: "#1971c2",
+                    strokeWidth: 2,
+                },
+                {
+                    type: "text",
+                    x: 150,
+                    y: 200,
+                    text: "Hello CDN!",
+                    fontSize: 20,
+                    fontFamily: 1,
+                },
+                {
+                    type: "arrow",
+                    x: 300,
+                    y: 150,
+                    width: 100,
+                    height: 0,
+                    strokeColor: "#e03131",
+                    strokeWidth: 3,
+                }
+            ]);
+            
+            excalidrawAPI.updateScene({ elements });
+        };
+        
+        async function initializeExcalidraw() {
+            try {
+                // 导入 Excalidraw 库
+                ExcalidrawLib = await import('https://esm.sh/@excalidraw/excalidraw@0.18.0?external=react,react-dom');
+                const React = await import("https://esm.sh/react@19.0.0");
+                const ReactDOM = await import("https://esm.sh/react-dom@19.0.0");
+                
+                const { Excalidraw } = ExcalidrawLib;
+                
+                // 创建 React 应用
+                const App = () => {
+                    return React.createElement(
+                        Excalidraw,
+                        {
+                            excalidrawAPI: (api) => {
+                                excalidrawAPI = api;
+                            },
+                            initialData: {
+                                elements: [],
+                                appState: {
+                                    viewBackgroundColor: "#ffffff",
+                                    currentItemFontFamily: 1,
+                                }
+                            },
+                            onChange: (elements, appState) => {
+                                console.log("场景已更新:", { elements: elements.length, appState });
+                            },
+                            UIOptions: {
+                                canvasActions: {
+                                    loadScene: false,
+                                    saveAsImage: false,
+                                }
+                            }
+                        }
+                    );
+                };
+                
+                // 隐藏加载提示，显示应用
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+                
+                // 渲染到页面
+                const container = document.getElementById('app');
+                const root = ReactDOM.createRoot(container);
+                root.render(React.createElement(App));
+                
+                console.log("✅ Excalidraw 初始化成功!");
+                
+            } catch (error) {
+                console.error("❌ Excalidraw 初始化失败:", error);
+                document.getElementById('loading').innerHTML = `
+                    <div style="text-align: center;">
+                        <h3>初始化失败</h3>
+                        <p style="color: #dc3545;">${error.message}</p>
+                        <button onclick="location.reload()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            重新加载
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        // 初始化应用
+        initializeExcalidraw();
+    </script>
+</body>
+</html>

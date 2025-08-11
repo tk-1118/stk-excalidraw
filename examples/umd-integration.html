@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excalidraw UMD 集成示例</title>
+    
+    <!-- 引入 Excalidraw CSS -->
+    <link 
+        rel="stylesheet" 
+        href="../dist/umd/prod/excalidraw.umd.css"
+    />
+    
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .header h1 {
+            margin: 0;
+            color: #495057;
+        }
+        .excalidraw-container {
+            flex: 1;
+            position: relative;
+        }
+        .controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 10px;
+        }
+        .controls button {
+            margin: 5px;
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background: #f8f9fa;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 18px;
+            color: #6c757d;
+        }
+        .error {
+            color: #dc3545;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+    
+    <!-- 设置资源路径 -->
+    <script>
+        // window.EXCALIDRAW_ASSET_PATH = "https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/prod/";
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Excalidraw 完整 UMD 集成示例</h1>
+            <p>使用自定义构建的完整 UMD 包，包含：React + 所有子包 (common、element、math、utils)</p>
+            <p style="color: #28a745; font-weight: bold;">✨ 无需额外引入任何依赖，一个 JS 文件搞定！</p>
+        </div>
+        
+        <div class="excalidraw-container">
+            <div id="loading" class="loading">
+                正在加载 Excalidraw UMD 包...
+            </div>
+            <div id="app" style="height: 100%; display: none;"></div>
+            
+            <!-- <div class="controls" style="display: none;" id="controls">
+                <button onclick="exportAsPNG()">导出 PNG</button>
+                <button onclick="exportAsSVG()">导出 SVG</button>
+                <button onclick="clearCanvas()">清空画布</button>
+                <button onclick="addSampleElements()">添加示例元素</button>
+                <button onclick="showPackageInfo()">显示包信息</button>
+            </div> -->
+        </div>
+    </div>
+    
+    <!-- 引入完整的 UMD 包（包含 React + Excalidraw）-->
+    <script src="../dist/umd/prod/excalidraw.umd.js"></script>
+    
+    <script>
+        let excalidrawAPI = null;
+        
+        // 全局函数，供按钮调用
+        window.exportAsPNG = async () => {
+            if (!excalidrawAPI || !ExcalidrawLib) return;
+            
+            try {
+                const canvas = await ExcalidrawLib.exportToCanvas({
+                    elements: excalidrawAPI.getSceneElements(),
+                    appState: excalidrawAPI.getAppState(),
+                    files: excalidrawAPI.getFiles(),
+                });
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                link.download = 'excalidraw-umd-export.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            } catch (error) {
+                alert('导出失败: ' + error.message);
+            }
+        };
+        
+        window.exportAsSVG = async () => {
+            if (!excalidrawAPI || !ExcalidrawLib) return;
+            
+            try {
+                const svg = await ExcalidrawLib.exportToSvg({
+                    elements: excalidrawAPI.getSceneElements(),
+                    appState: excalidrawAPI.getAppState(),
+                    files: excalidrawAPI.getFiles(),
+                });
+                
+                // 创建下载链接
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const link = document.createElement('a');
+                link.download = 'excalidraw-umd-export.svg';
+                link.href = URL.createObjectURL(svgBlob);
+                link.click();
+            } catch (error) {
+                alert('导出失败: ' + error.message);
+            }
+        };
+        
+        window.clearCanvas = () => {
+            if (!excalidrawAPI) return;
+            excalidrawAPI.resetScene();
+        };
+        
+        window.addSampleElements = () => {
+            if (!excalidrawAPI || !ExcalidrawLib) return;
+            
+            try {
+                const elements = ExcalidrawLib.convertToExcalidrawElements([
+                    {
+                        type: "rectangle",
+                        x: 100,
+                        y: 100,
+                        width: 200,
+                        height: 100,
+                        backgroundColor: "#ffd43b",
+                        strokeColor: "#1971c2",
+                        strokeWidth: 2,
+                    },
+                    {
+                        type: "text",
+                        x: 150,
+                        y: 200,
+                        text: "UMD Package!",
+                        fontSize: 20,
+                        fontFamily: 1,
+                    },
+                    {
+                        type: "ellipse",
+                        x: 350,
+                        y: 120,
+                        width: 80,
+                        height: 80,
+                        backgroundColor: "#51cf66",
+                        strokeColor: "#2f9e44",
+                        strokeWidth: 2,
+                    }
+                ]);
+                
+                excalidrawAPI.updateScene({ elements });
+            } catch (error) {
+                alert('添加元素失败: ' + error.message);
+            }
+        };
+        
+        window.showPackageInfo = () => {
+            if (!ExcalidrawLib) return;
+            
+            // 尝试获取 React 版本
+            let reactVersion = 'Unknown';
+            try {
+                if (typeof React !== 'undefined' && React.version) {
+                    reactVersion = React.version;
+                }
+            } catch (e) {
+                reactVersion = 'Bundled (内置)';
+            }
+            
+            const info = `
+🏗️ Excalidraw 完整 UMD 包信息
+
+📦 包含的所有模块:
+• @excalidraw/excalidraw (主包)
+• @excalidraw/common (通用工具)
+• @excalidraw/element (元素处理)
+• @excalidraw/math (数学计算)
+• @excalidraw/utils (工具函数)
+• React ${reactVersion} (内置)
+• ReactDOM (内置)
+• 所有其他依赖 (内置)
+
+🔥 特性:
+• ✓ 完全独立，无需额外依赖
+• ✓ 一个 JS 文件包含所有功能
+• ✓ 支持完整的绘图和导出功能
+
+🌐 全局变量:
+• ExcalidrawLib (包含所有 Excalidraw 功能)
+
+✨ 可用的主要组件和函数:
+• Excalidraw (主组件)
+• exportToCanvas, exportToSvg (导出函数)
+• convertToExcalidrawElements (元素转换)
+• 以及更多...
+            `;
+            
+            alert(info);
+        };
+        
+        function initializeExcalidraw() {
+            try {
+                // 检查是否成功加载了 UMD 包
+                if (typeof ExcalidrawLib === 'undefined') {
+                    throw new Error('ExcalidrawLib UMD 包未能正确加载');
+                }
+                
+                // 注意：React 和 ReactDOM 现在内置在 UMD 包中，通过 ExcalidrawLib 访问
+                console.log('✅ 已加载完整 UMD 包:', {
+                    ExcalidrawLib: typeof ExcalidrawLib,
+                    type: '完整包含 React 的独立版本'
+                });
+                
+                // 尝试多种方式获取 React 和 ReactDOM
+                let ReactToUse, ReactDOMToUse;
+                
+                // 方式1: 从 ExcalidrawLib 获取
+                if (ExcalidrawLib.React && ExcalidrawLib.ReactDOM) {
+                    ReactToUse = ExcalidrawLib.React;
+                    ReactDOMToUse = ExcalidrawLib.ReactDOM;
+                }
+                // 方式2: 从全局变量获取（打包后可能暴露到这里）
+                else if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined') {
+                    ReactToUse = React;
+                    ReactDOMToUse = ReactDOM;
+                }
+                // 方式3: 从 window 获取
+                else if (typeof window.React !== 'undefined' && typeof window.ReactDOM !== 'undefined') {
+                    ReactToUse = window.React;
+                    ReactDOMToUse = window.ReactDOM;
+                }
+                
+                if (!ReactToUse || !ReactDOMToUse) {
+                    // 如果都获取不到，尝试更深入的查找
+                    console.log('ExcalidrawLib 内容:', Object.keys(ExcalidrawLib));
+                    throw new Error('React 或 ReactDOM 未能从 UMD 包中正确加载。请检查构建配置。');
+                }
+                
+                const { Excalidraw } = ExcalidrawLib;
+                
+                // 创建 React 应用
+                const App = () => {
+                    return ReactToUse.createElement(
+                        Excalidraw,
+                        {
+                            excalidrawAPI: (api) => {
+                                excalidrawAPI = api;
+                                console.log('📋 Excalidraw API 已准备就绪');
+                            },
+                            initialData: {
+                                elements: [],
+                                appState: {
+                                    viewBackgroundColor: "#ffffff",
+                                    currentItemFontFamily: 1,
+                                }
+                            },
+                            onChange: (elements, appState) => {
+                                console.log("场景已更新:", { elements: elements.length, appState });
+                            },
+                            UIOptions: {
+                                canvasActions: {
+                                    loadScene: false,
+                                    saveAsImage: false,
+                                }
+                            }
+                        }
+                    );
+                };
+                
+                // 隐藏加载提示，显示应用和控制按钮
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+                // document.getElementById('controls').style.display = 'block';
+                
+                // 渲染到页面
+                const container = document.getElementById('app');
+                
+                // React 18+ 使用 createRoot，旧版本使用 render
+                if (ReactDOMToUse.createRoot) {
+                    // React 18+ 方式
+                    const root = ReactDOMToUse.createRoot(container);
+                    root.render(ReactToUse.createElement(App));
+                } else if (ReactDOMToUse.render) {
+                    // React 17 及以下版本
+                    ReactDOMToUse.render(ReactToUse.createElement(App), container);
+                } else {
+                    // 尝试从 window 获取 ReactDOM
+                    if (typeof window.ReactDOM !== 'undefined' && window.ReactDOM.render) {
+                        window.ReactDOM.render(ReactToUse.createElement(App), container);
+                    } else if (typeof window.ReactDOM !== 'undefined' && window.ReactDOM.createRoot) {
+                        const root = window.ReactDOM.createRoot(container);
+                        root.render(ReactToUse.createElement(App));
+                    } else {
+                        throw new Error('无法找到有效的 ReactDOM 渲染方法');
+                    }
+                }
+                
+                console.log("🎉 Excalidraw UMD 初始化成功!");
+                
+            } catch (error) {
+                console.error("❌ Excalidraw UMD 初始化失败:", error);
+                document.getElementById('loading').innerHTML = `
+                    <div class="error">
+                        <h3>❌ 初始化失败</h3>
+                        <p><strong>错误信息:</strong> ${error.message}</p>
+                        <p><strong>可能的原因:</strong></p>
+                        <ul style="text-align: left; display: inline-block;">
+                            <li>UMD 包文件路径不正确</li>
+                            <li>需要先运行 <code>yarn build:umd</code> 构建 UMD 包</li>
+                            <li>React/ReactDOM 版本不兼容</li>
+                            <li>网络连接问题</li>
+                        </ul>
+                        <button onclick="location.reload()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">
+                            重新加载
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        // 等待页面加载完成后初始化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeExcalidraw);
+        } else {
+            initializeExcalidraw();
+        }
+    </script>
+</body>
+</html>

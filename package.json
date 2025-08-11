@@ -57,6 +57,7 @@
     "build:excalidraw": "yarn --cwd ./packages/excalidraw build:esm",
     "build:math": "yarn --cwd ./packages/math build:esm",
     "build:packages": "yarn build:common && yarn build:math && yarn build:element && yarn build:excalidraw",
+    "build:umd": "node ./scripts/buildUMD.js",
     "build:version": "yarn --cwd ./excalidraw-app build:version",
     "build": "yarn --cwd ./excalidraw-app build",
     "build:preview": "yarn --cwd ./excalidraw-app build:preview",
