@@ -1532,6 +1532,40 @@ class App extends React.Component<AppProps, AppState> {
           >
             构建前端规约
           </div>
+          {/* <div
+            key={`spec-button-${f.id}`}
+            style={{
+              position: "absolute",
+              left: `${specButtonX - this.state.offsetLeft}px`,
+              top: `${specButtonY - this.state.offsetTop}px`,
+              width: `${specButtonWidth}px`,
+              height: `${specButtonHeight}px`,
+              backgroundColor: "#007acc",
+              border: "2px solid #005a9c",
+              borderRadius: "4px",
+              cursor: "pointer",
+              zIndex: 2,
+              pointerEvents: this.state.viewModeEnabled
+                ? POINTER_EVENTS.disabled
+                : POINTER_EVENTS.enabled,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "12px",
+              color: "white",
+              fontWeight: "bold",
+              textAlign: "center",
+              lineHeight: "1",
+            }}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              this.onHemaButtonClick("buildFrontPage", f);
+            }}
+            title="构建页面"
+          >
+            构建页面
+          </div> */}
         </React.Fragment>
       );
     });
