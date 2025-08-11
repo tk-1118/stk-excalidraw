@@ -8,9 +8,8 @@ import {
   getFrameChildren,
 } from "@excalidraw/element/frame";
 
-import { newElementWith } from "@excalidraw/element";
-
 import { newFrameElement } from "@excalidraw/element";
+import { randomId } from "@excalidraw/common";
 
 import type {
   ExcalidrawFrameLikeElement,
@@ -87,6 +86,106 @@ export const BusinessServiceProtoNav = () => {
       })
       .join("|");
   }, [frames, elements]);
+
+  /**
+   * 为模板元素生成新的唯一ID，避免ID冲突
+   *
+   * 当重复使用同一个模板时，如果不重新生成ID，会导致：
+   * 1. 元素ID冲突，可能导致意外的行为
+   * 2. 引用关系错乱（如文本容器、箭头绑定等）
+   * 3. 选择和编辑功能异常
+   *
+   * 该函数会：
+   * 1. 为所有模板元素生成新的唯一ID
+   * 2. 更新所有相关的引用关系（containerId、boundElements、binding等）
+   * 3. 确保组关系正确维护
+   * 4. 重置版本信息避免缓存冲突
+   */
+  const regenerateElementIds = useCallback(
+    (elements: any[], frameId: string): any[] => {
+      // 创建ID映射表，用于更新引用关系
+      const idMap = new Map<string, string>();
+
+      // 第一轮：为所有元素生成新ID
+      const elementsWithNewIds = elements.map((element) => {
+        const newId = randomId();
+        idMap.set(element.id, newId);
+
+        return {
+          ...element,
+          id: newId,
+          frameId, // 设置新的frameId
+          // 重置版本信息以避免冲突
+          versionNonce: Math.floor(Math.random() * 2 ** 31),
+          updated: Date.now(),
+        };
+      });
+
+      // 第二轮：更新所有引用关系
+      const elementsWithUpdatedReferences = elementsWithNewIds.map(
+        (element) => {
+          const updatedElement = { ...element };
+
+          // 更新containerId引用（文本容器关系）
+          if (element.containerId && idMap.has(element.containerId)) {
+            updatedElement.containerId = idMap.get(element.containerId);
+          }
+
+          // 更新boundElements引用（绑定元素关系）
+          if (element.boundElements && Array.isArray(element.boundElements)) {
+            updatedElement.boundElements = element.boundElements.map(
+              (boundElement: any) => {
+                if (boundElement.id && idMap.has(boundElement.id)) {
+                  return {
+                    ...boundElement,
+                    id: idMap.get(boundElement.id),
+                  };
+                }
+                return boundElement;
+              },
+            );
+          }
+
+          // 更新箭头的startBinding和endBinding引用
+          if (
+            element.startBinding &&
+            element.startBinding.elementId &&
+            idMap.has(element.startBinding.elementId)
+          ) {
+            updatedElement.startBinding = {
+              ...element.startBinding,
+              elementId: idMap.get(element.startBinding.elementId),
+            };
+          }
+
+          if (
+            element.endBinding &&
+            element.endBinding.elementId &&
+            idMap.has(element.endBinding.elementId)
+          ) {
+            updatedElement.endBinding = {
+              ...element.endBinding,
+              elementId: idMap.get(element.endBinding.elementId),
+            };
+          }
+
+          // 更新groupIds（如果有组引用）
+          if (element.groupIds && Array.isArray(element.groupIds)) {
+            updatedElement.groupIds = element.groupIds.map(
+              (groupId: string) => {
+                return idMap.has(groupId) ? idMap.get(groupId)! : groupId;
+              },
+            );
+          }
+
+          return updatedElement;
+        },
+      );
+
+      return elementsWithUpdatedReferences;
+    },
+    [],
+  );
 
   /**
    * 生成单个Frame的Excalidraw数据
@@ -181,7 +280,7 @@ export const BusinessServiceProtoNav = () => {
         setPrevFramesData(framesData);
       }, 300); // 300ms 防抖延迟
     },
-    [exportFramesData],
+    [],
   );
 
   /**
@@ -323,59 +422,101 @@ export const BusinessServiceProtoNav = () => {
   ) => {
     // eslint-disable-next-line no-console
     console.log(templateType, tempTypeName, templateData);
-    let newFrame = newFrameElement({
-      name: `新建${tempTypeName || ""}页面`,
-      x: 0,
-      y: 0,
-      width: 1920,
-      height: 1080,
-    }) as ExcalidrawFrameElement;
 
-    if (templateType === "BLANK") {
-      // 空白模板使用默认尺寸
-      newFrame = newElementWith(newFrame, {
-        width: 1920,
-        height: 1080,
+    // 计算新frame的初始尺寸
+    let frameWidth = 1920;
+    let frameHeight = 1080;
+
+    // 如果是模板，先计算模板的实际尺寸
+    if (templateType !== "BLANK" && templateData?.elements) {
+      let maxX = 0;
+      let maxY = 0;
+      let minX = Infinity;
+      let minY = Infinity;
+
+      templateData.elements.forEach((el: any) => {
+        minX = Math.min(minX, el.x);
+        minY = Math.min(minY, el.y);
+        maxX = Math.max(maxX, el.x + el.width);
+        maxY = Math.max(maxY, el.y + el.height);
       });
+
+      frameWidth = maxX - minX; // 添加一些边距
+      frameHeight = maxY - minY;
     }
 
-    // 确保新frame不会与其他frame重叠
+    // 计算新frame的位置，确保不与现有frame重叠
+    let newX = 0;
+    let newY = 0;
+
     if (frames.length > 0) {
-      const lastFrame = frames[frames.length - 1];
-      newFrame = newElementWith(newFrame, {
-        x: lastFrame.x,
-        y: lastFrame.y + lastFrame.height + 100,
+      // 找到所有frame的最右边和最下边位置
+      let maxRight = 0;
+      let maxBottom = 0;
+
+      frames.forEach((frame) => {
+        maxRight = Math.max(maxRight, frame.x + frame.width);
+        maxBottom = Math.max(maxBottom, frame.y + frame.height);
       });
+
+      // 尝试在右侧放置新frame
+      const rightX = maxRight + 100; // 100px间距
+      const rightY = 0;
+
+      // 检查右侧位置是否与现有frame冲突
+      const rightConflict = frames.some(
+        (frame) =>
+          rightX < frame.x + frame.width + 50 &&
+          rightX + frameWidth > frame.x - 50 &&
+          rightY < frame.y + frame.height + 50 &&
+          rightY + frameHeight > frame.y - 50,
+      );
+
+      if (!rightConflict) {
+        newX = rightX;
+        newY = rightY;
+      } else {
+        // 如果右侧有冲突，放在最下方
+        newX = 0;
+        newY = maxBottom + 100; // 100px间距
+      }
     }
+
+    const newFrame = newFrameElement({
+      name: `新建${tempTypeName || ""}页面`,
+      x: newX,
+      y: newY,
+      width: frameWidth,
+      height: frameHeight,
+    }) as ExcalidrawFrameElement;
 
     let newElements;
 
     if (templateType !== "BLANK" && templateData?.elements) {
-      let maxWidth = 0;
-      let maxHeight = 0;
-      let minTop = 0;
-      let minLeft = 0;
-      const templateElements = templateData?.elements?.map((el: any) => {
-        maxWidth = Math.max(maxWidth, el.width);
-        maxHeight = Math.max(maxHeight, el.height);
-        if (minTop === 0 && minLeft === 0) {
-          minTop = el.y;
-          minLeft = el.x;
-        } else {
-          minTop = Math.min(minTop, el.y);
-          minLeft = Math.min(minLeft, el.x);
-        }
+      // 计算模板元素的偏移量
+      let minTemplateX = Infinity;
+      let minTemplateY = Infinity;
+
+      templateData.elements.forEach((el: any) => {
+        minTemplateX = Math.min(minTemplateX, el.x);
+        minTemplateY = Math.min(minTemplateY, el.y);
+      });
+
+      // 为模板元素生成新的ID，避免冲突
+      const elementsWithNewIds = regenerateElementIds(
+        templateData.elements,
+        newFrame.id,
+      );
+
+      // 将模板元素相对于新frame进行定位
+      const templateElements = elementsWithNewIds.map((el: any) => {
         return {
           ...el,
-          frameId: newFrame.id,
+          x: el.x - minTemplateX + newX + 50, // 添加50px内边距
+          y: el.y - minTemplateY + newY + 50,
         };
       });
-      newFrame = newElementWith(newFrame, {
-        width: maxWidth,
-        height: maxHeight,
-        x: minLeft,
-        y: minTop,
-      });
+
       newElements = [
         ...app.scene.getElementsIncludingDeleted(),
         newFrame,

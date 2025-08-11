@@ -447,7 +447,7 @@ export const STANDARD_COMPONENT_LIBRARY = "StandardComponentLibrary";
 
 export const DEFAULT_SIDEBAR = {
   name: "default",
-  defaultTab: LIBRARY_SIDEBAR_TAB,
+  defaultTab: STANDARD_COMPONENT_LIBRARY,
 } as const;
 
 export const LIBRARY_DISABLED_TYPES = new Set([
