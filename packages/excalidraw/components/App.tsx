@@ -1492,80 +1492,94 @@ class App extends React.Component<AppProps, AppState> {
           </div>
 
           {/* 构建前端规约按钮 */}
-          <div
-            key={`spec-button-${f.id}`}
-            style={{
-              position: "absolute",
-              left: `${specButtonX - this.state.offsetLeft}px`,
-              top: `${specButtonY - this.state.offsetTop}px`,
-              width: `${specButtonWidth}px`,
-              height: `${specButtonHeight}px`,
-              backgroundColor: "#007acc",
-              border: "2px solid #005a9c",
-              borderRadius: "4px",
-              cursor: "pointer",
-              zIndex: 2,
-              pointerEvents: this.state.viewModeEnabled
-                ? POINTER_EVENTS.disabled
-                : POINTER_EVENTS.enabled,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "12px",
-              color: "white",
-              fontWeight: "bold",
-              textAlign: "center",
-              lineHeight: "1",
-            }}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              // 打开规约构建弹框
-              this.setState({
-                openDialog: {
-                  name: "specification",
-                  frameId: f.id,
-                },
-              });
-            }}
-            title="构建前端规约"
-          >
-            构建前端规约
-          </div>
-          {/* <div
-            key={`spec-button-${f.id}`}
-            style={{
-              position: "absolute",
-              left: `${specButtonX - this.state.offsetLeft}px`,
-              top: `${specButtonY - this.state.offsetTop}px`,
-              width: `${specButtonWidth}px`,
-              height: `${specButtonHeight}px`,
-              backgroundColor: "#007acc",
-              border: "2px solid #005a9c",
-              borderRadius: "4px",
-              cursor: "pointer",
-              zIndex: 2,
-              pointerEvents: this.state.viewModeEnabled
-                ? POINTER_EVENTS.disabled
-                : POINTER_EVENTS.enabled,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "12px",
-              color: "white",
-              fontWeight: "bold",
-              textAlign: "center",
-              lineHeight: "1",
-            }}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              this.onHemaButtonClick("buildFrontPage", f);
-            }}
-            title="构建页面"
-          >
-            构建页面
-          </div> */}
+          {(this.props.UIOptions.visibility?.customButtons === true ||
+            (typeof this.props.UIOptions.visibility?.customButtons ===
+              "object" &&
+              this.props.UIOptions.visibility?.customButtons?.specButton !==
+                false)) && (
+            <div
+              key={`spec-button-${f.id}`}
+              style={{
+                position: "absolute",
+                left: `${specButtonX - this.state.offsetLeft}px`,
+                top: `${specButtonY - this.state.offsetTop}px`,
+                width: `${specButtonWidth}px`,
+                height: `${specButtonHeight}px`,
+                backgroundColor: "#007acc",
+                border: "2px solid #005a9c",
+                borderRadius: "4px",
+                cursor: "pointer",
+                zIndex: 2,
+                pointerEvents: this.state.viewModeEnabled
+                  ? POINTER_EVENTS.disabled
+                  : POINTER_EVENTS.enabled,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "12px",
+                color: "white",
+                fontWeight: "bold",
+                textAlign: "center",
+                lineHeight: "1",
+              }}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                // 打开规约构建弹框
+                this.setState({
+                  openDialog: {
+                    name: "specification",
+                    frameId: f.id,
+                  },
+                });
+              }}
+              title="构建前端规约"
+            >
+              构建前端规约
+            </div>
+          )}
+          {(this.props.UIOptions.visibility?.customButtons === true ||
+            (typeof this.props.UIOptions.visibility?.customButtons ===
+              "object" &&
+              this.props.UIOptions.visibility?.customButtons?.aiGenerate !==
+                false)) && (
+            <div
+              key={`spec-button-${f.id}-build-page`}
+              style={{
+                position: "absolute",
+                left: `${
+                  specButtonX - this.state.offsetLeft + specButtonWidth + 10
+                }px`,
+                top: `${specButtonY - this.state.offsetTop}px`,
+                width: `${specButtonWidth}px`,
+                height: `${specButtonHeight}px`,
+                backgroundColor: "#007acc",
+                border: "2px solid #005a9c",
+                borderRadius: "4px",
+                cursor: "pointer",
+                zIndex: 2,
+                pointerEvents: this.state.viewModeEnabled
+                  ? POINTER_EVENTS.disabled
+                  : POINTER_EVENTS.enabled,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "12px",
+                color: "white",
+                fontWeight: "bold",
+                textAlign: "center",
+                lineHeight: "1",
+              }}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.onHemaButtonClick("buildFrontPage", f);
+              }}
+              title="AI生成"
+            >
+              AI生成
+            </div>
+          )}
         </React.Fragment>
       );
     });
@@ -10863,6 +10877,11 @@ class App extends React.Component<AppProps, AppState> {
   private handleCanvasContextMenu = (
     event: React.MouseEvent<HTMLElement | HTMLCanvasElement>,
   ) => {
+    // 如果集成方通过 UIOptions.visibility.contextMenu 禁用了右键菜单，直接阻止并返回
+    if (this.props.UIOptions?.visibility?.contextMenu === false) {
+      event.preventDefault();
+      return;
+    }
     event.preventDefault();
 
     if (

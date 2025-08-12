@@ -71,6 +71,15 @@ const ExcalidrawBase = (props: ExcalidrawProps) => {
     tools: {
       image: props.UIOptions?.tools?.image ?? true,
     },
+    visibility: {
+      toolbar: props.UIOptions?.visibility?.toolbar ?? true,
+      library: props.UIOptions?.visibility?.library ?? true,
+      contextMenu: props.UIOptions?.visibility?.contextMenu ?? true,
+      mainMenu: props.UIOptions?.visibility?.mainMenu ?? true,
+      topRightUI: props.UIOptions?.visibility?.topRightUI ?? true,
+      customButtons: props.UIOptions?.visibility?.customButtons ?? true,
+      selectionActions: props.UIOptions?.visibility?.selectionActions ?? true,
+    },
   };
 
   if (canvasActions?.export) {

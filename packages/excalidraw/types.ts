@@ -682,6 +682,44 @@ export type UIOptions = Partial<{
   tools: {
     image: boolean;
   };
+  /**
+   * 控制内置 UI 的可见性
+   * - toolbar: 顶部工具栏（形状工具等）
+   * - library: 右侧栏（素材库/搜索/标准组件库）及其默认触发按钮
+   * - contextMenu: 画布右键菜单
+   */
+  visibility: {
+    toolbar?: boolean;
+    library?: boolean;
+    contextMenu?: boolean;
+    /** 顶部主菜单（汉堡菜单） */
+    mainMenu?: boolean;
+    /** 右上角自定义区域（renderTopRightUI） */
+    topRightUI?: boolean;
+    /**
+     * 桌面端顶部条中的自定义按钮（如首页/AI 生成）
+     * - true/false: 统一开关
+     * - 对象: 分别控制
+     */
+    customButtons?:
+      | boolean
+      | {
+          home?: boolean;
+          ai?: boolean;
+          /** 左侧导航：保存画布 */
+          saveCanvas?: boolean;
+          /** 左侧导航：添加页面 */
+          addPage?: boolean;
+          /** 左侧导航：单个条目的更多菜单 */
+          frameMenu?: boolean;
+          /** 画布上方：构建前端规约按钮 */
+          specButton?: boolean;
+          /** 画布上方：AI生成按钮（与frame关联） */
+          aiGenerate?: boolean;
+        };
+    /** 聚焦元素时出现的左侧操作面板（SelectedShapeActions） */
+    selectionActions?: boolean;
+  };
   /** @deprecated does nothing. Will be removed in 0.15 */
   welcomeScreen?: boolean;
 }>;

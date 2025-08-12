@@ -77,6 +77,9 @@ export const MobileMenu = ({
     DefaultSidebarTriggerTunnel,
   } = useTunnels();
   const renderToolbar = () => {
+    if (UIOptions.visibility?.toolbar === false) {
+      return null;
+    }
     return (
       <FixedSideContainer side="top" className="App-top-bar">
         {renderWelcomeScreen && <WelcomeScreenCenterTunnel.Out />}
@@ -95,10 +98,13 @@ export const MobileMenu = ({
                     />
                   </Stack.Row>
                 </Island>
-                {renderTopRightUI && renderTopRightUI(true, appState)}
+                {UIOptions.visibility?.topRightUI !== false &&
+                  renderTopRightUI &&
+                  renderTopRightUI(true, appState)}
                 <div className="mobile-misc-tools-container">
                   {!appState.viewModeEnabled &&
-                    appState.openDialog?.name !== "elementLinkSelector" && (
+                    appState.openDialog?.name !== "elementLinkSelector" &&
+                    UIOptions.visibility?.library !== false && (
                       <DefaultSidebarTriggerTunnel.Out />
                     )}
                   <PenModeButton
@@ -142,7 +148,7 @@ export const MobileMenu = ({
     ) {
       return (
         <div className="App-toolbar-content">
-          <MainMenuTunnel.Out />
+          {UIOptions.visibility?.mainMenu !== false && <MainMenuTunnel.Out />}
         </div>
       );
     }
@@ -178,7 +184,8 @@ export const MobileMenu = ({
         }}
       >
         <Island padding={0}>
-          {appState.openMenu === "shape" &&
+          {UIOptions.visibility?.selectionActions !== false &&
+            appState.openMenu === "shape" &&
           !appState.viewModeEnabled &&
           appState.openDialog?.name !== "elementLinkSelector" &&
           showSelectedShapeActions(appState, elements) ? (

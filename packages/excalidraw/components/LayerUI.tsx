@@ -205,10 +205,13 @@ const LayerUI = ({
 
   const renderCanvasActions = () => (
     <div style={{ position: "relative" }}>
-      {/* wrapping to Fragment stops React from occasionally complaining
-                about identical Keys */}
-      <tunnels.MainMenuTunnel.Out />
-      {renderWelcomeScreen && <tunnels.WelcomeScreenMenuHintTunnel.Out />}
+      {UIOptions.visibility?.mainMenu !== false && (
+        <>
+          {/* wrapping to Fragment stops React from occasionally complaining about identical Keys */}
+          <tunnels.MainMenuTunnel.Out />
+          {renderWelcomeScreen && <tunnels.WelcomeScreenMenuHintTunnel.Out />}
+        </>
+      )}
     </div>
   );
 
@@ -239,10 +242,9 @@ const LayerUI = ({
   );
 
   const renderFixedSideContainer = () => {
-    const shouldRenderSelectedShapeActions = showSelectedShapeActions(
-      appState,
-      elements,
-    );
+    const shouldRenderSelectedShapeActions =
+      UIOptions.visibility?.selectionActions !== false &&
+      showSelectedShapeActions(appState, elements);
 
     const shouldShowStats =
       appState.stats.open &&
@@ -258,6 +260,10 @@ const LayerUI = ({
       app.onHemaButtonClick("goAIGenerate", {});
     };
 
+    const showToolbar = UIOptions.visibility?.toolbar !== false;
+    const showLibrary = UIOptions.visibility?.library !== false;
+    const showTopRightUI = UIOptions.visibility?.topRightUI !== false;
+
     return (
       <FixedSideContainer side="top">
         <div className="App-menu App-menu_top">
@@ -265,10 +271,13 @@ const LayerUI = ({
             {renderCanvasActions()}
             {shouldRenderSelectedShapeActions && renderSelectedShapeActions()}
           </Stack.Col>
-          <button
-            className="dropdown-menu-button main-menu-trigger"
-            onClick={() => goHome()}
-          >
+          {(UIOptions.visibility?.customButtons === true ||
+            (typeof UIOptions.visibility?.customButtons === "object" &&
+              UIOptions.visibility?.customButtons?.home !== false)) && (
+            <button
+              className="dropdown-menu-button main-menu-trigger"
+              onClick={() => goHome()}
+            >
             <svg
               className="hema-button-icon"
               viewBox="0 0 1033 1024"
@@ -283,11 +292,15 @@ const LayerUI = ({
                 p-id="6211"
               ></path>
             </svg>
-          </button>
-          <button
-            className="dropdown-menu-button main-menu-trigger"
-            onClick={() => goAIGenerate()}
-          >
+            </button>
+          )}
+          {(UIOptions.visibility?.customButtons === true ||
+            (typeof UIOptions.visibility?.customButtons === "object" &&
+              UIOptions.visibility?.customButtons?.ai !== false)) && (
+            <button
+              className="dropdown-menu-button main-menu-trigger"
+              onClick={() => goAIGenerate()}
+            >
             <svg
               className="hema-button-icon"
               viewBox="0 0 1024 1024"
@@ -306,8 +319,9 @@ const LayerUI = ({
                 p-id="10796"
               ></path>
             </svg>
-          </button>
-          {!appState.viewModeEnabled &&
+            </button>
+          )}
+          {!appState.viewModeEnabled && showToolbar &&
             appState.openDialog?.name !== "elementLinkSelector" && (
               <Section heading="shapes" className="shapes-section">
                 {(heading: React.ReactNode) => (
@@ -322,7 +336,7 @@ const LayerUI = ({
                           "zen-mode": appState.zenModeEnabled,
                         })}
                       >
-                        <Island
+                         <Island
                           padding={1}
                           className={clsx("App-toolbar", {
                             "zen-mode": appState.zenModeEnabled,
@@ -366,7 +380,7 @@ const LayerUI = ({
                             />
                           </Stack.Row>
                         </Island>
-                        {isCollaborating && (
+                         {isCollaborating && (
                           <Island
                             style={{
                               marginLeft: 8,
@@ -406,8 +420,8 @@ const LayerUI = ({
                 userToFollow={appState.userToFollow?.socketId || null}
               />
             )}
-            {renderTopRightUI?.(device.editor.isMobile, appState)}
-            {!appState.viewModeEnabled &&
+            {showTopRightUI && renderTopRightUI?.(device.editor.isMobile, appState)}
+            {!appState.viewModeEnabled && showLibrary &&
               appState.openDialog?.name !== "elementLinkSelector" &&
               // hide button when sidebar docked
               (!isSidebarDocked ||
@@ -431,6 +445,7 @@ const LayerUI = ({
 
   const renderSidebars = () => {
     return (
+      UIOptions.visibility?.library === false ? null : (
       <DefaultSidebar
         __fallback
         onDock={(docked) => {
@@ -441,6 +456,7 @@ const LayerUI = ({
           );
         }}
       />
+      )
     );
   };
 
@@ -455,24 +471,28 @@ const LayerUI = ({
       {/* render component fallbacks. Can be rendered anywhere as they'll be
           tunneled away. We only render tunneled components that actually
         have defaults when host do not render anything. */}
-      <DefaultMainMenu UIOptions={UIOptions} />
-      <DefaultSidebar.Trigger
-        __fallback
-        icon={LibraryIcon}
-        title={capitalizeString(t("toolBar.library"))}
-        onToggle={(open) => {
-          if (open) {
-            trackEvent(
-              "sidebar",
-              `${DEFAULT_SIDEBAR.name} (open)`,
-              `button (${device.editor.isMobile ? "mobile" : "desktop"})`,
-            );
-          }
-        }}
-        tab={DEFAULT_SIDEBAR.defaultTab}
-      >
-        {t("toolBar.library")}
-      </DefaultSidebar.Trigger>
+      {UIOptions.visibility?.mainMenu !== false && (
+        <DefaultMainMenu UIOptions={UIOptions} />
+      )}
+      {UIOptions.visibility?.library !== false && (
+        <DefaultSidebar.Trigger
+          __fallback
+          icon={LibraryIcon}
+          title={capitalizeString(t("toolBar.library"))}
+          onToggle={(open) => {
+            if (open) {
+              trackEvent(
+                "sidebar",
+                `${DEFAULT_SIDEBAR.name} (open)`,
+                `button (${device.editor.isMobile ? "mobile" : "desktop"})`,
+              );
+            }
+          }}
+          tab={DEFAULT_SIDEBAR.defaultTab}
+        >
+          {t("toolBar.library")}
+        </DefaultSidebar.Trigger>
+      )}
       <DefaultOverwriteConfirmDialog />
       {appState.openDialog?.name === "ttd" && <TTDDialog __fallback />}
       {/* ------------------------------------------------------------------ */}

@@ -18,7 +18,7 @@ import type {
 } from "@excalidraw/element/types";
 
 import { frameToolIcon, moreIcon } from "../icons";
-import { useApp, useExcalidrawSetAppState } from "../App";
+import { useApp, useAppProps, useExcalidrawSetAppState } from "../App";
 import { serializeAsJSON } from "../../data/json";
 
 import "./BusinessServiceProtoNav.scss";
@@ -42,6 +42,7 @@ export interface FramesExportData {
 
 export const BusinessServiceProtoNav = () => {
   const app = useApp();
+  const appProps = useAppProps();
   const setAppState = useExcalidrawSetAppState();
   const elements = app.scene.getNonDeletedElements();
   //   console.log("elements:", elements);
@@ -588,12 +589,27 @@ export const BusinessServiceProtoNav = () => {
         </div>
         <div className="business-service-proto-nav-body">
           <div className="business-service-proto-nav-body-frames">
-            <div className="export-all-button" onClick={manualExportFramesData}>
-              保存画布
-            </div>
-            <div className="add-page-button" onClick={addNewFrame}>
-              + 添加页面
-            </div>
+            {(appProps.UIOptions.visibility?.customButtons === true ||
+              (typeof appProps.UIOptions.visibility?.customButtons ===
+                "object" &&
+                appProps.UIOptions.visibility?.customButtons?.saveCanvas !==
+                  false)) && (
+              <div
+                className="export-all-button"
+                onClick={manualExportFramesData}
+              >
+                保存画布
+              </div>
+            )}
+            {(appProps.UIOptions.visibility?.customButtons === true ||
+              (typeof appProps.UIOptions.visibility?.customButtons ===
+                "object" &&
+                appProps.UIOptions.visibility?.customButtons?.addPage !==
+                  false)) && (
+              <div className="add-page-button" onClick={addNewFrame}>
+                + 添加页面
+              </div>
+            )}
             {(frames || []).map((frame) => (
               <div
                 key={frame.id}
@@ -611,18 +627,24 @@ export const BusinessServiceProtoNav = () => {
                   </div>
                 </div>
                 <div className="frames-item-right">
-                  <div
-                    className="more-icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedFrame(frame);
-                      setActiveMenuFrameId(
-                        activeMenuFrameId === frame.id ? null : frame.id,
-                      );
-                    }}
-                  >
-                    {moreIcon}
-                  </div>
+                  {(appProps.UIOptions.visibility?.customButtons === true ||
+                    (typeof appProps.UIOptions.visibility?.customButtons ===
+                      "object" &&
+                      appProps.UIOptions.visibility?.customButtons?.frameMenu !==
+                        false)) && (
+                    <div
+                      className="more-icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedFrame(frame);
+                        setActiveMenuFrameId(
+                          activeMenuFrameId === frame.id ? null : frame.id,
+                        );
+                      }}
+                    >
+                      {moreIcon}
+                    </div>
+                  )}
                   {activeMenuFrameId === frame.id && (
                     <div className="frame-more-menu" ref={menuRef}>
                       <div
