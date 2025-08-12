@@ -1550,7 +1550,11 @@ class App extends React.Component<AppProps, AppState> {
               style={{
                 position: "absolute",
                 left: `${
-                  specButtonX - this.state.offsetLeft + specButtonWidth + 10
+                  specButtonX - this.state.offsetLeft +  ((this.props.UIOptions.visibility?.customButtons === true ||
+                    (typeof this.props.UIOptions.visibility?.customButtons ===
+                      "object" &&
+                      this.props.UIOptions.visibility?.customButtons?.specButton !==
+                        false)) ? specButtonWidth + 10 : 0)
                 }px`,
                 top: `${specButtonY - this.state.offsetTop}px`,
                 width: `${specButtonWidth}px`,
