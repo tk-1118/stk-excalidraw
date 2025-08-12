@@ -423,6 +423,7 @@ import {
 } from "./hyperlink/helpers";
 import { MagicIcon, copyIcon, fullscreenIcon } from "./icons";
 import { Toast } from "./Toast";
+import { buildComponentDetails } from "./specification/buildComponentDetails";
 
 import { findShapeByKey } from "./shapes";
 
@@ -1526,12 +1527,13 @@ class App extends React.Component<AppProps, AppState> {
                 event.preventDefault();
                 event.stopPropagation();
                 // 打开规约构建弹框
-                this.setState({
-                  openDialog: {
-                    name: "specification",
-                    frameId: f.id,
-                  },
-                });
+                // this.setState({
+                //   openDialog: {
+                //     name: "specification",
+                //     frameId: f.id,
+                //   },
+                // });
+                this.onHemaButtonClick("buildProtocol", f);
               }}
               title="构建前端规约"
             >
@@ -2139,8 +2141,24 @@ class App extends React.Component<AppProps, AppState> {
   };
 
   public onHemaButtonClick = (type: string, data: any) => {
+    if ((type === "buildProtocol" || type === "buildFrontPage") && data) {
+      try {
+        const frame = data;
+        const elements = this.scene.getNonDeletedElements();
+        const componentDetails = buildComponentDetails(elements, frame);
+        const payload = { frame, componentDetails };
+        this.props.onHemaButtonClick &&
+          this.props.onHemaButtonClick(type, payload);
+        console.log("onHemaButtonClick", type, payload);
+        return;
+      } catch (error) {
+        console.error("buildProtocol error:", error);
+      }
+    } else {
     console.log("onHemaButtonClick", type, data);
-    this.props.onHemaButtonClick && this.props.onHemaButtonClick(type, data);
+
+      this.props.onHemaButtonClick && this.props.onHemaButtonClick(type, data);
+    }
   };
 
   public onInsertElements = (elements: readonly ExcalidrawElement[]) => {
