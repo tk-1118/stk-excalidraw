@@ -73,6 +73,8 @@ export const BusinessServiceProtoNav = () => {
 
   // 存储上一次的frames快照，用于快速比较
   const prevFramesSnapshot = useRef<string>("");
+  // 标记是否已完成初始化聚焦，避免多次触发
+  const hasInitialFocusRef = useRef<boolean>(false);
 
   /**
    * 生成快速的frames快照，用于初步变化检测
@@ -340,6 +342,23 @@ export const BusinessServiceProtoNav = () => {
     });
     app.scrollToContent(frame, { animate: true });
   };
+
+  // 默认将第一个 frame 聚焦到画布中心（仅初始化一次）
+  useEffect(() => {
+    if (hasInitialFocusRef.current || selectedFrame) {
+      return;
+    }
+    if (frames.length > 0) {
+      const firstFrame = frames[0];
+      setSelectedFrame(firstFrame);
+      setActiveMenuFrameId(null);
+      setAppState({
+        selectedElementIds: { [firstFrame.id]: true },
+      });
+      app.scrollToContent(firstFrame, { animate: true });
+      hasInitialFocusRef.current = true;
+    }
+  }, [frames, selectedFrame, setAppState, app]);
 
   const frameExportPng = async (exportingFrame: ExcalidrawFrameLikeElement) => {
     const elementsInFrame = getFrameChildren(
