@@ -532,8 +532,8 @@ export const BusinessServiceProtoNav = () => {
       const templateElements = elementsWithNewIds.map((el: any) => {
         return {
           ...el,
-          x: el.x - minTemplateX + newX + 50, // 添加50px内边距
-          y: el.y - minTemplateY + newY + 50,
+          x: el.x - minTemplateX + newX,
+          y: el.y - minTemplateY + newY,
         };
       });
 
@@ -547,7 +547,12 @@ export const BusinessServiceProtoNav = () => {
     }
 
     app.scene.replaceAllElements(newElements);
-
+    app.onHemaButtonClick("addNewFrame", {
+      newFrame,
+      templateType,
+      tempTypeName,
+      templateData,
+    });
     setShowTemplateModal(false);
     setSelectedFrame(newFrame);
     // 主动选中frame元素
