@@ -174,9 +174,15 @@ export const BusinessServiceProtoNav = () => {
 
           // 更新groupIds（如果有组引用）
           if (element.groupIds && Array.isArray(element.groupIds)) {
+            // 为groupIds生成新的ID，确保不同frame中的组不冲突
             updatedElement.groupIds = element.groupIds.map(
               (groupId: string) => {
-                return idMap.has(groupId) ? idMap.get(groupId)! : groupId;
+                if (!idMap.has(groupId)) {
+                  // 如果组ID不在映射中，创建一个新的组ID
+                  const newGroupId = randomId();
+                  idMap.set(groupId, newGroupId);
+                }
+                return idMap.get(groupId)!;
               },
             );
           }
@@ -339,6 +345,7 @@ export const BusinessServiceProtoNav = () => {
     // 主动选中frame元素
     setAppState({
       selectedElementIds: { [frame.id]: true },
+      selectedGroupIds: {}, // 清除组选择，避免跨frame影响
     });
     app.scrollToContent(frame, { animate: true });
   };
@@ -556,9 +563,10 @@ export const BusinessServiceProtoNav = () => {
     });
     setShowTemplateModal(false);
     setSelectedFrame(newFrame);
-    // 主动选中frame元素
+    // 主动选中frame元素，清除组选择
     setAppState({
       selectedElementIds: { [newFrame.id]: true },
+      selectedGroupIds: {}, // 确保不会选择到其他frame中的组
     });
     app.scrollToContent(newFrame, {
       fitToContent: true,
@@ -655,8 +663,8 @@ export const BusinessServiceProtoNav = () => {
                   {(appProps.UIOptions.visibility?.customButtons === true ||
                     (typeof appProps.UIOptions.visibility?.customButtons ===
                       "object" &&
-                      appProps.UIOptions.visibility?.customButtons?.frameMenu !==
-                        false)) && (
+                      appProps.UIOptions.visibility?.customButtons
+                        ?.frameMenu !== false)) && (
                     <div
                       className="more-icon"
                       onClick={(e) => {
