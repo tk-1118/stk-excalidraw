@@ -534,6 +534,7 @@ export const BusinessServiceProtoNav = () => {
           ...el,
           x: el.x - minTemplateX + newX,
           y: el.y - minTemplateY + newY,
+          id: randomId(),
         };
       });
 
