@@ -556,10 +556,23 @@ export const BusinessServiceProtoNav = () => {
 
     app.scene.replaceAllElements(newElements);
     app.onHemaButtonClick("addNewFrame", {
-      newFrame,
-      templateType,
-      tempTypeName,
-      templateData,
+      data: {
+        frames: [
+          {
+            childrenElements: templateData?.elements || [],
+            excalidrawData: serializeAsJSON(
+              newElements,
+              app.state,
+              app.files,
+              "local",
+            ),
+
+            frameElement: newFrame,
+            frameName: newFrame.name,
+            frameId: newFrame.id,
+          },
+        ],
+      },
     });
     setShowTemplateModal(false);
     setSelectedFrame(newFrame);
