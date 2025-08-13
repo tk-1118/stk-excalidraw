@@ -76,6 +76,37 @@ export const BusinessServiceProtoNav = () => {
   // 标记是否已完成初始化聚焦，避免多次触发
   const hasInitialFocusRef = useRef<boolean>(false);
 
+  // 处理点击菜单外部区域时隐藏菜单
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        activeMenuFrameId &&
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
+        // 检查点击的是否是其他frame的more-icon
+        const moreIconElements = document.querySelectorAll(".more-icon");
+        let clickedOnMoreIcon = false;
+
+        moreIconElements.forEach((icon) => {
+          if (icon.contains(event.target as Node)) {
+            clickedOnMoreIcon = true;
+          }
+        });
+
+        // 只有当点击的不是more-icon时才隐藏菜单
+        if (!clickedOnMoreIcon) {
+          setActiveMenuFrameId(null);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [activeMenuFrameId]);
+
   /**
    * 生成快速的frames快照，用于初步变化检测
    */
@@ -683,6 +714,7 @@ export const BusinessServiceProtoNav = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedFrame(frame);
+                        // 总是切换当前frame的菜单状态
                         setActiveMenuFrameId(
                           activeMenuFrameId === frame.id ? null : frame.id,
                         );
@@ -695,7 +727,11 @@ export const BusinessServiceProtoNav = () => {
                     <div className="frame-more-menu" ref={menuRef}>
                       <div
                         className="frame-more-menu-item"
-                        onClick={() => frameExportPng(frame)}
+                        onClick={() => {
+                          frameExportPng(frame);
+                          // 点击菜单项后自动隐藏菜单
+                          setActiveMenuFrameId(null);
+                        }}
                       >
                         导出页面PNG
                       </div>
@@ -710,13 +746,19 @@ export const BusinessServiceProtoNav = () => {
                           });
                           // eslint-disable-next-line no-console
                           console.log("Single frame exported:", frameData);
+                          // 点击菜单项后自动隐藏菜单
+                          setActiveMenuFrameId(null);
                         }}
                       >
                         导出页面数据
                       </div>
                       <div
                         className="frame-more-menu-item delete"
-                        onClick={() => deleteFrame(frame)}
+                        onClick={() => {
+                          deleteFrame(frame);
+                          // 点击菜单项后自动隐藏菜单
+                          setActiveMenuFrameId(null);
+                        }}
                       >
                         删除页面
                       </div>
