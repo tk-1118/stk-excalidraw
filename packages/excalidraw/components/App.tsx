@@ -423,7 +423,10 @@ import {
 } from "./hyperlink/helpers";
 import { MagicIcon, copyIcon, fullscreenIcon } from "./icons";
 import { Toast } from "./Toast";
-import { buildComponentDetails } from "./specification/buildComponentDetails";
+import {
+  buildComponentDetails,
+  buildComponentLayoutJSON,
+} from "./specification/buildComponentDetails";
 
 import { findShapeByKey } from "./shapes";
 
@@ -2150,7 +2153,12 @@ class App extends React.Component<AppProps, AppState> {
         const frame = data;
         const elements = this.scene.getNonDeletedElements();
         const componentDetails = buildComponentDetails(elements, frame);
-        const payload = { frame, componentDetails };
+        const componentLayoutJSON = buildComponentLayoutJSON(
+          elements,
+          frame,
+          true,
+        );
+        const payload = { frame, componentDetails, componentLayoutJSON };
         this.props.onHemaButtonClick &&
           this.props.onHemaButtonClick(type, payload);
         console.log("onHemaButtonClick", type, payload);
