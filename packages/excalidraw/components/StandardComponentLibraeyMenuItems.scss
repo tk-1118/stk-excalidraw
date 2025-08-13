@@ -52,7 +52,7 @@
 
     &__items {
       row-gap: 0.5rem;
-      padding: var(--container-padding-y) 0;
+      // padding: var(--container-padding-y) 0;
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
@@ -65,8 +65,13 @@
       font-weight: 700;
       margin-bottom: 0.75rem;
       width: 100%;
-      padding-right: 4rem; // due to dropdown button
+      position: sticky;
+      top: 0px;
+      z-index: 100;
+      padding: 0.75rem 0;
       box-sizing: border-box;
+      transition: all 0.2s ease-in-out;
+      backdrop-filter: blur(20px);
 
       &--excal {
         margin-top: 2rem;

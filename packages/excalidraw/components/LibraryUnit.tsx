@@ -6,6 +6,7 @@ import { useLibraryItemSvg } from "../hooks/useLibraryItemSvg";
 import { useDevice } from "./App";
 import { CheckboxItem } from "./CheckboxItem";
 import { PlusIcon } from "./icons";
+import { PreviewModal } from "./PreviewModal";
 
 import "./LibraryUnit.scss";
 
@@ -34,6 +35,7 @@ export const LibraryUnit = memo(
   }) => {
     const ref = useRef<HTMLDivElement | null>(null);
     const svg = useLibraryItemSvg(id, elements, svgCache);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     useEffect(() => {
       const node = ref.current;
@@ -57,6 +59,32 @@ export const LibraryUnit = memo(
       <div className="library-unit__adder">{PlusIcon}</div>
     );
 
+    // 获取组件名称
+    const componentName = (elements || [])[0]?.customData?.componentName;
+
+    // 处理预览点击
+    const handlePreviewClick = (event: React.MouseEvent) => {
+      // 防止与选择功能冲突
+      if (event.shiftKey) {
+        return;
+      }
+
+      event.stopPropagation();
+      // 只有当有SVG且不是待处理项时才打开预览
+      if (svg && !isPending && svg.outerHTML) {
+        setIsPreviewOpen(true);
+        // 阻止进一步的事件传播以避免触发其他操作
+        event.preventDefault();
+      } else if ((!!elements || !!isPending) && !isPreviewOpen) {
+        // 保持原有的点击功能
+        if (id && event.shiftKey) {
+          onToggle(id, event);
+        } else {
+          onClick(id);
+        }
+      }
+    };
+
     return (
       <>
         <div
@@ -75,17 +103,7 @@ export const LibraryUnit = memo(
             })}
             ref={ref}
             draggable={!!elements}
-            onClick={
-              !!elements || !!isPending
-                ? (event) => {
-                    if (id && event.shiftKey) {
-                      onToggle(id, event);
-                    } else {
-                      onClick(id);
-                    }
-                  }
-                : undefined
-            }
+            onClick={handlePreviewClick}
             onDragStart={(event) => {
               if (!id) {
                 event.preventDefault();
@@ -104,7 +122,14 @@ export const LibraryUnit = memo(
             />
           )}
         </div>
-          <p>{(elements || [])[0]?.customData?.componentName}</p>
+        <p>{componentName}</p>
+        {isPreviewOpen && svg && svg.outerHTML && (
+          <PreviewModal
+            svg={svg.outerHTML}
+            componentName={componentName || ""}
+            onClose={() => setIsPreviewOpen(false)}
+          />
+        )}
       </>
     );
   },

@@ -256,21 +256,8 @@ export default function LibraryMenuItems({
         display: "block",
         overflowY: "auto",
       }}
-      // style={
-      //   pendingElements.length ||
-      //   unpublishedItems.length ||
-      //   publishedItems.length
-      //     ? { justifyContent: "flex-start" }
-      //     : { borderBottom: 0 }
-      // }
     >
-      {/* {!isLibraryEmpty && (
-          <LibraryDropdownMenu
-            selectedItems={selectedItems}
-            onSelectItems={onSelectItems}
-            className="library-menu-dropdown-container--in-heading"
-          />
-        )} */}
+      {/* 基础组件部分 */}
       <Stack.Col
         className="library-menu-items-container__items"
         align="start"
@@ -280,18 +267,8 @@ export default function LibraryMenuItems({
           height: "300px",
           marginBottom: 0,
         }}
-        ref={libraryContainerRef}
       >
-        <div
-          className="library-menu-items-container__header"
-          style={{
-            position: "sticky",
-            top: "0px",
-            zIndex: 1000,
-          }}
-        >
-          基础组件
-        </div>
+        <div className="library-menu-items-container__header">基础组件</div>
         <LibraryMenuSectionGrid>
           <LibraryMenuSection
             itemsRenderedPerBatch={itemsRenderedPerBatch}
@@ -304,6 +281,8 @@ export default function LibraryMenuItems({
           />
         </LibraryMenuSectionGrid>
       </Stack.Col>
+
+      {/* 表单组件部分 */}
       <Stack.Col
         className="library-menu-items-container__items"
         align="start"
@@ -313,18 +292,8 @@ export default function LibraryMenuItems({
           height: "300px",
           marginBottom: 0,
         }}
-        ref={libraryContainerRef}
       >
-        <div
-          className="library-menu-items-container__header"
-          style={{
-            position: "sticky",
-            top: "0px",
-            zIndex: 1000,
-          }}
-        >
-          表单组件
-        </div>
+        <div className="library-menu-items-container__header">表单组件</div>
         <LibraryMenuSectionGrid>
           <LibraryMenuSection
             itemsRenderedPerBatch={itemsRenderedPerBatch}
@@ -337,6 +306,8 @@ export default function LibraryMenuItems({
           />
         </LibraryMenuSectionGrid>
       </Stack.Col>
+
+      {/* 数据组件部分 */}
       <Stack.Col
         className="library-menu-items-container__items"
         align="start"
@@ -346,18 +317,8 @@ export default function LibraryMenuItems({
           height: "300px",
           marginBottom: 0,
         }}
-        ref={libraryContainerRef}
       >
-        <div
-          className="library-menu-items-container__header"
-          style={{
-            position: "sticky",
-            top: "0px",
-            zIndex: 1000,
-          }}
-        >
-          数据组件
-        </div>
+        <div className="library-menu-items-container__header">数据组件</div>
         <LibraryMenuSectionGrid>
           <LibraryMenuSection
             itemsRenderedPerBatch={itemsRenderedPerBatch}
@@ -370,6 +331,8 @@ export default function LibraryMenuItems({
           />
         </LibraryMenuSectionGrid>
       </Stack.Col>
+
+      {/* 消息组件部分 */}
       <Stack.Col
         className="library-menu-items-container__items"
         align="start"
@@ -379,18 +342,8 @@ export default function LibraryMenuItems({
           height: "300px",
           marginBottom: 0,
         }}
-        ref={libraryContainerRef}
       >
-        <div
-          className="library-menu-items-container__header"
-          style={{
-            position: "sticky",
-            top: "0px",
-            zIndex: 1000,
-          }}
-        >
-          消息组件
-        </div>
+        <div className="library-menu-items-container__header">消息组件</div>
         <LibraryMenuSectionGrid>
           <LibraryMenuSection
             itemsRenderedPerBatch={itemsRenderedPerBatch}
@@ -403,6 +356,8 @@ export default function LibraryMenuItems({
           />
         </LibraryMenuSectionGrid>
       </Stack.Col>
+
+      {/* 向导组件部分 */}
       <Stack.Col
         className="library-menu-items-container__items"
         align="start"
@@ -412,18 +367,8 @@ export default function LibraryMenuItems({
           height: "300px",
           marginBottom: 0,
         }}
-        ref={libraryContainerRef}
       >
-        <div
-          className="library-menu-items-container__header"
-          style={{
-            position: "sticky",
-            top: "0px",
-            zIndex: 1000,
-          }}
-        >
-          向导组件
-        </div>
+        <div className="library-menu-items-container__header">向导组件</div>
         <LibraryMenuSectionGrid>
           <LibraryMenuSection
             itemsRenderedPerBatch={itemsRenderedPerBatch}
@@ -436,6 +381,8 @@ export default function LibraryMenuItems({
           />
         </LibraryMenuSectionGrid>
       </Stack.Col>
+
+      {/* 其他组件部分 */}
       <Stack.Col
         className="library-menu-items-container__items"
         align="start"
@@ -445,18 +392,8 @@ export default function LibraryMenuItems({
           height: "300px",
           marginBottom: 0,
         }}
-        ref={libraryContainerRef}
       >
-        <div
-          className="library-menu-items-container__header"
-          style={{
-            position: "sticky",
-            top: "0px",
-            zIndex: 1000,
-          }}
-        >
-          其他组件
-        </div>
+        <div className="library-menu-items-container__header">其他组件</div>
         <LibraryMenuSectionGrid>
           <LibraryMenuSection
             itemsRenderedPerBatch={itemsRenderedPerBatch}
@@ -469,122 +406,6 @@ export default function LibraryMenuItems({
           />
         </LibraryMenuSectionGrid>
       </Stack.Col>
-      {/* <Stack.Col
-          className="library-menu-items-container__items"
-          align="start"
-          gap={1}
-          style={{
-            flex: publishedItems.length > 0 ? 1 : "0 1 auto",
-            marginBottom: 0,
-          }}
-          ref={libraryContainerRef}
-        >
-          <>
-            {!isLibraryEmpty && (
-              <div className="library-menu-items-container__header">
-                {t("labels.personalLib")}
-              </div>
-            )}
-            {isLoading && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "var(--container-padding-y)",
-                  right: "var(--container-padding-x)",
-                  transform: "translateY(50%)",
-                }}
-              >
-                <Spinner />
-              </div>
-            )}
-            {!pendingElements.length && !unpublishedItems.length ? (
-              <div className="library-menu-items__no-items">
-                <div className="library-menu-items__no-items__label">
-                  {t("library.noItems")}
-                </div>
-                <div className="library-menu-items__no-items__hint">
-                  {publishedItems.length > 0
-                    ? t("library.hint_emptyPrivateLibrary")
-                    : t("library.hint_emptyLibrary")}
-                </div>
-              </div>
-            ) : (
-              <LibraryMenuSectionGrid>
-                {pendingElements.length > 0 && (
-                  <LibraryMenuSection
-                    itemsRenderedPerBatch={itemsRenderedPerBatch}
-                    items={[{ id: null, elements: pendingElements }]}
-                    onItemSelectToggle={onItemSelectToggle}
-                    onItemDrag={onItemDrag}
-                    onClick={onAddToLibraryClick}
-                    isItemSelected={isItemSelected}
-                    svgCache={svgCache}
-                  />
-                )}
-                <LibraryMenuSection
-                  itemsRenderedPerBatch={itemsRenderedPerBatch}
-                  items={unpublishedItems}
-                  onItemSelectToggle={onItemSelectToggle}
-                  onItemDrag={onItemDrag}
-                  onClick={onItemClick}
-                  isItemSelected={isItemSelected}
-                  svgCache={svgCache}
-                />
-              </LibraryMenuSectionGrid>
-            )}
-          </>
-  
-          <>
-            {(publishedItems.length > 0 ||
-              pendingElements.length > 0 ||
-              unpublishedItems.length > 0) && (
-              <div className="library-menu-items-container__header library-menu-items-container__header--excal">
-                {t("labels.excalidrawLib")}
-              </div>
-            )}
-            {publishedItems.length > 0 ? (
-              <LibraryMenuSectionGrid>
-                <LibraryMenuSection
-                  itemsRenderedPerBatch={itemsRenderedPerBatch}
-                  items={publishedItems}
-                  onItemSelectToggle={onItemSelectToggle}
-                  onItemDrag={onItemDrag}
-                  onClick={onItemClick}
-                  isItemSelected={isItemSelected}
-                  svgCache={svgCache}
-                />
-              </LibraryMenuSectionGrid>
-            ) : unpublishedItems.length > 0 ? (
-              <div
-                style={{
-                  margin: "1rem 0",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
-                  fontSize: ".9rem",
-                }}
-              >
-                {t("library.noItems")}
-              </div>
-            ) : null}
-          </>
-  
-          {showBtn && (
-            <LibraryMenuControlButtons
-              style={{ padding: "16px 0", width: "100%" }}
-              id={id}
-              libraryReturnUrl={libraryReturnUrl}
-              theme={theme}
-            >
-              <LibraryDropdownMenu
-                selectedItems={selectedItems}
-                onSelectItems={onSelectItems}
-              />
-            </LibraryMenuControlButtons>
-          )}
-        </Stack.Col> */}
     </div>
   );
 }
