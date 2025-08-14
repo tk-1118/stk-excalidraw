@@ -1,4 +1,4 @@
-import { isTextElement } from "@excalidraw/element";
+import { isAnnotationElement, isTextElement } from "@excalidraw/element";
 import { getTextFromElements } from "@excalidraw/element";
 
 import { CODES, KEYS, isFirefox } from "@excalidraw/common";
@@ -46,7 +46,7 @@ export const actionAddRemark = register({
 
     // 过滤掉文本元素，只对非文本元素添加组件说明
     const nonTextElements = selectedElements.filter(
-      (element) => !isTextElement(element)
+      (element) => !isTextElement(element),
     );
 
     if (nonTextElements.length === 0) {
@@ -77,10 +77,14 @@ export const actionAddRemark = register({
       includeBoundTextElement: true,
       includeElementsInFrames: true,
     });
-    
+
     // 如果没有选中元素或所有选中元素都是文本元素，则不显示该操作
-    return selectedElements.length > 0 && 
-           !selectedElements.every((element) => isTextElement(element));
+    return (
+      selectedElements.length > 0 &&
+      !selectedElements.every(
+        (element) => isTextElement(element) || isAnnotationElement(element),
+      )
+    );
   },
   keyTest: undefined,
 });
