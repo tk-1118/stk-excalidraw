@@ -5,13 +5,20 @@ import type {
   ExcalidrawFrameLikeElement,
 } from "@excalidraw/element/types";
 
+/**
+ * 元素树节点接口
+ * 用于表示元素的层级结构关系
+ */
 interface ElementTreeNode {
   element: ExcalidrawElement;
   children: ElementTreeNode[];
   depth: number;
 }
 
-// 精简后的布局节点定义，仅包含对布局/生成有帮助的字段
+/**
+ * 布局节点接口（精简版）
+ * 仅包含对布局/生成有帮助的字段
+ */
 interface LayoutNode {
   id: string;
   type: string;
@@ -35,6 +42,12 @@ interface LayoutNode {
   children: LayoutNode[];
 }
 
+/**
+ * 将数值保留指定小数位数
+ * @param value 需要处理的数值
+ * @param digits 保留的小数位数，默认为2位
+ * @returns 处理后的数值或undefined
+ */
 function toFixedNumber(
   value: number | undefined,
   digits: number = 2,
@@ -45,6 +58,11 @@ function toFixedNumber(
   return Number(value.toFixed(digits));
 }
 
+/**
+ * 提取有意义的自定义数据
+ * @param raw 原始数据对象
+ * @returns 精简后的自定义数据或undefined
+ */
 function pickMeaningfulCustomData(
   raw: any,
 ): LayoutNode["customData"] | undefined {
@@ -70,6 +88,11 @@ function pickMeaningfulCustomData(
     : undefined;
 }
 
+/**
+ * 移除元素中的布局属性，提取关键信息
+ * @param element 原始元素对象
+ * @returns 精简后的布局节点（不含children、depth、siblingIndex）
+ */
 function stripLayoutAttributes(
   element: ExcalidrawElement,
 ): Omit<LayoutNode, "children" | "depth" | "siblingIndex"> {
@@ -117,6 +140,12 @@ function stripLayoutAttributes(
   };
 }
 
+/**
+ * 将元素树映射为布局JSON结构
+ * @param node 元素树节点
+ * @param siblingIndex 兄弟节点索引
+ * @returns 布局节点
+ */
 function mapTreeToLayoutJSON(
   node: ElementTreeNode,
   siblingIndex: number = 0,
@@ -133,6 +162,12 @@ function mapTreeToLayoutJSON(
   };
 }
 
+/**
+ * 判断元素是否在另一个元素内部
+ * @param inner 内部元素
+ * @param outer 外部元素
+ * @returns 是否在内部
+ */
 function isElementInside(
   inner: ExcalidrawElement,
   outer: ExcalidrawElement,
@@ -158,6 +193,11 @@ function isElementInside(
   );
 }
 
+/**
+ * 构建元素层级树
+ * @param elements 元素数组
+ * @returns 元素树节点数组
+ */
 function buildElementTree(elements: ExcalidrawElement[]): ElementTreeNode[] {
   const sortedElements = [...elements].sort((a, b) => {
     if (a.y !== b.y) {
@@ -205,6 +245,11 @@ function buildElementTree(elements: ExcalidrawElement[]): ElementTreeNode[] {
   return root.children;
 }
 
+/**
+ * 构建简化树（只保留有customData的节点）
+ * @param originalTree 原始元素树
+ * @returns 简化后的元素树
+ */
 function buildSimplifiedTree(
   originalTree: ElementTreeNode[],
 ): ElementTreeNode[] {
@@ -242,6 +287,12 @@ function buildSimplifiedTree(
   return simplifiedRoots;
 }
 
+/**
+ * 生成语义化树结构描述
+ * @param node 元素树节点
+ * @param level 当前层级
+ * @returns 语义化描述字符串
+ */
 function generateSemanticTree(
   node: ElementTreeNode,
   level: number = 0,
@@ -249,32 +300,150 @@ function generateSemanticTree(
   const indent = "  ".repeat(level);
   const hasChildren = node.children && node.children.length > 0;
   const customData: any = (node.element as any).customData || {};
+  const el: any = node.element as any;
+
+  // helpers
+  const toNumber2 = (value: any): number | null => {
+    if (typeof value !== "number" || Number.isNaN(value)) {
+      return null;
+    }
+    return Math.round(value * 100) / 100;
+  };
+
+  const normalizeStrokeStyle = (style: any): string | null => {
+    if (style === "dashed") {
+      return "虚线";
+    }
+    if (style === "dotted") {
+      return "点线";
+    }
+    if (style === "solid") {
+      return "实线";
+    }
+    return style ? "实线" : null;
+  };
+
+  const normalizeSharpness = (s: any): string | null => {
+    if (s === "sharp") {
+      return "直角";
+    }
+    if (s === "round") {
+      return "圆角";
+    }
+    return null;
+  };
+
+  const normalizeTextAlign = (a: any): string | null => {
+    if (a === "left") {
+      return "左对齐";
+    }
+    if (a === "center") {
+      return "居中";
+    }
+    if (a === "right") {
+      return "右对齐";
+    }
+    if (a === "justify") {
+      return "两端对齐";
+    }
+    return null;
+  };
+
+  const normalizeVerticalAlign = (a: any): string | null => {
+    if (a === "top") {
+      return "顶部";
+    }
+    if (a === "middle") {
+      return "居中";
+    }
+    if (a === "bottom") {
+      return "底部";
+    }
+    return null;
+  };
+
+  const normalizeArrowhead = (a: any): string | null => {
+    if (a === "arrow") {
+      return "箭头";
+    }
+    if (a === "bar") {
+      return "条形";
+    }
+    if (a === "dot") {
+      return "圆点";
+    }
+    if (a === "none") {
+      return "无";
+    }
+    if (!a) {
+      return "无";
+    }
+    return null;
+  };
+
+  // computed
+  const angleDeg = toNumber2(
+    typeof el.angle === "number" ? (el.angle * 180) / Math.PI : null,
+  );
+  const roughness = toNumber2(el.roughness);
+  const opacity = toNumber2(el.opacity);
+  const strokeWidth = toNumber2(el.strokeWidth);
+
+  // human-friendly section
+  const strokeStyleLabel = normalizeStrokeStyle(el.strokeStyle);
+  const strokeSharpnessLabel = normalizeSharpness(el.strokeSharpness);
 
   const componentInfo = [
-    `${indent}  组件层级: ${level + 1}`,
-    `${indent}  组件用途: ${customData.componentPurpose || "无描述"}`,
-    `${indent}  用户操作: ${customData.componentUserOperation || "无描述"}`,
-    `${indent}  操作结果: ${customData.componentOperationResult || "无描述"}`,
-    `${indent}  服务端交互: ${
+    `${indent}组件: type=${el.type ?? "unknown"}, id=${
+      el.id ?? "unknown"
+    }, 层级=${level + 1}`,
+    `${indent}语义: 用途=${customData.componentPurpose || "无描述"}，用户操作=${
+      customData.componentUserOperation || "无描述"
+    }，结果=${customData.componentOperationResult || "无描述"}，服务端交互=${
       customData.componentServerInteraction || "无描述"
+    }，特殊要求=${customData.componentSpecialRequirements || "无描述"}`,
+    `${indent}UI库: 映射=${customData.componentMapping || "无描述"}`,
+    `${indent}布局(px): x=${toNumber2(el.x) ?? 0}, y=${
+      toNumber2(el.y) ?? 0
+    }, w=${toNumber2(el.width) ?? 0}, h=${toNumber2(el.height) ?? 0}, 角度=${
+      angleDeg ?? 0
+    }°`,
+    `${indent}样式: 背景=${el.backgroundColor ?? "默认"}，透明度=${
+      opacity ?? 1
+    }，粗糙度=${roughness ?? 1}，锁定=${!!el.locked}`,
+    `${indent}  - 描边: 颜色=${el.strokeColor ?? "默认"}，宽度=${
+      strokeWidth ?? 1
+    }px，样式=${strokeStyleLabel ?? "默认"}，边角=${
+      strokeSharpnessLabel ?? "默认"
     }`,
-    `${indent}  特殊要求: ${
-      customData.componentSpecialRequirements || "无描述"
-    }`,
-    `${indent}  UI库映射: ${customData.componentMapping || "无描述"}`,
-    `${indent}  组件样式: 宽度: ${
-      (node.element.width as number)?.toFixed(2) || 0
-    }px, 高度: ${
-      (node.element.height as number)?.toFixed(2) || 0
-    }px, 位置: left: ${node.element.x?.toFixed(2) || 0}px, top: ${
-      node.element.y?.toFixed(2) || 0
-    }px`,
+    ...(el.type === "text"
+      ? [
+          `${indent}文本: "${el.text ?? ""}"`,
+          `${indent}  - 字体: 大小=${toNumber2(el.fontSize) ?? 16}px，类型=${
+            el.fontFamily ?? "默认"
+          }`,
+          `${indent}  - 对齐: 水平=${
+            normalizeTextAlign(el.textAlign) ?? "左对齐"
+          }，垂直=${normalizeVerticalAlign(el.verticalAlign) ?? "顶部"}`,
+        ]
+      : []),
+    ...(el.type === "arrow"
+      ? [
+          `${indent}箭头: 起点=${
+            normalizeArrowhead(el.startArrowhead) ?? "无"
+          }，终点=${normalizeArrowhead(el.endArrowhead) ?? "无"}`,
+        ]
+      : []),
+    `${indent}关系: 分组=${
+      Array.isArray(el.groupIds) ? el.groupIds.length : 0
+    } 个，frameId=${el.frameId ?? "无"}，子组件=${
+      node.children?.length ?? 0
+    } 个`,
   ].join("\n");
 
   let childrenInfo = "";
   if (hasChildren) {
-    childrenInfo = `\n
-    ${indent}子组件 >\n${node.children
+    childrenInfo = `\n  子组件=>  \n${node.children
       .map((child) => generateSemanticTree(child, level + 1))
       .join("\n")}`;
   }
@@ -282,7 +451,12 @@ function generateSemanticTree(
   return `${componentInfo}${childrenInfo}`;
 }
 
-// 第一种方式：按 customData 过滤，生成语义化描述
+/**
+ * 构建组件详情（第一种方式：按 customData 过滤，生成语义化描述）
+ * @param elements 元素数组
+ * @param frame 框架元素
+ * @returns 语义化描述字符串
+ */
 export function buildComponentDetails(
   elements: readonly ExcalidrawElement[],
   frame: ExcalidrawFrameLikeElement,
@@ -297,11 +471,11 @@ export function buildComponentDetails(
   const elementTree = buildElementTree(allElements);
 
   // 构建精简树（只包含有customData的节点）
-  const simplifiedTree = buildSimplifiedTree(elementTree);
+  // const simplifiedTree = buildSimplifiedTree(elementTree);
 
   // 生成语义化描述
-  if (simplifiedTree.length > 0) {
-    const semanticDescription = simplifiedTree
+  if (elementTree.length > 0) {
+    const semanticDescription = elementTree
       .map((node) => generateSemanticTree(node))
       .join("\n\n");
     return semanticDescription;
@@ -319,7 +493,13 @@ export function buildComponentDetails(
   );
 }
 
-// 第二种方式：不按 customData 过滤，基于全量元素生成“精简布局 JSON”
+/**
+ * 构建组件布局JSON（第二种方式：不按 customData 过滤，基于全量元素生成"精简布局 JSON"）
+ * @param elements 元素数组
+ * @param frame 框架元素
+ * @param pretty 是否格式化输出
+ * @returns 布局JSON字符串
+ */
 export function buildComponentLayoutJSON(
   elements: readonly ExcalidrawElement[],
   frame: ExcalidrawFrameLikeElement,
@@ -336,7 +516,10 @@ export function buildComponentLayoutJSON(
   return JSON.stringify(layoutForest, null, pretty ? 2 : 0);
 }
 
-// V2：更语义化且更精简的 JSON（保留布局关键信息）
+/**
+ * 语义化节点V2接口
+ * 更语义化且更精简的JSON结构
+ */
 interface SemanticNodeV2 {
   id: string;
   as?: string; // UI 组件/标签映射
@@ -364,6 +547,12 @@ interface SemanticNodeV2 {
   children: SemanticNodeV2[];
 }
 
+/**
+ * 转换为语义化节点V2
+ * @param node 元素树节点
+ * @param siblingIndex 兄弟节点索引
+ * @returns 语义化节点V2
+ */
 function toSemanticNodeV2(
   node: ElementTreeNode,
   siblingIndex: number,
@@ -432,6 +621,13 @@ function toSemanticNodeV2(
   };
 }
 
+/**
+ * 构建组件布局V2（更语义化且更精简的JSON）
+ * @param elements 元素数组
+ * @param frame 框架元素
+ * @param pretty 是否格式化输出
+ * @returns 布局V2 JSON字符串
+ */
 export function buildComponentLayoutV2(
   elements: readonly ExcalidrawElement[],
   frame: ExcalidrawFrameLikeElement,
