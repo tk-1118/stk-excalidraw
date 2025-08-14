@@ -404,7 +404,7 @@ import ConvertElementTypePopup, {
 } from "./ConvertElementTypePopup";
 
 // stk - 引入BusinessServiceProtoNav组件
-import { BusinessServiceProtoNav } from "./BusinessServiceProtoNav/BusinessServiceProtoNav"
+import { BusinessServiceProtoNav } from "./BusinessServiceProtoNav/BusinessServiceProtoNav";
 import { activeConfirmDialogAtom } from "./ActiveConfirmDialog";
 import BraveMeasureTextError from "./BraveMeasureTextError";
 import { ContextMenu, CONTEXT_MENU_SEPARATOR } from "./ContextMenu";
@@ -425,6 +425,7 @@ import { MagicIcon, copyIcon, fullscreenIcon } from "./icons";
 import { Toast } from "./Toast";
 import {
   buildComponentDetails,
+  buildComponentAreas,
   buildComponentLayoutJSON,
 } from "./specification/buildComponentDetails";
 
@@ -1553,11 +1554,15 @@ class App extends React.Component<AppProps, AppState> {
               style={{
                 position: "absolute",
                 left: `${
-                  specButtonX - this.state.offsetLeft +  ((this.props.UIOptions.visibility?.customButtons === true ||
-                    (typeof this.props.UIOptions.visibility?.customButtons ===
-                      "object" &&
-                      this.props.UIOptions.visibility?.customButtons?.specButton !==
-                        false)) ? specButtonWidth + 10 : 0)
+                  specButtonX -
+                  this.state.offsetLeft +
+                  (this.props.UIOptions.visibility?.customButtons === true ||
+                  (typeof this.props.UIOptions.visibility?.customButtons ===
+                    "object" &&
+                    this.props.UIOptions.visibility?.customButtons
+                      ?.specButton !== false)
+                    ? specButtonWidth + 10
+                    : 0)
                 }px`,
                 top: `${specButtonY - this.state.offsetTop}px`,
                 width: `${specButtonWidth}px`,
@@ -2088,7 +2093,7 @@ class App extends React.Component<AppProps, AppState> {
                         {showShapeSwitchPanel && (
                           <ConvertElementTypePopup app={this} />
                         )}
-                                                <AnnotationLayer
+                        <AnnotationLayer
                           elements={this.scene.getNonDeletedElements()}
                           appState={this.state}
                           setAppState={this.setAppState}
@@ -2117,7 +2122,6 @@ class App extends React.Component<AppProps, AppState> {
                             }
                           }}
                         />
-
                       </ExcalidrawActionManagerContext.Provider>
                       {this.renderEmbeddables()}
                     </ExcalidrawElementsContext.Provider>
@@ -2158,7 +2162,13 @@ class App extends React.Component<AppProps, AppState> {
           frame,
           true,
         );
-        const payload = { frame, componentDetails, componentLayoutJSON };
+        const componentGroupsJSON = buildComponentAreas(elements, frame, true);
+        const payload = {
+          frame,
+          componentDetails,
+          componentLayoutJSON,
+          componentGroupsJSON,
+        };
         this.props.onHemaButtonClick &&
           this.props.onHemaButtonClick(type, payload);
         console.log("onHemaButtonClick", type, payload);
@@ -2167,7 +2177,7 @@ class App extends React.Component<AppProps, AppState> {
         console.error("buildProtocol error:", error);
       }
     } else {
-    console.log("onHemaButtonClick", type, data);
+      console.log("onHemaButtonClick", type, data);
 
       this.props.onHemaButtonClick && this.props.onHemaButtonClick(type, data);
     }
@@ -8341,7 +8351,11 @@ class App extends React.Component<AppProps, AppState> {
   }
 
   private createGenericElementOnPointerDown = (
-    elementType: ExcalidrawGenericElement["type"] | "embeddable" | "iframe" | "annotation",
+    elementType:
+      | ExcalidrawGenericElement["type"]
+      | "embeddable"
+      | "iframe"
+      | "annotation",
     pointerDownState: PointerDownState,
   ): void => {
     const [gridX, gridY] = getGridPoint(
