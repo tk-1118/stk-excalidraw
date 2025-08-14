@@ -47,11 +47,12 @@ export const AnnotationDialog = ({
   const handleConfirm = () => {
     // 按照指定模板格式化数据
     const formattedText =
-      `\n用途=${formData.purpose || "无描述"}` +
-      `\n用户操作=${formData.operation || "无描述"}` +
-      `\n结果=${formData.result || "无描述"}` +
-      `\n服务端交互=${formData.interaction || "无描述"}` +
-      `\n特殊要求=${formData.requirements || "无描述"}`;
+      `组件：\n` +
+      `\n用途: ${formData.purpose || "无描述"}\n` +
+      `\n用户操作: ${formData.operation || "无描述"}\n` +
+      `\n操作结果: ${formData.result || "无描述"}\n` +
+      `\n服务端交互: ${formData.interaction || "无描述"}\n` +
+      `\n特殊要求: ${formData.requirements || "无描述"}\n`;
 
     onConfirm(formattedText);
     onClose();
