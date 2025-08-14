@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 
 import "./AnnotationContent.scss";
 
@@ -25,6 +25,7 @@ export const AnnotationContent = ({
   const [isVisible, setIsVisible] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [parsedData, setParsedData] = useState<AnnotationData | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsVisible(true);
@@ -146,6 +147,7 @@ export const AnnotationContent = ({
 
   return (
     <div 
+      ref={contentRef}
       className={contentClasses}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
