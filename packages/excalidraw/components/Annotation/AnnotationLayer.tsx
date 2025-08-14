@@ -60,7 +60,7 @@ export const AnnotationLayer = ({
           // 使用sceneCoordsToViewportCoords将场景坐标转换为视口坐标
           const { x: viewportX, y: viewportY } = sceneCoordsToViewportCoords(
             { sceneX: annotationX, sceneY: annotationY },
-            appState
+            appState,
           );
 
           return (
@@ -75,6 +75,21 @@ export const AnnotationLayer = ({
               }}
               onClick={(e) => {
                 e.stopPropagation();
+              }}
+              onMouseEnter={() => {
+                setAppState((prev: AppState) => ({
+                  hoveredElementIds: {
+                    ...prev.hoveredElementIds,
+                    [element.id]: true,
+                  },
+                }));
+              }}
+              onMouseLeave={() => {
+                setAppState((prev: AppState) => {
+                  const next = { ...prev.hoveredElementIds } as any;
+                  delete next[element.id];
+                  return { hoveredElementIds: next } as any;
+                });
               }}
             >
               <AnnotationContent

@@ -6719,14 +6719,6 @@ class App extends React.Component<AppProps, AppState> {
           isExpanded: true,
         },
       });
-
-      // 更新hoveredElementIds状态，将注释元素标记为悬停状态
-      this.setState((prevState) => ({
-        hoveredElementIds: {
-          ...prevState.hoveredElementIds,
-          [hoveredAnnotation.id]: true,
-        },
-      }));
     }
 
     // 检查之前展开的标注是否不再被悬停，如果是则收起标注
@@ -6738,35 +6730,50 @@ class App extends React.Component<AppProps, AppState> {
       if (annotation !== hoveredAnnotation) {
         // 添加延迟隐藏机制，避免用户还没移动到注释内容上就立即消失
         setTimeout(() => {
-          // 再次检查注释是否仍然未被悬停，确保不会误关闭
-          const isStillHovered = annotationElements.some(
-            (element) =>
-              element.id === annotation.id && element.customData?.isExpanded,
+          // 注释仍处于展开状态？
+          const isStillExpanded = !!this.scene
+            .getNonDeletedElements()
+            .find((el) => el.id === annotation.id && el.customData?.isExpanded);
+
+          if (!isStillExpanded) {
+            return;
+          }
+
+          // 是否悬停在注释内容上（由 AnnotationLayer 维护）
+          const isHoveringContent = !!(
+            this.state.hoveredElementIds &&
+            this.state.hoveredElementIds[annotation.id]
           );
 
-          // 检查鼠标是否悬停在注释内容上
-          const isHoveringContent =
-            this.state.hoveredElementIds?.[annotation.id];
+          // 是否悬停在注释图标上（使用最新指针坐标）
+          const last = this.lastPointerMoveCoords;
+          const isHoveringIcon = (() => {
+            if (!last) {
+              return false;
+            }
+            const cx = annotation.x + annotation.width / 2;
+            const cy = annotation.y + annotation.height / 2;
+            const dx = last.x - cx;
+            const dy = last.y - cy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            return dist <= 20;
+          })();
 
-          // 只有当注释仍处于展开状态且鼠标既不悬停在注释图标上也不悬停在注释内容上时才关闭
-          if (isStillHovered && !isHoveringContent && !hoveredAnnotation) {
+          // 满足：未在图标上、且未在内容上，则关闭
+          if (!isHoveringIcon && !isHoveringContent) {
             this.mutateElement(annotation, {
               customData: {
                 ...annotation.customData,
                 isExpanded: false,
               },
             });
-
-            // 同时更新hoveredElementIds状态，确保注释内容被正确标记为非悬停状态
             this.setState((prevState) => {
-              const newHoveredElementIds = { ...prevState.hoveredElementIds };
-              delete newHoveredElementIds[annotation.id];
-              return {
-                hoveredElementIds: newHoveredElementIds,
-              };
+              const next = { ...prevState.hoveredElementIds } as any;
+              delete next[annotation.id];
+              return { hoveredElementIds: next } as any;
             });
           }
-        }, 300); // 延迟300毫秒隐藏
+        }, 1000); // 延迟1000毫秒隐藏
       }
     }
   };
