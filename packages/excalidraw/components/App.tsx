@@ -2161,12 +2161,12 @@ class App extends React.Component<AppProps, AppState> {
         const frame = data;
         const elements = this.scene.getNonDeletedElements();
         const componentDetails = buildComponentDetails(elements, frame);
-        const componentLayoutJSON = buildComponentLayoutJSON(
-          elements,
-          frame,
-          true,
-        );
-        const componentGroupsJSON = buildComponentAreas(elements, frame, true);
+        // const componentLayoutJSON = buildComponentLayoutJSON(
+        //   elements,
+        //   frame,
+        //   true,
+        // );
+        // const componentGroupsJSON = buildComponentAreas(elements, frame, true);
 
         // 导出frame图片
         let frameImageBase64 = null;
@@ -2192,8 +2192,8 @@ class App extends React.Component<AppProps, AppState> {
         const payload = {
           frame,
           componentDetails,
-          componentLayoutJSON,
-          componentGroupsJSON,
+          // componentLayoutJSON,
+          // componentGroupsJSON,
           frameImage: frameImageBase64,
         };
         this.props.onHemaButtonClick &&

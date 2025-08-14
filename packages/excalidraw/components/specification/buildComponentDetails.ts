@@ -513,26 +513,27 @@ export function buildComponentDetails(
   const elementTree = buildElementTree(allElements);
 
   // 构建精简树（只包含有customData的节点）
-  // const simplifiedTree = buildSimplifiedTree(elementTree);
+  const simplifiedTree = buildSimplifiedTree(elementTree);
 
   // 生成语义化描述
-  if (elementTree.length > 0) {
-    const semanticDescription = elementTree
+  if (simplifiedTree.length > 0) {
+    const semanticDescription = simplifiedTree
       .map((node) => generateSemanticTree(node))
       .join("\n\n");
     return semanticDescription;
   }
 
-  return (
-    "当前frame及其子元素中没有找到包含customData的组件。\n\n" +
-    "请为相关元素添加组件描述信息：\n" +
-    "- componentPurpose: 组件用途\n" +
-    "- componentUserOperation: 用户操作\n" +
-    "- componentOperationResult: 操作结果\n" +
-    "- componentServerInteraction: 服务端交互\n" +
-    "- componentSpecialRequirements: 特殊要求\n" +
-    "- componentMapping: UI库映射"
-  );
+  return ``;
+  // return (
+  //   "当前frame及其子元素中没有找到包含customData的组件。\n\n" +
+  //   "请为相关元素添加组件描述信息：\n" +
+  //   "- componentPurpose: 组件用途\n" +
+  //   "- componentUserOperation: 用户操作\n" +
+  //   "- componentOperationResult: 操作结果\n" +
+  //   "- componentServerInteraction: 服务端交互\n" +
+  //   "- componentSpecialRequirements: 特殊要求\n" +
+  //   "- componentMapping: UI库映射"
+  // );
 }
 
 /**
