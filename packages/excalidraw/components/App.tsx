@@ -633,6 +633,13 @@ class App extends React.Component<AppProps, AppState> {
   eraserTrail = new EraserTrail(this.animationFrameHandler, this);
   lassoTrail = new LassoTrail(this.animationFrameHandler, this);
 
+  // 扫描特效：记录需要展示扫描效果的 frameId 以及对应的超时句柄
+  private activeScanFrameIds = new Set<ExcalidrawElement["id"]>();
+  private scanEffectTimeouts = new Map<
+    ExcalidrawElement["id"],
+    ReturnType<typeof setTimeout>
+  >();
+
   onHemaButtonClickEmitter = new Emitter<[type: string, data: any]>();
 
   onChangeEmitter = new Emitter<
@@ -1515,8 +1522,8 @@ class App extends React.Component<AppProps, AppState> {
                 top: `${specButtonY - this.state.offsetTop}px`,
                 width: `${specButtonWidth}px`,
                 height: `${specButtonHeight}px`,
-                backgroundColor: "#007acc",
-                border: "2px solid #005a9c",
+                backgroundColor: "#6965DB",
+                border: "2px solid #6965DB",
                 borderRadius: "4px",
                 cursor: "pointer",
                 zIndex: 2,
@@ -1542,6 +1549,8 @@ class App extends React.Component<AppProps, AppState> {
                 //     frameId: f.id,
                 //   },
                 // });
+                // 启动扫描特效（3 秒）
+                this.startFrameScanEffect(f.id, 3000);
                 this.onHemaButtonClick("buildProtocol", f);
               }}
               title="构建前端规约"
@@ -1572,8 +1581,8 @@ class App extends React.Component<AppProps, AppState> {
                 top: `${specButtonY - this.state.offsetTop}px`,
                 width: `${specButtonWidth}px`,
                 height: `${specButtonHeight}px`,
-                backgroundColor: "#007acc",
-                border: "2px solid #005a9c",
+                backgroundColor: "#6965DB",
+                border: "2px solid #6965DB",
                 borderRadius: "4px",
                 cursor: "pointer",
                 zIndex: 2,
@@ -1597,6 +1606,24 @@ class App extends React.Component<AppProps, AppState> {
               title="AI生成"
             >
               AI生成
+            </div>
+          )}
+          {/* 扫描特效覆盖层（与frame同位） */}
+          {this.activeScanFrameIds.has(f.id) && (
+            <div
+              style={{
+                position: "fixed",
+                left: `${x1 - this.state.offsetLeft}px`,
+                top: `${y1 - this.state.offsetTop}px`,
+                width: `${f.width * this.state.zoom.value}px`,
+                height: `${f.height * this.state.zoom.value}px`,
+                pointerEvents: "none",
+                zIndex: 3,
+                overflow: "hidden",
+                borderRadius: "4px",
+              }}
+            >
+              <div className="hema-frame-scan-overlay" />
             </div>
           )}
         </React.Fragment>
@@ -1757,6 +1784,24 @@ class App extends React.Component<AppProps, AppState> {
           }}
         >
           {frameNameJSX}
+          {/* 扫描特效覆盖层 */}
+          {this.activeScanFrameIds.has(f.id) && (
+            <div
+              style={{
+                position: "fixed",
+                left: `${x1 - this.state.offsetLeft}px`,
+                top: `${y1 - this.state.offsetTop}px`,
+                width: `${f.width * this.state.zoom.value}px`,
+                height: `${f.height * this.state.zoom.value}px`,
+                pointerEvents: "none",
+                zIndex: 3,
+                overflow: "hidden",
+                borderRadius: "4px",
+              }}
+            >
+              <div className="hema-frame-scan-overlay" />
+            </div>
+          )}
         </div>
       );
     });
@@ -1838,6 +1883,41 @@ class App extends React.Component<AppProps, AppState> {
             <ExcalidrawContainerContext.Provider
               value={this.excalidrawContainerValue}
             >
+              {/* 注入扫描特效的全局样式 */}
+              <style>{`
+                @keyframes hema-scan-move {
+                  0% { transform: translateY(-100%); }
+                  100% { transform: translateY(100%); }
+                }
+                .hema-frame-scan-overlay {
+                  position: absolute;
+                  left: 0;
+                  top: 0;
+                  right: 0;
+                  bottom: 0;
+                  background: linear-gradient(
+                    to bottom,
+                    rgba(105, 101, 219, 0) 0%,
+                    rgba(105, 101, 219, 0.15) 30%,
+                    rgba(105, 101, 219, 0.35) 50%,
+                    rgba(105, 101, 219, 0.15) 70%,
+                    rgba(105, 101, 219, 0) 100%
+                  );
+                  animation: hema-scan-move 1.2s linear infinite;
+                  mix-blend-mode: screen;
+                }
+                
+                .excalidraw.theme--dark .hema-frame-scan-overlay {
+                  background: linear-gradient(
+                    to bottom,
+                    rgba(168, 165, 255, 0) 0%,
+                    rgba(168, 165, 255, 0.15) 30%,
+                    rgba(168, 165, 255, 0.35) 50%,
+                    rgba(168, 165, 255, 0.15) 70%,
+                    rgba(168, 165, 255, 0) 100%
+                  );
+                }
+              `}</style>
               <DeviceContext.Provider value={this.device}>
                 <ExcalidrawSetAppStateContext.Provider value={this.setAppState}>
                   <ExcalidrawAppStateContext.Provider value={this.state}>
@@ -2217,6 +2297,24 @@ class App extends React.Component<AppProps, AppState> {
 
       this.props.onHemaButtonClick && this.props.onHemaButtonClick(type, data);
     }
+  };
+  /** 启动某个 frame 的扫描特效，durationMs 毫秒后自动结束 */
+  private startFrameScanEffect = (
+    frameId: ExcalidrawElement["id"],
+    durationMs: number = 3000,
+  ) => {
+    this.activeScanFrameIds.add(frameId);
+    this.triggerRender();
+    const prevTimer = this.scanEffectTimeouts.get(frameId);
+    if (prevTimer) {
+      clearTimeout(prevTimer);
+    }
+    const timer = setTimeout(() => {
+      this.activeScanFrameIds.delete(frameId);
+      this.scanEffectTimeouts.delete(frameId);
+      this.triggerRender();
+    }, durationMs);
+    this.scanEffectTimeouts.set(frameId, timer);
   };
 
   public onInsertElements = (elements: readonly ExcalidrawElement[]) => {
@@ -2935,6 +3033,10 @@ class App extends React.Component<AppProps, AppState> {
     this.onChangeEmitter.clear();
     this.store.onStoreIncrementEmitter.clear();
     this.store.onDurableIncrementEmitter.clear();
+    // 清理扫描特效计时器
+    this.scanEffectTimeouts.forEach((timer) => clearTimeout(timer));
+    this.scanEffectTimeouts.clear();
+    this.activeScanFrameIds.clear();
     ShapeCache.destroy();
     SnapCache.destroy();
     clearTimeout(touchTimeout);
