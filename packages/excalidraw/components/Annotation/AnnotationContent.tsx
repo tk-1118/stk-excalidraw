@@ -112,6 +112,15 @@ export const AnnotationContent = ({
     setTimeout(() => setIsActive(false), 300);
   }, []);
 
+  const handleMouseEnter = useCallback(() => {
+    // 鼠标进入时取消可能的关闭操作
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    // 鼠标离开时关闭注释
+    handleClose();
+  }, [handleClose]);
+
   const contentClasses = [
     "annotation-content",
     isVisible ? "visible" : "closing",
@@ -136,7 +145,11 @@ export const AnnotationContent = ({
   };
 
   return (
-    <div className={contentClasses}>
+    <div 
+      className={contentClasses}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <div className="annotation-content-box" onClick={handleContentClick}>
         <button
           className="annotation-content-close"
@@ -154,11 +167,11 @@ export const AnnotationContent = ({
         <div className="annotation-content-body">
           {parsedData ? (
             <>
-              {renderField("用途", parsedData.purpose, "🎯")}
-              {renderField("用户操作", parsedData.operation, "👆")}
-              {renderField("操作结果", parsedData.result, "✅")}
-              {renderField("服务端交互", parsedData.interaction, "📡")}
-              {renderField("特殊要求", parsedData.requirements, "⚠️")}
+              {renderField("作用对象", parsedData.purpose, "🎯")}
+              {renderField("需求说明", parsedData.operation, "👆")}
+              {renderField("用户操作与交互", parsedData.result, "✅")}
+              {renderField("服务端接口交互", parsedData.interaction, "📡")}
+              {/* {renderField("特殊要求", parsedData.requirements, "⚠️")} */}
               {!parsedData.purpose &&
                 !parsedData.operation &&
                 !parsedData.result &&
