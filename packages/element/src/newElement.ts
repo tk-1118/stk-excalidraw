@@ -301,6 +301,7 @@ export const newAnnotationElement = (
     textAlign?: TextAlign;
     verticalAlign?: VerticalAlign;
     lineHeight?: ExcalidrawAnnotationElement["lineHeight"];
+    rawData?: string;
   } & ElementConstructorOpts,
 ): NonDeleted<ExcalidrawAnnotationElement> => {
   const fontFamily = opts.fontFamily || DEFAULT_FONT_FAMILY;
@@ -319,6 +320,7 @@ export const newAnnotationElement = (
     lineHeight,
     customData: {
       ...opts.customData,
+      rawData: opts.rawData,
       isExpanded: false,
     },
   };

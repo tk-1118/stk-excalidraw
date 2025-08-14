@@ -8016,22 +8016,37 @@ class App extends React.Component<AppProps, AppState> {
 
     // 设置标注元素的初始位置和样式
     const createAnnotation = (text: string) => {
-      // 确保文本内容不为空
-      const annotationText = text.trim() || "";
+      // 解析JSON文本获取结构化数据
+      let jsonData = null;
+      let displayText = text;
 
-      // 获取网格点，如果按住Ctrl则不对齐网格
+      try {
+        // 尝试解析传入的文本是否为JSON
+        jsonData = JSON.parse(text);
+        // 如果是JSON，创建格式化的显示文本
+        if (typeof jsonData === "object" && jsonData !== null) {
+          displayText =
+            `组件：\n` +
+            `\n用途: ${jsonData.purpose || "无描述"}\n` +
+            `\n用户操作: ${jsonData.operation || "无描述"}\n` +
+            `\n操作结果: ${jsonData.result || "无描述"}\n` +
+            `\n服务端交互: ${jsonData.interaction || "无描述"}\n` +
+            `\n特殊要求: ${jsonData.requirements || "无描述"}\n`;
+        }
+      } catch (e) {
+        // 如果不是JSON，保持原始文本
+        console.log("Annotation text is not JSON, storing as plain text");
+      }
+
       const [gridX, gridY] = getGridPoint(
-        pointerDownState.origin.x,
-        pointerDownState.origin.y,
-        this.lastPointerDownEvent?.[KEYS.CTRL_OR_CMD]
-          ? null
-          : this.getEffectiveGridSize(),
+        pointerDownState.lastCoords.x,
+        pointerDownState.lastCoords.y,
+        this.getEffectiveGridSize(),
       );
 
-      const topLayerFrame = this.getTopLayerFrameAtSceneCoords({
-        x: gridX,
-        y: gridY,
-      });
+      const topLayerFrame = this.getTopLayerFrameAtSceneCoords(
+        pointerDownState.lastCoords,
+      );
 
       const annotationElement = newAnnotationElement({
         x: gridX,
@@ -8044,7 +8059,9 @@ class App extends React.Component<AppProps, AppState> {
         roughness: this.state.currentItemRoughness,
         opacity: this.state.currentItemOpacity,
         frameId: topLayerFrame ? topLayerFrame.id : null,
-        text: annotationText,
+        text: displayText, // 显示格式化的文本
+        rawData:
+          typeof jsonData === "object" && jsonData !== null ? text : undefined, // 只有当text是JSON时才存储为rawData
         fontSize: this.state.currentItemFontSize,
         fontFamily: this.state.currentItemFontFamily,
         textAlign: this.state.currentItemTextAlign,

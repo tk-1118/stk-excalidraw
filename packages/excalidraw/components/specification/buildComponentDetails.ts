@@ -516,8 +516,8 @@ export function buildComponentDetails(
   const simplifiedTree = buildSimplifiedTree(elementTree);
 
   // 生成语义化描述
-  if (simplifiedTree.length > 0) {
-    const semanticDescription = simplifiedTree
+  if (elementTree.length > 0) {
+    const semanticDescription = elementTree
       .map((node) => generateSemanticTree(node))
       .join("\n\n");
     return semanticDescription;

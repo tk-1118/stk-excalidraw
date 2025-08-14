@@ -45,16 +45,18 @@ export const AnnotationDialog = ({
   const firstFieldRef = useRef<HTMLTextAreaElement>(null);
 
   const handleConfirm = () => {
-    // 按照指定模板格式化数据
-    const formattedText =
-      `组件：\n` +
-      `\n用途: ${formData.purpose || "无描述"}\n` +
-      `\n用户操作: ${formData.operation || "无描述"}\n` +
-      `\n操作结果: ${formData.result || "无描述"}\n` +
-      `\n服务端交互: ${formData.interaction || "无描述"}\n` +
-      `\n特殊要求: ${formData.requirements || "无描述"}\n`;
+    // 以JSON格式存储数据
+    const jsonData = {
+      purpose: formData.purpose || "无描述",
+      operation: formData.operation || "无描述",
+      result: formData.result || "无描述",
+      interaction: formData.interaction || "无描述",
+      requirements: formData.requirements || "无描述",
+      mapping: formData.mapping || "无描述",
+    };
 
-    onConfirm(formattedText);
+    // 将JSON数据作为字符串传递
+    onConfirm(JSON.stringify(jsonData));
     onClose();
   };
 
@@ -74,39 +76,55 @@ export const AnnotationDialog = ({
   // 解析 defaultValue 并填充表单
   useEffect(() => {
     if (defaultValue) {
-      // 尝试解析默认值并填充表单
-      const fields = defaultValue.split("，").filter(Boolean);
-      const parsedData: Record<string, string> = {};
-
-      fields.forEach((field) => {
-        const [key, ...valueParts] = field.split("=");
-        const value = valueParts.join("=").replace(/^"(.*)"$/, "$1"); // 移除引号
-
-        switch (key?.trim()) {
-          case "用途":
-            parsedData.purpose = value || "";
-            break;
-          case "用户操作":
-            parsedData.operation = value || "";
-            break;
-          case "结果":
-            parsedData.result = value || "";
-            break;
-          case "服务端交互":
-            parsedData.interaction = value || "";
-            break;
-          case "特殊要求":
-            parsedData.requirements = value || "";
-            break;
-          default:
-            break;
+      try {
+        // 尝试解析默认值为JSON
+        const parsedData = JSON.parse(defaultValue);
+        if (typeof parsedData === "object" && parsedData !== null) {
+          setFormData({
+            purpose: parsedData.purpose || "",
+            operation: parsedData.operation || "",
+            result: parsedData.result || "",
+            interaction: parsedData.interaction || "",
+            requirements: parsedData.requirements || "",
+            mapping: parsedData.mapping || "",
+          });
+          return;
         }
-      });
+      } catch (e) {
+        // 如果不是JSON，按原有方式解析
+        const fields = defaultValue.split("，").filter(Boolean);
+        const parsedData: Record<string, string> = {};
 
-      setFormData((prev) => ({
-        ...prev,
-        ...parsedData,
-      }));
+        fields.forEach((field) => {
+          const [key, ...valueParts] = field.split("=");
+          const value = valueParts.join("=").replace(/^"(.*)"$/, "$1"); // 移除引号
+
+          switch (key?.trim()) {
+            case "用途":
+              parsedData.purpose = value || "";
+              break;
+            case "用户操作":
+              parsedData.operation = value || "";
+              break;
+            case "结果":
+              parsedData.result = value || "";
+              break;
+            case "服务端交互":
+              parsedData.interaction = value || "";
+              break;
+            case "特殊要求":
+              parsedData.requirements = value || "";
+              break;
+            default:
+              break;
+          }
+        });
+
+        setFormData((prev) => ({
+          ...prev,
+          ...parsedData,
+        }));
+      }
     }
   }, [defaultValue]);
 
