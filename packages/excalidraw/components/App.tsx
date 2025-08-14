@@ -1550,7 +1550,7 @@ class App extends React.Component<AppProps, AppState> {
                 //   },
                 // });
                 // 启动扫描特效（3 秒）
-                this.startFrameScanEffect(f.id, 3000);
+                this.startFrameScanEffect(f.id, 6000);
                 this.onHemaButtonClick("buildProtocol", f);
               }}
               title="构建前端规约"
@@ -1887,7 +1887,8 @@ class App extends React.Component<AppProps, AppState> {
               <style>{`
                 @keyframes hema-scan-move {
                   0% { transform: translateY(-100%); }
-                  100% { transform: translateY(100%); }
+                  50% { transform: translateY(100%); }
+                  100% { transform: translateY(-100%); }
                 }
                 .hema-frame-scan-overlay {
                   position: absolute;
@@ -1898,12 +1899,12 @@ class App extends React.Component<AppProps, AppState> {
                   background: linear-gradient(
                     to bottom,
                     rgba(105, 101, 219, 0) 0%,
-                    rgba(105, 101, 219, 0.15) 30%,
+                    rgba(105, 101, 219, 0.15) 48%,
                     rgba(105, 101, 219, 0.35) 50%,
-                    rgba(105, 101, 219, 0.15) 70%,
+                    rgba(105, 101, 219, 0.15) 52%,
                     rgba(105, 101, 219, 0) 100%
                   );
-                  animation: hema-scan-move 1.2s linear infinite;
+                  animation: hema-scan-move 2.4s ease-in-out infinite;
                   mix-blend-mode: screen;
                 }
                 
@@ -1911,9 +1912,9 @@ class App extends React.Component<AppProps, AppState> {
                   background: linear-gradient(
                     to bottom,
                     rgba(168, 165, 255, 0) 0%,
-                    rgba(168, 165, 255, 0.15) 30%,
+                    rgba(168, 165, 255, 0.15) 48%,
                     rgba(168, 165, 255, 0.35) 50%,
-                    rgba(168, 165, 255, 0.15) 70%,
+                    rgba(168, 165, 255, 0.15) 52%,
                     rgba(168, 165, 255, 0) 100%
                   );
                 }
@@ -2301,7 +2302,7 @@ class App extends React.Component<AppProps, AppState> {
   /** 启动某个 frame 的扫描特效，durationMs 毫秒后自动结束 */
   private startFrameScanEffect = (
     frameId: ExcalidrawElement["id"],
-    durationMs: number = 3000,
+    durationMs: number = 5000,
   ) => {
     this.activeScanFrameIds.add(frameId);
     this.triggerRender();
