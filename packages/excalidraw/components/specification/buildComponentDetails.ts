@@ -335,3 +335,119 @@ export function buildComponentLayoutJSON(
 
   return JSON.stringify(layoutForest, null, pretty ? 2 : 0);
 }
+
+// V2：更语义化且更精简的 JSON（保留布局关键信息）
+interface SemanticNodeV2 {
+  id: string;
+  as?: string; // UI 组件/标签映射
+  role?: string; // 组件语义角色（来源于 componentMapping）
+  text?: string; // 文本类元素内容
+  layout: {
+    position: "absolute";
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    rotate?: number;
+    order: number; // 同级顺序
+  };
+  geometry?: {
+    points?: number[][]; // 线/多边形等
+  };
+  intent?: {
+    purpose?: string;
+    userOperation?: string;
+    operationResult?: string;
+    serverInteraction?: string;
+    specialRequirements?: string;
+  };
+  children: SemanticNodeV2[];
+}
+
+function toSemanticNodeV2(
+  node: ElementTreeNode,
+  siblingIndex: number,
+): SemanticNodeV2 {
+  const anyEl = node.element as any;
+  const x = toFixedNumber(anyEl.x, 2) ?? 0;
+  const y = toFixedNumber(anyEl.y, 2) ?? 0;
+  const w = toFixedNumber(anyEl.width, 2) ?? 0;
+  const h = toFixedNumber(anyEl.height, 2) ?? 0;
+  const rotate = toFixedNumber(anyEl.angle, 4);
+
+  const text = typeof anyEl.text === "string" ? anyEl.text : undefined;
+  const role =
+    typeof anyEl?.customData?.componentMapping === "string"
+      ? anyEl.customData.componentMapping
+      : undefined;
+  const as = role || (typeof anyEl.type === "string" ? anyEl.type : undefined);
+
+  let points: number[][] | undefined;
+  if (Array.isArray(anyEl.points)) {
+    points = anyEl.points.map((pt: any) => {
+      const px = toFixedNumber(pt?.[0], 2) ?? 0;
+      const py = toFixedNumber(pt?.[1], 2) ?? 0;
+      return [px, py];
+    });
+  }
+
+  const intent = ((): SemanticNodeV2["intent"] => {
+    const cd = anyEl.customData || {};
+    const picked: SemanticNodeV2["intent"] = {};
+    if (cd.componentPurpose) {
+      picked.purpose = cd.componentPurpose;
+    }
+    if (cd.componentUserOperation) {
+      picked.userOperation = cd.componentUserOperation;
+    }
+    if (cd.componentOperationResult) {
+      picked.operationResult = cd.componentOperationResult;
+    }
+    if (cd.componentServerInteraction) {
+      picked.serverInteraction = cd.componentServerInteraction;
+    }
+    if (cd.componentSpecialRequirements) {
+      picked.specialRequirements = cd.componentSpecialRequirements;
+    }
+    return Object.keys(picked).length ? picked : undefined;
+  })();
+
+  return {
+    id: String(anyEl.id ?? ""),
+    as,
+    role,
+    text,
+    layout: {
+      position: "absolute",
+      x,
+      y,
+      w,
+      h,
+      rotate,
+      order: siblingIndex,
+    },
+    geometry: points ? { points } : undefined,
+    intent,
+    children: node.children.map((child, idx) => toSemanticNodeV2(child, idx)),
+  };
+}
+
+export function buildComponentLayoutV2(
+  elements: readonly ExcalidrawElement[],
+  frame: ExcalidrawFrameLikeElement,
+  pretty: boolean = true,
+): string {
+  const frameChildren = getFrameChildren(elements, frame.id);
+  const allElements = [frame, ...frameChildren] as ExcalidrawElement[];
+  const elementTree = buildElementTree(allElements);
+
+  // 语义化输出使用单一根（frame）优先；如存在多个顶层节点则全部输出
+  const v2Forest = elementTree.map((node, index) =>
+    toSemanticNodeV2(node, index),
+  );
+  const result = {
+    version: "layout.v2",
+    nodes: v2Forest,
+  };
+  return JSON.stringify(result, null, pretty ? 2 : 0);
+}
