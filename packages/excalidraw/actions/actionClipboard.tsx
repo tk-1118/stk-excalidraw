@@ -37,6 +37,25 @@ export const actionAddRemark = register({
       };
     }
 
+    // 禁止为文本元素添加组件说明
+    if (selectedElements.every((element) => isTextElement(element))) {
+      return {
+        captureUpdate: CaptureUpdateAction.EVENTUALLY,
+      };
+    }
+
+    // 过滤掉文本元素，只对非文本元素添加组件说明
+    const nonTextElements = selectedElements.filter(
+      (element) => !isTextElement(element)
+    );
+
+    if (nonTextElements.length === 0) {
+      // 如果只有文本元素，直接返回
+      return {
+        captureUpdate: CaptureUpdateAction.EVENTUALLY,
+      };
+    }
+
     // 设置应用状态以打开备注对话框
     return {
       appState: {
@@ -44,13 +63,24 @@ export const actionAddRemark = register({
         openDialog: {
           name: "remark",
           data: {
-            elementIds: selectedElements.map((el) => el.id),
-            customData: selectedElements[0].customData || {},
+            elementIds: nonTextElements.map((el) => el.id),
+            customData: nonTextElements[0].customData || {},
           },
         },
       },
       captureUpdate: CaptureUpdateAction.IMMEDIATELY,
     };
+  },
+  predicate: (elements, appState, appProps, app) => {
+    const selectedElements = app.scene.getSelectedElements({
+      selectedElementIds: appState.selectedElementIds,
+      includeBoundTextElement: true,
+      includeElementsInFrames: true,
+    });
+    
+    // 如果没有选中元素或所有选中元素都是文本元素，则不显示该操作
+    return selectedElements.length > 0 && 
+           !selectedElements.every((element) => isTextElement(element));
   },
   keyTest: undefined,
 });
