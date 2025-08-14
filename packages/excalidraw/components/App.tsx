@@ -6594,7 +6594,7 @@ class App extends React.Component<AppProps, AppState> {
     const annotationElements = allElements.filter(isAnnotationElement);
 
     // 检查鼠标是否在任何标注元素附近
-    let hoveredAnnotation = null;
+    let hoveredAnnotation: any = null;
     for (const element of annotationElements) {
       const centerX = element.x + element.width / 2;
       const centerY = element.y + element.height / 2;

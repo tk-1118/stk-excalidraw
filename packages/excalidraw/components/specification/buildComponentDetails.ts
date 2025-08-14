@@ -509,21 +509,21 @@ export function buildComponentDetails(
   // 包含frame本身和所有子元素
   const allElements = [frame, ...frameChildren] as ExcalidrawElement[];
 
-  console.log("location", {
-    page: {
-      x: frame.x,
-      y: frame.y,
-      w: frame.width,
-      h: frame.height,
-      elements: frameChildren.map((el) => ({
-        x: el.x,
-        y: el.y,
-        w: el.width,
-        h: el.height,
-        ...(el?.text ? { label: el?.text } : {}),
-      })),
-    },
-  });
+  // console.log("location", {
+  //   page: {
+  //     x: frame.x,
+  //     y: frame.y,
+  //     w: frame.width,
+  //     h: frame.height,
+  //     elements: frameChildren.map((el) => ({
+  //       x: el.x,
+  //       y: el.y,
+  //       w: el.width,
+  //       h: el.height,
+  //       ...(el?.text ? { label: el?.text } : {}),
+  //     })),
+  //   },
+  // });
   // 构建元素层级树
   const elementTree = buildElementTree(allElements);
 
