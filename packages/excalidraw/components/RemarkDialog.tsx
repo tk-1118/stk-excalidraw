@@ -125,7 +125,7 @@ export const RemarkDialog = ({
           <div
             style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
           >
-            <label>1. 它在页面上是干什么的？</label>
+            <label>作用对象</label>
             <textarea
               ref={firstFieldRef}
               value={componentPurpose}
@@ -133,8 +133,13 @@ export const RemarkDialog = ({
               onKeyDown={handleKeyDown}
               placeholder={`示例：
               展示商品信息
-              让用户搜索订单
-              显示订单当前状态`}
+              让用户搜索订单说明该提示对应的页面元素或功能点，方便后续整理与实现。
+建议写法：位置 + 元素类型 + 元素名称（可选其二）
+示例：
+	•	页面顶部的搜索条件标题
+	•	“客户列表”中的“状态”字段
+	•	“订单详情”信息展示表单
+	•	表单中的“联系人电话”输入框`}
               // disabled
               style={{
                 boxSizing: "border-box",
@@ -152,13 +157,15 @@ export const RemarkDialog = ({
           <div
             style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
           >
-            <label>2. 用户会怎么操作它？</label>
+            <label>需求说明</label>
             <textarea
               value={componentUserOperation}
               onChange={(e) => setComponentUserOperation(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={`示例：
-              点击 / 输入文字 / 选择下拉项 / 拖拽 / 悬停显示 / 无操作 / 其他…`}
+              placeholder={`描述该组件的业务意义和目标。
+示例：
+	•	在客户列表中提供状态筛选，方便业务人员快速定位目标客户。
+	•	在订单详情页展示快递单号，方便客户跟踪物流。`}
               // disabled
               style={{
                 boxSizing: "border-box",
@@ -176,16 +183,15 @@ export const RemarkDialog = ({
           <div
             style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
           >
-            <label>3. 用户操作后会发生什么？</label>
+            <label>用户操作与交互</label>
             <textarea
               value={componentOperationResult}
               onChange={(e) => setComponentOperationResult(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={`示例：
-              点击"立即购买" → 跳转到支付页
-              输入搜索词 → 列表实时刷新
-              选择订单状态 → 筛选订单列表
-              无操作 → 仅展示信息`}
+              placeholder={`说明用户如何使用该组件，交互流程是什么。
+示例：
+	•	用户选择状态下拉框中的“已签约” → 列表刷新显示匹配数据
+	•	用户输入关键字 → 点击“搜索” → 展示结果列表`}
               // disabled
               style={{
                 boxSizing: "border-box",
@@ -203,29 +209,17 @@ export const RemarkDialog = ({
           <div
             style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
           >
-            <label>4. 需要和服务端交互吗？</label>
+            <label>服务端接口交互</label>
             <textarea
               value={componentServerInteraction}
               onChange={(e) => setComponentServerInteraction(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={`示例：
-              获取商品详情
-              提交订单
-              搜索订单列表
-              上传文件
-              ）*
-              "成功后告诉用户什么？"
-              *（示例：
-              "订单提交成功！"
-              "找到3个订单"
-              "文件上传完成"
-              ）*
-              "失败时告诉用户什么？"
-              *（示例：
-              "网络错误，请重试"
-              "库存不足"
-              "文件格式不支持"
-              ）*`}
+              placeholder={`引用已配置的服务端应用服务，并说明调用目的、输入输出要点。
+格式：
+	•	应用服务：@服务端/应用服务名称
+	•	调用目的：简要说明为何调用
+	•	关键输入：说明哪些字段会传入（字段名可与应用服务定义一致）
+	•	关键输出：说明需要用到的返回字段`}
               // disabled
               style={{
                 boxSizing: "border-box",
@@ -240,7 +234,7 @@ export const RemarkDialog = ({
               }}
             />
           </div>
-          <div
+          {/* <div
             style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
           >
             <label>5. 有没有什么特殊要求？</label>
@@ -266,11 +260,11 @@ export const RemarkDialog = ({
                 whiteSpace: "pre-wrap",
               }}
             />
-          </div>
+          </div> */}
           <div
             style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
           >
-            <label>6. 有没有使用UI库？</label>
+            <label>映射组件库</label>
             <textarea
               value={componentMapping}
               onChange={(e) => setComponentMapping(e.target.value)}

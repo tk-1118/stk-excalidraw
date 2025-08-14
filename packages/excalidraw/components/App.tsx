@@ -430,6 +430,7 @@ import {
   buildComponentDetails,
   buildComponentAreas,
   buildComponentLayoutJSON,
+  buildComponentsTips,
 } from "./specification/buildComponentDetails";
 
 import { findShapeByKey } from "./shapes";
@@ -2161,6 +2162,14 @@ class App extends React.Component<AppProps, AppState> {
         const frame = data;
         const elements = this.scene.getNonDeletedElements();
         const componentDetails = buildComponentDetails(elements, frame);
+        const componentsTips = buildComponentsTips(elements).map((tip) => {
+          return [
+            `作用对象: ${tip.purpose}`,
+            `需求说明: ${tip.operation}`,
+            `用户操作与交互: ${tip.result}`,
+            `服务端接口交互: ${tip.interaction}`,
+          ].join("\n");
+        });
         const componentLayoutJSON = buildComponentLayoutJSON(
           elements,
           frame,
@@ -2192,6 +2201,7 @@ class App extends React.Component<AppProps, AppState> {
         const payload = {
           frame,
           componentDetails,
+          componentsTips,
           componentLayoutJSON,
           componentGroupsJSON,
           frameImage: frameImageBase64,
@@ -6800,7 +6810,7 @@ class App extends React.Component<AppProps, AppState> {
 
       // 使用更大的检测范围
       if (distance <= 16) {
-        console.log("点击标注元素:", element.id);
+        console.log("点击标注元素:", element);
         // 切换展开/收起状态
         this.mutateElement(element, {
           customData: {
@@ -8060,10 +8070,10 @@ class App extends React.Component<AppProps, AppState> {
         if (typeof jsonData === "object" && jsonData !== null) {
           displayText =
             `组件：\n` +
-            `\n用途: ${jsonData.purpose || "无描述"}\n` +
-            `\n用户操作: ${jsonData.operation || "无描述"}\n` +
-            `\n操作结果: ${jsonData.result || "无描述"}\n` +
-            `\n服务端交互: ${jsonData.interaction || "无描述"}\n` +
+            `\n作用对象: ${jsonData.purpose || "无描述"}\n` +
+            `\n需求说明: ${jsonData.operation || "无描述"}\n` +
+            `\n用户操作与交互: ${jsonData.result || "无描述"}\n` +
+            `\n服务端接口交互: ${jsonData.interaction || "无描述"}\n` +
             `\n特殊要求: ${jsonData.requirements || "无描述"}\n`;
         }
       } catch (e) {

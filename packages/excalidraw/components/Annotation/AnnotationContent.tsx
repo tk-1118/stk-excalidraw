@@ -79,13 +79,13 @@ export const AnnotationContent = ({
 
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
-          if (line.startsWith("用途:")) {
+          if (line.startsWith("作用对象:")) {
             parsed.purpose = line.substring(4).trim() || "无描述";
-          } else if (line.startsWith("用户操作:")) {
+          } else if (line.startsWith("需求说明:")) {
             parsed.operation = line.substring(6).trim() || "无描述";
-          } else if (line.startsWith("操作结果:")) {
+          } else if (line.startsWith("用户操作与交互:")) {
             parsed.result = line.substring(6).trim() || "无描述";
-          } else if (line.startsWith("服务端交互:")) {
+          } else if (line.startsWith("服务端接口交互:")) {
             parsed.interaction = line.substring(7).trim() || "无描述";
           } else if (line.startsWith("特殊要求:")) {
             parsed.requirements = line.substring(6).trim() || "无描述";

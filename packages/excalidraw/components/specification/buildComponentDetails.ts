@@ -396,13 +396,14 @@ function generateSemanticTree(
   componentInfoList.push(`${indent}组件: `);
   if (customData) {
     componentInfoList.push(
-      `${indent}${indent}语义: 用途=${
+      `${indent}${indent}语义: 作用对象=${
         customData.componentPurpose || "无描述"
-      }，用户操作=${customData.componentUserOperation || "无描述"}，结果=${
+      }需求说明=${
+        customData.componentUserOperation || "无描述"
+      }，用户操作与交互=${
         customData.componentOperationResult || "无描述"
-      }，服务端交互=${
-        customData.componentServerInteraction || "无描述"
-      }，特殊要求=${customData.componentSpecialRequirements || "无描述"}`,
+      }，服务端接口交互=${customData.componentServerInteraction || "无描述"}`,
+      // ，特殊要求=${customData.componentSpecialRequirements || "无描述"}`,
     );
     componentInfoList.push(
       `${indent}${indent}UI库: 映射=${customData.componentMapping || "无描述"}`,
@@ -503,6 +504,7 @@ export function buildComponentDetails(
   elements: readonly ExcalidrawElement[],
   frame: ExcalidrawFrameLikeElement,
 ): string {
+  elements = elements.filter((el) => el.type !== "annotation");
   // 获取frame内的所有子元素
   const frameChildren = getFrameChildren(elements, frame.id);
 
@@ -549,6 +551,14 @@ export function buildComponentDetails(
   //   "- componentSpecialRequirements: 特殊要求\n" +
   //   "- componentMapping: UI库映射"
   // );
+}
+
+export function buildComponentsTips(
+  elements: readonly ExcalidrawElement[],
+): any[] {
+  return elements
+    .filter((el) => el.type === "annotation")
+    .map((el) => JSON.parse(el.customData?.rawData));
 }
 
 /**
