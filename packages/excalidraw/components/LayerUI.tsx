@@ -572,7 +572,7 @@ const LayerUI = ({
         <AnnotationDialog
           onClose={appState.openDialog.onClose}
           onConfirm={appState.openDialog.onConfirm}
-          defaultValue=""
+          defaultValue={appState.openDialog.defaultValue || ""}
         />
       )}
       {appState.openDialog?.name === "remark" && (

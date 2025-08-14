@@ -363,6 +363,8 @@ export interface AppState {
         name: "annotation";
         onClose: () => void;
         onConfirm: (text: string) => void;
+        /** 用于编辑时预填的原始数据（优先为JSON字符串，其次为展示文本） */
+        defaultValue?: string;
       }
     | {
         name: "remark";

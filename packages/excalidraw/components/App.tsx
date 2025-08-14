@@ -2208,13 +2208,12 @@ class App extends React.Component<AppProps, AppState> {
         };
         this.props.onHemaButtonClick &&
           this.props.onHemaButtonClick(type, payload);
-        console.log("onHemaButtonClick", type, payload);
-        return;
+        // debug: onHemaButtonClick
       } catch (error) {
-        console.error("buildProtocol error:", error);
+        // buildProtocol error
       }
     } else {
-      console.log("onHemaButtonClick", type, data);
+      // debug: onHemaButtonClick
 
       this.props.onHemaButtonClick && this.props.onHemaButtonClick(type, data);
     }
@@ -5791,6 +5790,99 @@ class App extends React.Component<AppProps, AppState> {
       this.state,
     );
 
+    // 命中检测双击位置上的批注元素，打开编辑对话框
+    const hitEl = this.getElementAtPosition(sceneX, sceneY, {
+      includeLockedElements: true,
+    });
+    if (hitEl && isAnnotationElement(hitEl)) {
+      const annotation = hitEl as any;
+      const defaultValue =
+        annotation.customData?.rawData || annotation.text || "";
+      this.setState({
+        openDialog: {
+          name: "annotation",
+          defaultValue,
+          onClose: () => this.setOpenDialog(null),
+          onConfirm: (text: string) => {
+            try {
+              const json = JSON.parse(text);
+              const displayText =
+                `组件：\n` +
+                `\n作用对象: ${json.purpose || "无描述"}\n` +
+                `\n需求说明: ${json.operation || "无描述"}\n` +
+                `\n用户操作与交互: ${json.result || "无描述"}\n` +
+                `\n服务端接口交互: ${json.interaction || "无描述"}\n` +
+                `\n特殊要求: ${json.requirements || "无描述"}\n`;
+              this.mutateElement(annotation, {
+                text: displayText,
+                customData: {
+                  ...(annotation.customData || {}),
+                  rawData: text,
+                },
+              });
+            } catch {
+              this.mutateElement(annotation, {
+                text,
+                customData: {
+                  ...(annotation.customData || {}),
+                  rawData: undefined,
+                },
+              });
+            }
+            this.setOpenDialog(null);
+          },
+        },
+      });
+      return;
+    }
+
+    // 若双击的是批注元素，打开编辑对话框
+    if (
+      selectedElements.length === 1 &&
+      isAnnotationElement(selectedElements[0])
+    ) {
+      const annotation = selectedElements[0] as any;
+      const defaultValue =
+        annotation.customData?.rawData || annotation.text || "";
+      this.setState({
+        openDialog: {
+          name: "annotation",
+          defaultValue,
+          onClose: () => this.setOpenDialog(null),
+          onConfirm: (text: string) => {
+            try {
+              const json = JSON.parse(text);
+              const displayText =
+                `组件：\n` +
+                `\n作用对象: ${json.purpose || "无描述"}\n` +
+                `\n需求说明: ${json.operation || "无描述"}\n` +
+                `\n用户操作与交互: ${json.result || "无描述"}\n` +
+                `\n服务端接口交互: ${json.interaction || "无描述"}\n` +
+                `\n特殊要求: ${json.requirements || "无描述"}\n`;
+              this.mutateElement(annotation, {
+                text: displayText,
+                customData: {
+                  ...(annotation.customData || {}),
+                  rawData: text,
+                },
+              });
+            } catch {
+              // 非JSON，按纯文本保存
+              this.mutateElement(annotation, {
+                text,
+                customData: {
+                  ...(annotation.customData || {}),
+                  rawData: undefined,
+                },
+              });
+            }
+            this.setOpenDialog(null);
+          },
+        },
+      });
+      return;
+    }
+
     if (selectedElements.length === 1 && isLinearElement(selectedElements[0])) {
       const selectedLinearElement: ExcalidrawLinearElement =
         selectedElements[0];
@@ -6810,7 +6902,6 @@ class App extends React.Component<AppProps, AppState> {
 
       // 使用更大的检测范围
       if (distance <= 16) {
-        console.log("点击标注元素:", element);
         // 切换展开/收起状态
         this.mutateElement(element, {
           customData: {
@@ -8078,7 +8169,6 @@ class App extends React.Component<AppProps, AppState> {
         }
       } catch (e) {
         // 如果不是JSON，保持原始文本
-        console.log("Annotation text is not JSON, storing as plain text");
       }
 
       const [gridX, gridY] = getGridPoint(
