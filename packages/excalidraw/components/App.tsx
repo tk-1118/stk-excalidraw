@@ -1,7 +1,10 @@
 import clsx from "clsx";
 import throttle from "lodash.throttle";
 import React, { useContext } from "react";
-import { isAnnotationElement } from "@excalidraw/element";
+import {
+  getNonDeletedElements,
+  isAnnotationElement,
+} from "@excalidraw/element";
 import { flushSync } from "react-dom";
 import rough from "roughjs/bin/rough";
 import { nanoid } from "nanoid";
@@ -472,6 +475,7 @@ import type {
 } from "../types";
 import type { RoughCanvas } from "roughjs/bin/canvas";
 import type { Action, ActionResult } from "../actions/types";
+import { exportToCanvas } from "@excalidraw/utils";
 
 const AppContext = React.createContext<AppClassProperties>(null!);
 const AppPropsContext = React.createContext<AppProps>(null!);
@@ -2151,7 +2155,7 @@ class App extends React.Component<AppProps, AppState> {
     return this.scene.getNonDeletedElements();
   };
 
-  public onHemaButtonClick = (type: string, data: any) => {
+  public onHemaButtonClick = async (type: string, data: any) => {
     if ((type === "buildProtocol" || type === "buildFrontPage") && data) {
       try {
         const frame = data;
@@ -2163,11 +2167,34 @@ class App extends React.Component<AppProps, AppState> {
           true,
         );
         const componentGroupsJSON = buildComponentAreas(elements, frame, true);
+
+        // 导出frame图片
+        let frameImageBase64 = null;
+        try {
+          const elementsInFrame = getFrameChildren(
+            getNonDeletedElements(elements),
+            frame.id,
+          ).filter(
+            (element) => !(element.type === "text" && element.containerId),
+          );
+
+          const canvas = await exportToCanvas({
+            elements: elementsInFrame,
+            appState: this.state,
+            files: this.files,
+          });
+
+          frameImageBase64 = canvas.toDataURL("image/png");
+        } catch (error) {
+          console.error("Error exporting frame image:", error);
+        }
+
         const payload = {
           frame,
           componentDetails,
           componentLayoutJSON,
           componentGroupsJSON,
+          frameImage: frameImageBase64,
         };
         this.props.onHemaButtonClick &&
           this.props.onHemaButtonClick(type, payload);
