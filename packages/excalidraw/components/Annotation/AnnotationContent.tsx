@@ -151,7 +151,7 @@ export const AnnotationContent = ({
       onMouseLeave={handleMouseLeave}
     >
       <div className="annotation-content-box" onClick={handleContentClick}>
-        <button
+        {/* <button
           className="annotation-content-close"
           onClick={(e) => {
             e.stopPropagation();
@@ -160,7 +160,7 @@ export const AnnotationContent = ({
           aria-label="关闭"
         >
           ×
-        </button>
+        </button> */}
         <div className="annotation-content-header">
           <h3>组件标注</h3>
         </div>
