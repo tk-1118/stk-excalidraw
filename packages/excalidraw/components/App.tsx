@@ -748,6 +748,7 @@ class App extends React.Component<AppProps, AppState> {
         resetCursor: this.resetCursor,
         updateFrameRendering: this.updateFrameRendering,
         toggleSidebar: this.toggleSidebar,
+        startFrameScanEffect: this.startFrameScanEffect,
         onHemaButtonClick: (cb) => this.onHemaButtonClickEmitter.on(cb),
         onChange: (cb) => this.onChangeEmitter.on(cb),
         onIncrement: (cb) => this.store.onStoreIncrementEmitter.on(cb),
@@ -1612,7 +1613,7 @@ class App extends React.Component<AppProps, AppState> {
           {this.activeScanFrameIds.has(f.id) && (
             <div
               style={{
-                position: "fixed",
+                position: "absolute",
                 left: `${x1 - this.state.offsetLeft}px`,
                 top: `${y1 - this.state.offsetTop}px`,
                 width: `${f.width * this.state.zoom.value}px`,
@@ -2300,7 +2301,7 @@ class App extends React.Component<AppProps, AppState> {
     }
   };
   /** 启动某个 frame 的扫描特效，durationMs 毫秒后自动结束 */
-  private startFrameScanEffect = (
+  public startFrameScanEffect = (
     frameId: ExcalidrawElement["id"],
     durationMs: number = 5000,
   ) => {

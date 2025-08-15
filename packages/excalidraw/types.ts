@@ -894,6 +894,10 @@ export interface ExcalidrawImperativeAPI {
    * used in conjunction with view mode (props.viewModeEnabled).
    */
   updateFrameRendering: InstanceType<typeof App>["updateFrameRendering"];
+  /**
+   * 启动某个 frame 的扫描特效，durationMs 毫秒后自动结束
+   */
+  startFrameScanEffect: InstanceType<typeof App>["startFrameScanEffect"];
   onHemaButtonClick: (
     callback: (type: string, data: any) => void,
   ) => UnsubscribeCallback;
