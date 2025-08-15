@@ -1787,24 +1787,6 @@ class App extends React.Component<AppProps, AppState> {
           }}
         >
           {frameNameJSX}
-          {/* 扫描特效覆盖层 */}
-          {this.activeScanFrameIds.has(f.id) && (
-            <div
-              style={{
-                position: "fixed",
-                left: `${x1 - this.state.offsetLeft}px`,
-                top: `${y1 - this.state.offsetTop}px`,
-                width: `${f.width * this.state.zoom.value}px`,
-                height: `${f.height * this.state.zoom.value}px`,
-                pointerEvents: "none",
-                zIndex: 3,
-                overflow: "hidden",
-                borderRadius: "4px",
-              }}
-            >
-              <div className="hema-frame-scan-overlay" />
-            </div>
-          )}
         </div>
       );
     });

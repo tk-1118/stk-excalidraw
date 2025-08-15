@@ -50,6 +50,7 @@
   "prettier": "@excalidraw/prettier-config",
   "scripts": {
     "clean:output": "rimraf packages/excalidraw/dist packages/common/dist packages/element/dist packages/math/dist packages/utils/dist",
+    "clean:tgz": "rimraf packages/*/*.tgz",
     "build:pack": "for d in packages/*; do (cd \"$d\" && npm pack); done",
     "build-node": "node ./scripts/build-node.js",
     "build:app:docker": "yarn --cwd ./excalidraw-app build:app:docker",
