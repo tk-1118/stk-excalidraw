@@ -1612,6 +1612,7 @@ class App extends React.Component<AppProps, AppState> {
           {/* 扫描特效覆盖层（与frame同位） */}
           {this.activeScanFrameIds.has(f.id) && (
             <div
+              className="hema-frame-scan-container"
               style={{
                 position: "absolute",
                 left: `${x1 - this.state.offsetLeft}px`,
@@ -1622,6 +1623,7 @@ class App extends React.Component<AppProps, AppState> {
                 zIndex: 3,
                 overflow: "hidden",
                 borderRadius: "4px",
+                boxSizing: "border-box",
               }}
             >
               <div className="hema-frame-scan-overlay" />
