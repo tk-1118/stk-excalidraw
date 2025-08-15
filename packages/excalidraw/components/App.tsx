@@ -1884,42 +1884,6 @@ class App extends React.Component<AppProps, AppState> {
             <ExcalidrawContainerContext.Provider
               value={this.excalidrawContainerValue}
             >
-              {/* 注入扫描特效的全局样式 */}
-              <style>{`
-                @keyframes hema-scan-move {
-                  0% { transform: translateY(-100%); }
-                  50% { transform: translateY(100%); }
-                  100% { transform: translateY(-100%); }
-                }
-                .hema-frame-scan-overlay {
-                  position: absolute;
-                  left: 0;
-                  top: 0;
-                  right: 0;
-                  bottom: 0;
-                  background: linear-gradient(
-                    to bottom,
-                    rgba(105, 101, 219, 0) 0%,
-                    rgba(105, 101, 219, 0.15) 48%,
-                    rgba(105, 101, 219, 0.35) 50%,
-                    rgba(105, 101, 219, 0.15) 52%,
-                    rgba(105, 101, 219, 0) 100%
-                  );
-                  animation: hema-scan-move 2.4s ease-in-out infinite;
-                  mix-blend-mode: screen;
-                }
-                
-                .excalidraw.theme--dark .hema-frame-scan-overlay {
-                  background: linear-gradient(
-                    to bottom,
-                    rgba(168, 165, 255, 0) 0%,
-                    rgba(168, 165, 255, 0.15) 48%,
-                    rgba(168, 165, 255, 0.35) 50%,
-                    rgba(168, 165, 255, 0.15) 52%,
-                    rgba(168, 165, 255, 0) 100%
-                  );
-                }
-              `}</style>
               <DeviceContext.Provider value={this.device}>
                 <ExcalidrawSetAppStateContext.Provider value={this.setAppState}>
                   <ExcalidrawAppStateContext.Provider value={this.state}>
