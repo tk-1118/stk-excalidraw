@@ -188,7 +188,27 @@
         </div>
 
         <div class="test-section">
-            <h3>测试步骤 5：混合内容测试</h3>
+            <h3>测试步骤 5：初始数据网络图片测试</h3>
+            <p><strong>重要测试</strong>：验证初始化画布时网络图片能够正确加载</p>
+            <div class="test-urls">
+                <div class="url-item" onclick="loadInitialDataWithNetworkImages()">
+                    加载包含网络图片的初始数据
+                </div>
+                <div class="url-item" onclick="clearCanvas()">
+                    清空画布
+                </div>
+            </div>
+            <p><strong>预期结果</strong>：</p>
+            <ul>
+                <li>点击"加载包含网络图片的初始数据"后，画布应该显示网络图片</li>
+                <li>图片应该立即或很快显示出来，不需要手动操作</li>
+                <li>检查浏览器控制台，应该看到预加载网络图片的日志</li>
+                <li>图片加载完成后应该自动重新渲染</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>测试步骤 6：混合内容测试</h3>
             <p>测试同时包含图片和文本的复制粘贴</p>
             <div class="test-urls">
                 <div class="url-item" onclick="copyToClipboard('<p>文本内容</p><img src=&quot;https://picsum.photos/300/200?random=4&quot; alt=&quot;测试图片&quot;>')">
@@ -247,6 +267,102 @@
         // 如果要测试真实的ZZ-Infra配置，可以设置为null让系统自动使用
         const useRealZZInfraConfig = false; // 设置为true使用真实配置
 
+        // 全局变量存储Excalidraw API
+        let excalidrawAPI = null;
+
+        // 测试用的初始数据，包含网络图片
+        const initialDataWithNetworkImages = {
+            elements: [
+                {
+                    id: "test-network-image-1",
+                    type: "image",
+                    x: 100,
+                    y: 100,
+                    width: 300,
+                    height: 200,
+                    strokeColor: "transparent",
+                    backgroundColor: "transparent",
+                    fillStyle: "solid",
+                    strokeWidth: 1,
+                    strokeStyle: "solid",
+                    roughness: 1,
+                    opacity: 100,
+                    imageUrl: "https://picsum.photos/400/300?random=100",
+                    status: "saved",
+                    locked: false,
+                    link: null,
+                    updated: Date.now(),
+                    seed: Math.floor(Math.random() * 1000000),
+                    versionNonce: Math.floor(Math.random() * 1000000),
+                    isDeleted: false,
+                    groupIds: [],
+                    frameId: null,
+                    roundness: null,
+                    boundElements: null,
+                    customData: null,
+                    index: "a0"
+                },
+                {
+                    id: "test-network-image-2", 
+                    type: "image",
+                    x: 450,
+                    y: 100,
+                    width: 250,
+                    height: 180,
+                    strokeColor: "transparent",
+                    backgroundColor: "transparent",
+                    fillStyle: "solid",
+                    strokeWidth: 1,
+                    strokeStyle: "solid",
+                    roughness: 1,
+                    opacity: 100,
+                    imageUrl: "https://picsum.photos/350/250?random=200",
+                    status: "saved",
+                    locked: false,
+                    link: null,
+                    updated: Date.now(),
+                    seed: Math.floor(Math.random() * 1000000),
+                    versionNonce: Math.floor(Math.random() * 1000000),
+                    isDeleted: false,
+                    groupIds: [],
+                    frameId: null,
+                    roundness: null,
+                    boundElements: null,
+                    customData: null,
+                    index: "a1"
+                }
+            ],
+            appState: {
+                viewBackgroundColor: "#ffffff"
+            }
+        };
+
+        // 加载包含网络图片的初始数据
+        window.loadInitialDataWithNetworkImages = function() {
+            if (excalidrawAPI) {
+                showStatus('加载包含网络图片的初始数据...', 'success');
+                excalidrawAPI.updateScene(initialDataWithNetworkImages);
+                showStatus('初始数据已加载，请查看控制台日志', 'success');
+            } else {
+                showStatus('Excalidraw API 未准备就绪', 'error');
+            }
+        };
+
+        // 清空画布
+        window.clearCanvas = function() {
+            if (excalidrawAPI) {
+                excalidrawAPI.updateScene({
+                    elements: [],
+                    appState: {
+                        viewBackgroundColor: "#ffffff"
+                    }
+                });
+                showStatus('画布已清空', 'success');
+            } else {
+                showStatus('Excalidraw API 未准备就绪', 'error');
+            }
+        };
+
         // 初始化 Excalidraw
         const container = document.getElementById('excalidraw-container');
         const root = createRoot(container);
@@ -282,6 +398,12 @@
                     
                     // 返回 undefined 让 Excalidraw 继续处理
                     return undefined;
+                },
+                ref: (api) => {
+                    excalidrawAPI = api;
+                    if (api) {
+                        console.log('Excalidraw API 已准备就绪');
+                    }
                 }
             })
         );

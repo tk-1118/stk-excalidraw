@@ -2606,6 +2606,11 @@ class App extends React.Component<AppProps, AppState> {
       this.addNewImagesToImageCache();
     }
 
+    // 如果有新的元素，预加载其中的网络图片
+    if (actionResult.elements) {
+      this.preloadNetworkImages(actionResult.elements);
+    }
+
     if (actionResult.appState || editingTextElement || this.state.contextMenu) {
       let viewModeEnabled = actionResult?.appState?.viewModeEnabled || false;
       let zenModeEnabled = actionResult?.appState?.zenModeEnabled || false;
@@ -2798,6 +2803,9 @@ class App extends React.Component<AppProps, AppState> {
     // clear the shape and image cache so that any images in initialData
     // can be loaded fresh
     this.clearImageShapeCache();
+
+    // 预加载初始数据中的网络图片
+    this.preloadInitialNetworkImages(scene.elements);
 
     // manually loading the font faces seems faster even in browsers that do fire the loadingdone event
     this.fonts.loadSceneFonts().then((fontFaces) => {
@@ -3981,6 +3989,38 @@ class App extends React.Component<AppProps, AppState> {
         }
       }),
     );
+  }
+
+  /**
+   * 预加载初始数据中的网络图片
+   * 在画布初始化时调用，确保网络图片能够正确显示
+   */
+  private preloadInitialNetworkImages(elements: readonly ExcalidrawElement[]) {
+    const networkImageElements = elements.filter(isNetworkImageElement);
+
+    if (networkImageElements.length === 0) {
+      return;
+    }
+
+    console.log(`开始预加载 ${networkImageElements.length} 个初始网络图片`);
+
+    // 异步预加载，不阻塞初始化
+    Promise.allSettled(
+      networkImageElements.map(async (element) => {
+        if (element.imageUrl) {
+          try {
+            await getOrLoadNetworkImage(element.imageUrl);
+            console.log(`成功预加载网络图片: ${element.imageUrl}`);
+          } catch (error) {
+            console.warn(`初始网络图片预加载失败: ${element.imageUrl}`, error);
+          }
+        }
+      }),
+    ).then(() => {
+      console.log("初始网络图片预加载完成，触发重新渲染");
+      // 预加载完成后触发重新渲染
+      this.triggerRender();
+    });
   }
 
   /**
@@ -11063,7 +11103,8 @@ class App extends React.Component<AppProps, AppState> {
     files: BinaryFiles = this.files,
   ) => {
     const uncachedImageElements = imageElements.filter(
-      (element) => !element.isDeleted && !this.imageCache.has(element.fileId as any),
+      (element) =>
+        !element.isDeleted && !this.imageCache.has(element.fileId as any),
     );
 
     if (uncachedImageElements.length) {
