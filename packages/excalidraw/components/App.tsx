@@ -3922,7 +3922,9 @@ class App extends React.Component<AppProps, AppState> {
           // }
 
           // 直接记录错误，不做任何回退处理
-          errors.push(result.error);
+          // 优先使用详细错误信息，如果没有则使用简短错误信息
+          const errorMessage = result.detailedError || result.error;
+          errors.push(errorMessage);
         } else {
           this.scene.insertElement(result.element);
           nextSelectedIds[result.element.id] = true;

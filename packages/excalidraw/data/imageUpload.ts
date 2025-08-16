@@ -3,6 +3,8 @@
  * 处理本地图片上传到服务器并返回网络链接
  */
 
+import { analyzeUploadError, ImageUploadErrorType } from "./imageUploadErrors";
+
 export interface ImageUploadConfig {
   /** 上传接口地址 */
   uploadUrl: string;
@@ -49,11 +51,23 @@ export const validateImageFile = (
     config.allowedTypes || DEFAULT_UPLOAD_CONFIG.allowedTypes!;
 
   if (file.size > maxSize) {
-    throw new Error(`文件大小超过限制 ${Math.round(maxSize / 1024 / 1024)}MB`);
+    const error = analyzeUploadError({
+      message: `文件大小超过限制 ${Math.round(
+        maxSize / 1024 / 1024,
+      )}MB，当前文件大小: ${Math.round(file.size / 1024 / 1024)}MB`,
+    });
+    error.type = ImageUploadErrorType.FILE_TOO_LARGE;
+    throw error;
   }
 
   if (!allowedTypes.includes(file.type)) {
-    throw new Error(`不支持的文件类型: ${file.type}`);
+    const error = analyzeUploadError({
+      message: `不支持的文件类型: ${file.type}，支持的类型: ${allowedTypes.join(
+        ", ",
+      )}`,
+    });
+    error.type = ImageUploadErrorType.FILE_TYPE_NOT_SUPPORTED;
+    throw error;
   }
 };
 
@@ -64,58 +78,149 @@ export const uploadImageFile = async (
   file: File,
   config: ImageUploadConfig,
 ): Promise<string> => {
-  // 验证文件
-  validateImageFile(file, config);
+  try {
+    // 验证配置
+    if (!config.uploadUrl) {
+      const error = analyzeUploadError({
+        message: "上传服务地址未配置",
+      });
+      error.type = ImageUploadErrorType.INVALID_UPLOAD_URL;
+      throw error;
+    }
 
-  // 如果有自定义上传函数，使用自定义函数
-  if (config.customUpload) {
-    return await config.customUpload(file);
+    // 验证文件
+    validateImageFile(file, config);
+
+    // 如果有自定义上传函数，使用自定义函数
+    if (config.customUpload) {
+      try {
+        return await config.customUpload(file);
+      } catch (error: any) {
+        throw analyzeUploadError(error);
+      }
+    }
+
+    // 默认使用 FormData 上传
+    const formData = new FormData();
+    formData.append("file", file);
+
+    let response: Response;
+
+    try {
+      response = await fetch(config.uploadUrl, {
+        method: "POST",
+        headers: config.headers || {},
+        body: formData,
+      });
+    } catch (error: any) {
+      // 网络请求失败
+      throw analyzeUploadError(error);
+    }
+
+    // 检查HTTP状态码
+    if (!response.ok) {
+      let errorMessage = `上传失败: ${response.status} ${response.statusText}`;
+      let errorDetails = "";
+
+      // 尝试获取服务器返回的错误信息
+      try {
+        const errorText = await response.text();
+        if (errorText) {
+          try {
+            const errorJson = JSON.parse(errorText);
+            if (errorJson.message) {
+              errorDetails = errorJson.message;
+            } else if (errorJson.error) {
+              errorDetails = errorJson.error;
+            }
+          } catch {
+            // 如果不是JSON，直接使用文本
+            errorDetails = errorText.substring(0, 200); // 限制长度
+          }
+        }
+      } catch {
+        // 忽略获取错误信息的失败
+      }
+
+      if (errorDetails) {
+        errorMessage += `\n服务器错误信息: ${errorDetails}`;
+      }
+
+      const error = analyzeUploadError({
+        message: errorMessage,
+      });
+      error.statusCode = response.status;
+      throw error;
+    }
+
+    let result: any;
+
+    try {
+      result = await response.json();
+    } catch (error: any) {
+      const parseError = analyzeUploadError({
+        message: "无法解析服务器返回的数据，可能不是有效的JSON格式",
+      });
+      parseError.type = ImageUploadErrorType.INVALID_RESPONSE;
+      throw parseError;
+    }
+
+    // 智能识别不同的返回格式
+    let imageUrl: string | undefined;
+
+    // 标准格式: { url: "..." }
+    if (result.url) {
+      imageUrl = result.url;
+    }
+    // ZZ-Infra 格式: { link: "..." }
+    else if (result.link) {
+      imageUrl = result.link;
+    }
+    // 其他可能的格式
+    else if (result.data?.url) {
+      imageUrl = result.data.url;
+    } else if (result.data?.link) {
+      imageUrl = result.data.link;
+    }
+    // 直接返回字符串
+    else if (typeof result === "string") {
+      imageUrl = result;
+    }
+
+    if (!imageUrl) {
+      console.error("服务器返回格式:", result);
+      const error = analyzeUploadError({
+        message: "服务器返回的数据中缺少图片链接",
+      });
+      error.type = ImageUploadErrorType.MISSING_IMAGE_URL;
+      error.details = `服务器返回: ${JSON.stringify(result, null, 2)}`;
+      throw error;
+    }
+
+    // 验证返回的URL格式
+    try {
+      new URL(imageUrl);
+    } catch {
+      const error = analyzeUploadError({
+        message: `服务器返回的图片链接格式无效: ${imageUrl}`,
+      });
+      error.type = ImageUploadErrorType.INVALID_RESPONSE;
+      throw error;
+    }
+
+    return imageUrl;
+  } catch (error: any) {
+    // 如果已经是我们的错误格式，直接抛出
+    if (
+      error.type &&
+      Object.values(ImageUploadErrorType).includes(error.type)
+    ) {
+      throw error;
+    }
+
+    // 否则分析并包装错误
+    throw analyzeUploadError(error);
   }
-
-  // 默认使用 FormData 上传
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const response = await fetch(config.uploadUrl, {
-    method: "POST",
-    headers: config.headers || {},
-    body: formData,
-  });
-
-  if (!response.ok) {
-    throw new Error(`上传失败: ${response.status} ${response.statusText}`);
-  }
-
-  const result: any = await response.json();
-
-  // 智能识别不同的返回格式
-  let imageUrl: string | undefined;
-
-  // 标准格式: { url: "..." }
-  if (result.url) {
-    imageUrl = result.url;
-  }
-  // ZZ-Infra 格式: { link: "..." }
-  else if (result.link) {
-    imageUrl = result.link;
-  }
-  // 其他可能的格式
-  else if (result.data?.url) {
-    imageUrl = result.data.url;
-  } else if (result.data?.link) {
-    imageUrl = result.data.link;
-  }
-  // 直接返回字符串
-  else if (typeof result === "string") {
-    imageUrl = result;
-  }
-
-  if (!imageUrl) {
-    console.error("服务器返回格式:", result);
-    throw new Error("服务器返回的数据中缺少图片链接");
-  }
-
-  return imageUrl;
 };
 
 /**

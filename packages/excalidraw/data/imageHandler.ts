@@ -3,6 +3,7 @@
  */
 
 import { newImageElement } from "@excalidraw/element";
+
 import type { ExcalidrawImageElement } from "@excalidraw/element/types";
 
 import {
@@ -12,6 +13,7 @@ import {
   type ImageUploadConfig,
 } from "./imageUpload";
 import { isSupportedImageFile } from "./blob";
+import { getErrorMessage, getShortErrorMessage } from "./imageUploadErrors";
 
 export interface ImageHandlerConfig {
   /** 图片上传配置 */
@@ -29,6 +31,8 @@ export interface ProcessedImageResult {
   isNetworkImage: boolean;
   /** 错误信息（如果有） */
   error?: string;
+  /** 详细错误信息（包含解决方案） */
+  detailedError?: string;
 }
 
 /**
@@ -147,13 +151,13 @@ export const processImageInput = async (
           element,
           isNetworkImage: true,
         };
-      } else {
-        return {
-          element: newImageElement(createElementProps({ status: "error" })),
-          isNetworkImage: false,
-          error: "无效的图片链接",
-        };
       }
+
+      return {
+        element: newImageElement(createElementProps({ status: "error" })),
+        isNetworkImage: false,
+        error: "无效的图片链接",
+      };
     }
 
     // 处理文件
@@ -185,10 +189,16 @@ export const processImageInput = async (
             isNetworkImage: true,
           };
         } catch (error: any) {
+          // 使用详细的错误分析
+          const detailedError = error.type
+            ? error
+            : { message: error.message || "未知错误" };
+
           return {
             element: newImageElement(createElementProps({ status: "error" })),
             isNetworkImage: false,
-            error: `上传失败：${error.message || "未知错误"}`,
+            error: getShortErrorMessage(detailedError),
+            detailedError: getErrorMessage(detailedError),
           };
         }
       } else {

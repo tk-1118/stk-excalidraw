@@ -113,12 +113,38 @@
                 <div class="url-item" onclick="copyToClipboard('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=300')">
                     Unsplash 示例图片
                 </div>
+                <div class="url-item" onclick="copyToClipboard('https://httpbin.org/delay/3?url=https://picsum.photos/600/400?random=999')">
+                    测试加载动画 (3秒延迟)
+                </div>
+                <div class="url-item" onclick="copyToClipboard('https://httpbin.org/status/404')">
+                    测试404错误 (无效图片地址)
+                </div>
+                <div class="url-item" onclick="copyToClipboard('https://nonexistent-domain-12345.com/image.jpg')">
+                    测试域名不存在错误
+                </div>
+                <div class="url-item" onclick="copyToClipboard('invalid-url-format')">
+                    测试无效URL格式
+                </div>
             </div>
             <p><strong>预期结果</strong>：</p>
             <ul>
-                <li>粘贴后立即显示加载动画（旋转的圆点）</li>
+                <li><strong>正常图片</strong>：粘贴后立即显示<strong>明显的加载动画</strong>，包含：</li>
+                <ul>
+                    <li>蓝色渐变背景</li>
+                    <li>动态闪烁的蓝色边框</li>
+                    <li>旋转的蓝色圆点动画（12个圆点，更流畅）</li>
+                    <li>中心脉冲圆圈效果</li>
+                    <li>沙漏图标（⏳）</li>
+                    <li>"加载中..."文本提示</li>
+                </ul>
                 <li>图片加载完成后自动显示为合适的尺寸</li>
                 <li>无需手动拖拽调整即可看到完整图片</li>
+                <li><strong>错误图片</strong>：应该显示错误占位符，包含：</li>
+                <ul>
+                    <li>错误图标（红色感叹号）</li>
+                    <li>具体的错误信息（如"图片不存在"、"域名无法解析"、"无效URL格式"等）</li>
+                    <li>错误类型标识（如"NETWORK_ERROR"、"INVALID_RESPONSE"等）</li>
+                </ul>
             </ul>
         </div>
 
@@ -160,8 +186,27 @@
                 <li>上传完成后显示"图片上传成功"的提示</li>
                 <li>图片应该使用上传后的网络地址显示</li>
                 <li>检查浏览器开发者工具，图片请求应该是网络URL而不是本地文件</li>
-                <li><strong>如果上传失败</strong>：应该显示错误信息，不会回退到本地文件处理</li>
+                <li><strong>如果上传失败</strong>：应该显示<strong>详细的错误信息</strong>，包含错误类型、原因和解决方案，不会回退到本地文件处理</li>
                 <li><strong>如果没有配置上传服务</strong>：应该显示"未配置图片上传服务"的错误</li>
+            </ul>
+            <div class="test-urls">
+                <div class="url-item" onclick="testUploadError('unauthorized')">
+                    测试401未授权错误
+                </div>
+                <div class="url-item" onclick="testUploadError('forbidden')">
+                    测试403权限不足错误
+                </div>
+                <div class="url-item" onclick="testUploadError('server_error')">
+                    测试500服务器错误
+                </div>
+                <div class="url-item" onclick="testUploadError('network_error')">
+                    测试网络连接错误
+                </div>
+                <div class="url-item" onclick="testUploadError('invalid_response')">
+                    测试响应格式错误
+                </div>
+            </div>
+            <ul>
             </ul>
             <p><strong>注意</strong>：</p>
             <ul>
@@ -248,6 +293,8 @@
 
         // 测试用的图片上传配置
         // 注意：这里使用模拟配置，实际项目中会自动使用ZZ-Infra配置
+        let mockUploadErrorType = null; // 用于测试不同类型的错误
+        
         const testImageUploadConfig = {
             uploadUrl: 'https://httpbin.org/post', // 测试用的API
             customUpload: async (file) => {
@@ -256,6 +303,27 @@
                 
                 // 模拟上传延迟
                 await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // 如果设置了错误类型，模拟对应的错误
+                if (mockUploadErrorType) {
+                    const errorType = mockUploadErrorType;
+                    mockUploadErrorType = null; // 重置错误类型
+                    
+                    switch (errorType) {
+                        case 'unauthorized':
+                            throw new Error('上传失败: 401 Unauthorized');
+                        case 'forbidden':
+                            throw new Error('上传失败: 403 Forbidden');
+                        case 'server_error':
+                            throw new Error('上传失败: 500 Internal Server Error');
+                        case 'network_error':
+                            throw new Error('Network error: Failed to fetch');
+                        case 'invalid_response':
+                            throw new Error('服务器返回的数据中缺少图片链接');
+                        default:
+                            break;
+                    }
+                }
                 
                 // 返回一个模拟的网络地址（模拟ZZ-Infra返回格式）
                 const mockUrl = `https://picsum.photos/400/300?random=${Date.now()}`;
@@ -361,6 +429,20 @@
             } else {
                 showStatus('Excalidraw API 未准备就绪', 'error');
             }
+        };
+
+        // 测试不同类型的上传错误
+        window.testUploadError = function(errorType) {
+            mockUploadErrorType = errorType;
+            const errorDescriptions = {
+                'unauthorized': '401未授权错误 - 模拟token无效或缺失',
+                'forbidden': '403权限不足错误 - 模拟账户权限不够',
+                'server_error': '500服务器错误 - 模拟服务器内部故障',
+                'network_error': '网络连接错误 - 模拟网络不可达',
+                'invalid_response': '响应格式错误 - 模拟服务器返回格式异常'
+            };
+            showStatus(`已设置模拟错误: ${errorDescriptions[errorType]}，请选择一个图片文件进行测试`, 'info');
+            document.getElementById('fileInput').click();
         };
 
         // 初始化 Excalidraw

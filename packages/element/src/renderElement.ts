@@ -97,7 +97,8 @@ const shouldResetImageFilter = (
     appState.theme === THEME.DARK &&
     isInitializedImageElement(element) &&
     !isPendingImageElement(element, renderConfig) &&
-    renderConfig.imageCache.get(element.fileId as any)?.mimeType !== MIME_TYPES.svg
+    renderConfig.imageCache.get(element.fileId as any)?.mimeType !==
+      MIME_TYPES.svg
   );
 };
 
@@ -376,7 +377,7 @@ IMAGE_ERROR_PLACEHOLDER_IMG.src = `data:${MIME_TYPES.svg},${encodeURIComponent(
 )}`;
 
 /**
- * 绘制加载动画
+ * 绘制加载动画 - 改进版本，更加明显和吸引人
  */
 const drawLoadingSpinner = (
   context: CanvasRenderingContext2D,
@@ -384,29 +385,54 @@ const drawLoadingSpinner = (
   centerY: number,
   radius: number,
 ) => {
-  const time = Date.now() / 100; // 控制动画速度
-  const segments = 8;
+  const time = Date.now() / 150; // 稍微减慢动画速度，使其更平滑
+  const segments = 12; // 增加段数，使动画更流畅
   const segmentAngle = (Math.PI * 2) / segments;
 
   context.save();
   context.translate(centerX, centerY);
 
+  // 绘制外圈旋转动画
   for (let i = 0; i < segments; i++) {
     const angle = i * segmentAngle + time;
-    const opacity = 0.3 + (0.7 * (i + 1)) / segments;
+    const opacity = 0.2 + (0.8 * (segments - i)) / segments; // 渐变透明度
+    const dotRadius = radius * 0.12; // 稍微增大圆点
 
     context.save();
     context.rotate(angle);
     context.globalAlpha = opacity;
-    context.fillStyle = "#666";
+
+    // 使用更鲜明的蓝色
+    context.fillStyle = "#2563eb"; // 蓝色主色调
+    context.shadowColor = "#2563eb";
+    context.shadowBlur = 4;
 
     // 绘制小圆点
     context.beginPath();
-    context.arc(radius * 0.7, 0, radius * 0.15, 0, Math.PI * 2);
+    context.arc(radius * 0.75, 0, dotRadius, 0, Math.PI * 2);
     context.fill();
 
     context.restore();
   }
+
+  // 绘制中心脉冲圆圈
+  const pulseTime = Date.now() / 800;
+  const pulseScale = 0.3 + 0.2 * Math.sin(pulseTime);
+  const pulseOpacity = 0.4 + 0.3 * Math.sin(pulseTime);
+
+  context.globalAlpha = pulseOpacity;
+  context.fillStyle = "#3b82f6"; // 稍浅的蓝色
+  context.beginPath();
+  context.arc(0, 0, radius * pulseScale, 0, Math.PI * 2);
+  context.fill();
+
+  // 绘制中心图标
+  context.globalAlpha = 0.8;
+  context.fillStyle = "#1e40af"; // 深蓝色
+  context.font = `${radius * 0.8}px Arial, sans-serif`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText("⏳", 0, 0); // 使用沙漏图标
 
   context.restore();
 };
@@ -415,9 +441,34 @@ const drawImagePlaceholder = (
   element: ExcalidrawImageElement,
   context: CanvasRenderingContext2D,
   isLoading: boolean = false,
+  errorInfo?: { error?: string; detailedError?: string; errorType?: string },
 ) => {
-  context.fillStyle = "#E7E7E7";
-  context.fillRect(0, 0, element.width, element.height);
+  // 根据状态设置不同的背景色
+  if (isLoading) {
+    // 加载状态：使用渐变背景，更加明显
+    const gradient = context.createLinearGradient(
+      0,
+      0,
+      element.width,
+      element.height,
+    );
+    gradient.addColorStop(0, "#f0f9ff"); // 浅蓝色
+    gradient.addColorStop(0.5, "#e0f2fe"); // 中蓝色
+    gradient.addColorStop(1, "#f0f9ff"); // 浅蓝色
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, element.width, element.height);
+
+    // 添加动态边框效果
+    const time = Date.now() / 1000;
+    const borderOpacity = 0.3 + 0.2 * Math.sin(time * 2);
+    context.strokeStyle = `rgba(37, 99, 235, ${borderOpacity})`;
+    context.lineWidth = 2;
+    context.strokeRect(1, 1, element.width - 2, element.height - 2);
+  } else {
+    // 默认状态
+    context.fillStyle = "#E7E7E7";
+    context.fillRect(0, 0, element.width, element.height);
+  }
 
   const imageMinWidthOrHeight = Math.min(element.width, element.height);
 
@@ -428,15 +479,33 @@ const drawImagePlaceholder = (
 
   // 如果是加载中状态，显示加载动画
   if (isLoading) {
+    // 增大加载动画的尺寸，使其更明显
+    const spinnerRadius = Math.max(size / 3, 20);
     drawLoadingSpinner(
       context,
       element.width / 2,
       element.height / 2,
-      size / 4,
+      spinnerRadius,
     );
+
+    // 添加加载文本
+    context.save();
+    context.fillStyle = "#1e40af";
+    context.font = `${Math.max(12, size / 8)}px Arial, sans-serif`;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.globalAlpha = 0.8;
+
+    const textY = element.height / 2 + spinnerRadius + 20;
+    if (textY < element.height - 10) {
+      context.fillText("加载中...", element.width / 2, textY);
+    }
+    context.restore();
+
     return;
   }
 
+  // 绘制图标
   context.drawImage(
     element.status === "error"
       ? IMAGE_ERROR_PLACEHOLDER_IMG
@@ -446,6 +515,58 @@ const drawImagePlaceholder = (
     size,
     size,
   );
+
+  // 如果是错误状态且有错误信息，显示错误文本
+  if (element.status === "error" && errorInfo?.error) {
+    context.save();
+
+    // 设置文本样式
+    const fontSize = Math.max(
+      10,
+      Math.min(element.width / 20, element.height / 20, 14),
+    );
+    context.font = `${fontSize}px Arial, sans-serif`;
+    context.fillStyle = "#666666";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+
+    // 计算文本位置（在图标下方）
+    const textY = element.height / 2 + size / 2 + fontSize + 5;
+
+    // 如果有足够空间显示错误信息
+    if (textY + fontSize < element.height - 5) {
+      // 截断过长的错误信息
+      let errorText = errorInfo.error;
+      const maxWidth = element.width - 10;
+
+      // 测量文本宽度并截断
+      if (context.measureText(errorText).width > maxWidth) {
+        while (
+          context.measureText(`${errorText}...`).width > maxWidth &&
+          errorText.length > 10
+        ) {
+          errorText = errorText.slice(0, -1);
+        }
+        errorText = `${errorText}...`;
+      }
+
+      // 绘制错误文本
+      context.fillText(errorText, element.width / 2, textY);
+
+      // 如果还有空间，显示错误类型
+      if (errorInfo.errorType && textY + fontSize * 2 < element.height - 5) {
+        context.font = `${Math.max(8, fontSize - 2)}px Arial, sans-serif`;
+        context.fillStyle = "#999999";
+        context.fillText(
+          `(${errorInfo.errorType})`,
+          element.width / 2,
+          textY + fontSize + 2,
+        );
+      }
+    }
+
+    context.restore();
+  }
 };
 
 const drawElementOnCanvas = (
@@ -497,12 +618,17 @@ const drawElementOnCanvas = (
     case "image": {
       let img: HTMLImageElement | undefined;
       let isLoading = false;
+      let errorInfo:
+        | { error?: string; detailedError?: string; errorType?: string }
+        | undefined;
 
       if (isInitializedImageElement(element)) {
         // 优先使用本地文件缓存（fileId），只有在没有fileId时才使用网络图片链接
         if (element.fileId as any) {
           // 使用文件缓存
-          const fileImageEntry = renderConfig.imageCache.get(element.fileId as any);
+          const fileImageEntry = renderConfig.imageCache.get(
+            element.fileId as any,
+          );
           if (
             fileImageEntry?.image &&
             !(fileImageEntry.image instanceof Promise)
@@ -523,6 +649,13 @@ const drawElementOnCanvas = (
             img = networkImageEntry.image;
           } else if (networkImageEntry?.status === "loading") {
             isLoading = true;
+          } else if (networkImageEntry?.status === "error") {
+            // 获取详细错误信息
+            errorInfo = {
+              error: networkImageEntry.error,
+              detailedError: networkImageEntry.detailedError,
+              errorType: networkImageEntry.errorType,
+            };
           }
         }
       }
@@ -561,7 +694,7 @@ const drawElementOnCanvas = (
           element.height,
         );
       } else {
-        drawImagePlaceholder(element, context, isLoading);
+        drawImagePlaceholder(element, context, isLoading, errorInfo);
       }
       break;
     }
