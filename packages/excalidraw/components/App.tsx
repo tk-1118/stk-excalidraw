@@ -3930,17 +3930,33 @@ class App extends React.Component<AppProps, AppState> {
           nextSelectedIds[result.element.id] = true;
           if (result.isNetworkImage) {
             successfulElements.push(result.element);
+
+            // 如果有本地图片数据，立即预缓存以加快显示速度
+            if (result.localImageData && result.element.imageUrl) {
+              this.preloadFromLocalData(
+                result.element.imageUrl,
+                result.localImageData,
+              );
+            }
           }
         }
       }
 
-      // 立即预加载新添加的网络图片
+      // 立即预加载新添加的网络图片（跳过已有本地缓存的图片）
       if (successfulElements.length > 0) {
-        // 异步预加载，但不等待完成
-        this.preloadNetworkImages(successfulElements).then(() => {
-          // 预加载完成后触发重新渲染
-          this.triggerRender();
-        });
+        // 过滤出需要网络加载的图片（排除已有本地缓存的）
+        const elementsNeedingNetworkLoad = successfulElements.filter(
+          (element) =>
+            element.imageUrl && !networkImageCache.has(element.imageUrl),
+        );
+
+        if (elementsNeedingNetworkLoad.length > 0) {
+          // 异步预加载，但不等待完成
+          this.preloadNetworkImages(elementsNeedingNetworkLoad).then(() => {
+            // 预加载完成后触发重新渲染
+            this.triggerRender();
+          });
+        }
       }
 
       // 更新选中状态并触发渲染
@@ -3991,6 +4007,45 @@ class App extends React.Component<AppProps, AppState> {
         }
       }),
     );
+  }
+
+  /**
+   * 从本地数据预加载图片到网络缓存，避免重新下载
+   */
+  private preloadFromLocalData(imageUrl: string, localFile: File) {
+    try {
+      // 创建本地图片对象
+      const localImageUrl = URL.createObjectURL(localFile);
+      const img = new Image();
+
+      img.onload = () => {
+        // 将本地图片直接缓存到网络图片缓存中
+        networkImageCache.set(imageUrl, {
+          image: img,
+          url: imageUrl,
+          status: "loaded",
+          created: Date.now(),
+        });
+
+        // 清理临时URL
+        URL.revokeObjectURL(localImageUrl);
+
+        // 触发重新渲染以显示图片
+        this.triggerRender();
+
+        console.log(`快速缓存本地上传图片: ${imageUrl}`);
+        console.log(`元素保存的imageUrl: ${imageUrl} (网络地址)`);
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(localImageUrl);
+        console.warn(`Failed to load local image data for: ${imageUrl}`);
+      };
+
+      img.src = localImageUrl;
+    } catch (error) {
+      console.warn(`Failed to preload from local data: ${imageUrl}`, error);
+    }
   }
 
   /**

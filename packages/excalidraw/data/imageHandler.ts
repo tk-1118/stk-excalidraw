@@ -33,6 +33,8 @@ export interface ProcessedImageResult {
   error?: string;
   /** 详细错误信息（包含解决方案） */
   detailedError?: string;
+  /** 本地图片数据（用于快速显示上传后的图片） */
+  localImageData?: File;
 }
 
 /**
@@ -176,17 +178,38 @@ export const processImageInput = async (
         try {
           const imageUrl = await uploadImageFile(input, config.uploadConfig);
 
+          // 获取本地图片的尺寸信息，避免重新从网络加载
+          let displaySize = defaultSize;
+          try {
+            // 从本地文件获取尺寸，避免网络请求
+            const localImageUrl = URL.createObjectURL(input);
+            const dimensions = await getImageDimensions(localImageUrl);
+            displaySize = calculateDisplaySize(
+              dimensions.width,
+              dimensions.height,
+            );
+            URL.revokeObjectURL(localImageUrl); // 清理临时URL
+          } catch (error) {
+            console.warn(
+              "Failed to get local image dimensions, using default size:",
+              error,
+            );
+          }
+
           // 创建网络图片元素
           const element = newImageElement(
             createElementProps({
               imageUrl,
               status: "saved",
+              width: displaySize.width,
+              height: displaySize.height,
             }),
           );
 
           return {
             element,
             isNetworkImage: true,
+            localImageData: input, // 传递本地图片数据，用于快速显示
           };
         } catch (error: any) {
           // 使用详细的错误分析
