@@ -3953,8 +3953,8 @@ class App extends React.Component<AppProps, AppState> {
         if (elementsNeedingNetworkLoad.length > 0) {
           // 异步预加载，但不等待完成
           this.preloadNetworkImages(elementsNeedingNetworkLoad).then(() => {
-            // 预加载完成后触发重新渲染
-            this.triggerRender();
+            // 预加载完成后强制触发重新渲染以清除加载动画
+            this.triggerRender(true);
           });
         }
       }
@@ -4030,8 +4030,8 @@ class App extends React.Component<AppProps, AppState> {
         // 清理临时URL
         URL.revokeObjectURL(localImageUrl);
 
-        // 触发重新渲染以显示图片
-        this.triggerRender();
+        // 强制触发重新渲染以显示图片并清除加载动画
+        this.triggerRender(true);
 
         console.log(`快速缓存本地上传图片: ${imageUrl}`);
         console.log(`元素保存的imageUrl: ${imageUrl} (网络地址)`);
@@ -4074,9 +4074,9 @@ class App extends React.Component<AppProps, AppState> {
         }
       }),
     ).then(() => {
-      console.log("初始网络图片预加载完成，触发重新渲染");
-      // 预加载完成后触发重新渲染
-      this.triggerRender();
+      console.log("初始网络图片预加载完成，强制触发重新渲染");
+      // 预加载完成后强制触发重新渲染以清除加载动画
+      this.triggerRender(true);
     });
   }
 

@@ -651,3 +651,48 @@
 17. 支持加载动画主题自定义
 18. 实现图片压缩和格式转换优化
 19. 添加图片上传的批量处理和队列管理
+
+## 完整修复：图片加载动画自动消失
+
+### 13. 图片加载动画不自动消失问题
+**问题描述**：上传完图片做回显，已经优化了性能，但是如果不缩放画布，图片的加载动画不会自己消失。
+
+**问题分析**：
+1. **渲染触发不足**：`triggerRender()` 默认使用轻量级渲染（`setState({})`）
+2. **状态更新未反映**：图片从 loading 状态变为 loaded 状态后，画布没有强制重新渲染
+3. **缓存更新与渲染不同步**：`networkImageCache` 更新后，渲染系统没有立即感知到状态变化
+
+**解决方案**：
+1. **强制渲染优化**：
+   - 在 `preloadFromLocalData` 的 `img.onload` 回调中使用 `triggerRender(true)`
+   - 在 `preloadNetworkImages` 完成后使用 `triggerRender(true)`
+   - 在初始网络图片预加载完成后使用 `triggerRender(true)`
+
+2. **渲染机制说明**：
+   - `triggerRender()` - 轻量级渲染，调用 `setState({})`
+   - `triggerRender(true)` - 强制渲染，调用 `scene.triggerUpdate()`
+
+**修改的文件**：
+- `packages/excalidraw/components/App.tsx` - 修改三处渲染触发点
+- `packages/excalidraw/examples/network-image-paste-test.html` - 更新测试说明
+
+**技术细节**：
+```typescript
+// 修复前：轻量级渲染
+this.triggerRender();
+
+// 修复后：强制渲染
+this.triggerRender(true);
+```
+
+**用户体验提升**：
+- 图片上传完成后，加载动画立即消失
+- 无需手动缩放画布即可看到最终图片
+- 视觉反馈更加及时和准确
+- 提升了整体的交互流畅性
+
+**测试验证**：
+1. 粘贴本地图片到画布
+2. 观察上传过程中的加载动画
+3. 确认上传完成后动画自动消失
+4. 验证图片正确显示，无需手动操作
