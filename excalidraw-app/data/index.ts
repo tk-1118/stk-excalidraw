@@ -297,8 +297,8 @@ export const exportToBackend = async (
   try {
     const filesMap = new Map<FileId, BinaryFileData>();
     for (const element of elements) {
-      if (isInitializedImageElement(element) && files[element.fileId]) {
-        filesMap.set(element.fileId, files[element.fileId]);
+      if (isInitializedImageElement(element) && files[element.fileId as any]) {
+        filesMap.set(element.fileId, files[element.fileId as any]);
       }
     }
 

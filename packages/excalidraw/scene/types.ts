@@ -30,6 +30,8 @@ export type StaticCanvasRenderConfig = {
   // extra options passed to the renderer
   // ---------------------------------------------------------------------------
   imageCache: AppClassProperties["imageCache"];
+  /** 网络图片缓存 */
+  networkImageCache?: import("../data/networkImageCache").NetworkImageCache;
   renderGrid: boolean;
   /** when exporting the behavior is slightly different (e.g. we can't use
    CSS filters), and we disable render optimizations for best output */

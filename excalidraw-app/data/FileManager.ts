@@ -94,14 +94,14 @@ export class FileManager {
 
     for (const element of elements) {
       const fileData =
-        isInitializedImageElement(element) && files[element.fileId];
+        isInitializedImageElement(element) && files[element.fileId as any];
 
       if (
         fileData &&
         // NOTE if errored during save, won't retry due to this check
         !this.isFileSavedOrBeingSaved(fileData)
       ) {
-        addedFiles.set(element.fileId, files[element.fileId]);
+        addedFiles.set(element.fileId, files[element.fileId as any]);
         this.savingFiles.set(element.fileId, this.getFileVersion(fileData));
       }
     }
@@ -176,7 +176,7 @@ export class FileManager {
       return (
         isInitializedImageElement(element) &&
         !element.isDeleted &&
-        this.savingFiles.has(element.fileId)
+        this.savingFiles.has(element.fileId as any)
       );
     });
   };
@@ -189,7 +189,7 @@ export class FileManager {
   ): element is InitializedExcalidrawImageElement => {
     return (
       isInitializedImageElement(element) &&
-      this.savedFiles.has(element.fileId) &&
+      this.savedFiles.has(element.fileId as any) &&
       element.status === "pending"
     );
   };
@@ -261,7 +261,7 @@ export const updateStaleImageStatuses = (params: {
       .map((element) => {
         if (
           isInitializedImageElement(element) &&
-          params.erroredFiles.has(element.fileId)
+          params.erroredFiles.has(element.fileId as any)
         ) {
           return newElementWith(element, {
             status: "error",

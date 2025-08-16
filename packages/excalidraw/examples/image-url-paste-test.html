@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片URL粘贴测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-urls {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .url-input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .test-btn {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .paste-area {
+            width: 100%;
+            height: 400px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #666;
+            margin: 20px 0;
+            position: relative;
+        }
+        .paste-area:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .instructions {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>图片URL粘贴功能测试</h1>
+        <p>测试直接粘贴图片URL文本时的自动识别功能</p>
+        
+        <div class="instructions">
+            <h3>测试说明：</h3>
+            <ol>
+                <li>复制下面的测试URL到剪贴板</li>
+                <li>在下方的粘贴区域按 Ctrl+V (或 Cmd+V) 粘贴</li>
+                <li>观察是否正确识别为图片URL</li>
+                <li>或者直接点击"测试"按钮模拟粘贴</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>测试用例</h3>
+            
+            <div class="test-urls">
+                <input class="url-input" value="https://picsum.photos/300/200" readonly>
+                <button class="test-btn" onclick="testUrl(this.previousElementSibling.value)">测试</button>
+            </div>
+            
+            <div class="test-urls">
+                <input class="url-input" value="https://images.unsplash.com/photo-1506905925346-21bda4d32df4" readonly>
+                <button class="test-btn" onclick="testUrl(this.previousElementSibling.value)">测试</button>
+            </div>
+            
+            <div class="test-urls">
+                <input class="url-input" value="https://via.placeholder.com/400x300.png" readonly>
+                <button class="test-btn" onclick="testUrl(this.previousElementSibling.value)">测试</button>
+            </div>
+            
+            <div class="test-urls">
+                <input class="url-input" value="https://i.imgur.com/example.jpg" readonly>
+                <button class="test-btn" onclick="testUrl(this.previousElementSibling.value)">测试</button>
+            </div>
+            
+            <div class="test-urls">
+                <input class="url-input" value="https://example.com/images/photo.jpeg" readonly>
+                <button class="test-btn" onclick="testUrl(this.previousElementSibling.value)">测试</button>
+            </div>
+            
+            <div class="test-urls">
+                <input class="url-input" value="https://cdn.example.com/media/image123.webp" readonly>
+                <button class="test-btn" onclick="testUrl(this.previousElementSibling.value)">测试</button>
+            </div>
+            
+            <div class="test-urls">
+                <input class="url-input" value="https://example.com/api/image?id=123&format=png&w=300" readonly>
+                <button class="test-btn" onclick="testUrl(this.previousElementSibling.value)">测试</button>
+            </div>
+            
+            <!-- 负面测试用例 -->
+            <div class="test-urls">
+                <input class="url-input" value="https://example.com/page.html" readonly>
+                <button class="test-btn" onclick="testUrl(this.previousElementSibling.value)">测试(应该失败)</button>
+            </div>
+            
+            <div class="test-urls">
+                <input class="url-input" value="这不是一个URL" readonly>
+                <button class="test-btn" onclick="testUrl(this.previousElementSibling.value)">测试(应该失败)</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>手动粘贴测试区域</h3>
+            <div class="paste-area" tabindex="0" id="pasteArea">
+                点击这里，然后按 Ctrl+V 或 Cmd+V 粘贴图片URL
+            </div>
+            <div id="pasteResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试结果</h3>
+            <div id="testResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // 图片URL检测函数（复制自clipboard.ts的逻辑）
+        function isNetworkImageUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+            } catch {
+                return false;
+            }
+        }
+
+        function detectImageUrlFromText(text) {
+            const trimmedText = text.trim();
+            
+            // 如果文本包含换行或空格，可能不是单个URL
+            if (trimmedText.includes('\n') || trimmedText.includes(' ')) {
+                return null;
+            }
+            
+            try {
+                // 检查是否为有效的网络URL
+                if (!isNetworkImageUrl(trimmedText)) {
+                    return null;
+                }
+                
+                const url = new URL(trimmedText);
+                const pathname = url.pathname.toLowerCase();
+                const hostname = url.hostname.toLowerCase();
+                
+                // 常见图片文件扩展名
+                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico', '.tiff', '.tif'];
+                
+                // 检查文件扩展名
+                const hasImageExtension = imageExtensions.some(ext => pathname.endsWith(ext));
+                
+                // 常见图片服务域名
+                const imageServiceDomains = [
+                    'imgur.com', 'i.imgur.com',
+                    'cloudinary.com',
+                    'unsplash.com', 'images.unsplash.com',
+                    'pixabay.com',
+                    'pexels.com',
+                    'flickr.com', 'live.staticflickr.com',
+                    'googleusercontent.com',
+                    'amazonaws.com',
+                    'aliyuncs.com',
+                    'qcloud.com',
+                    'github.com', 'githubusercontent.com',
+                    'gravatar.com',
+                    'wp.com',
+                    'blogspot.com',
+                    'photobucket.com',
+                    'tinypic.com',
+                    'imageshack.com',
+                    'postimg.cc',
+                    'imgbb.com',
+                    'sm.ms',
+                    'telegraph-image.pages.dev',
+                    'picsum.photos',
+                    'placeholder.com',
+                    'via.placeholder.com'
+                ];
+                
+                // 检查是否为已知的图片服务域名
+                const isImageServiceDomain = imageServiceDomains.some(domain => 
+                    hostname === domain || hostname.endsWith('.' + domain)
+                );
+                
+                // 路径模式检查
+                const pathPatterns = [
+                    '/image', '/img', '/photo', '/pic', '/picture',
+                    '/upload', '/media', '/assets', '/static',
+                    '/thumb', '/thumbnail', '/preview'
+                ];
+                const hasImagePath = pathPatterns.some(pattern => pathname.includes(pattern));
+                
+                // URL参数检查
+                const hasImageParams = url.searchParams.has('format') || 
+                                      url.searchParams.has('w') || 
+                                      url.searchParams.has('h') ||
+                                      url.searchParams.has('width') ||
+                                      url.searchParams.has('height') ||
+                                      url.searchParams.has('resize');
+                
+                // 如果满足以下任一条件，认为是图片URL
+                if (hasImageExtension || isImageServiceDomain || hasImagePath || hasImageParams) {
+                    return trimmedText;
+                }
+            } catch (error) {
+                return null;
+            }
+            
+            return null;
+        }
+
+        // 测试单个URL
+        function testUrl(url) {
+            const result = detectImageUrlFromText(url);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${result ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `
+                <strong>URL:</strong> ${url}<br>
+                <strong>检测结果:</strong> ${result ? '✅ 识别为图片URL' : '❌ 未识别为图片URL'}<br>
+                <strong>返回值:</strong> ${result || 'null'}
+            `;
+            
+            const testResults = document.getElementById('testResults');
+            testResults.appendChild(resultDiv);
+            testResults.scrollTop = testResults.scrollHeight;
+        }
+
+        // 粘贴事件处理
+        document.getElementById('pasteArea').addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text');
+            const result = detectImageUrlFromText(text);
+            
+            const resultDiv = document.getElementById('pasteResult');
+            resultDiv.className = `result ${result ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `
+                <strong>粘贴的文本:</strong> ${text}<br>
+                <strong>检测结果:</strong> ${result ? '✅ 识别为图片URL' : '❌ 未识别为图片URL'}<br>
+                <strong>返回值:</strong> ${result || 'null'}
+            `;
+        });
+
+        // 页面加载完成提示
+        window.addEventListener('load', () => {
+            console.log('图片URL检测测试页面已加载');
+        });
+    </script>
+</body>
+</html>

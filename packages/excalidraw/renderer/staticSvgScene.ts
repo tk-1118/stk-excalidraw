@@ -416,7 +416,7 @@ const renderElementToSvg = (
       const width = Math.round(element.width);
       const height = Math.round(element.height);
       const fileData =
-        isInitializedImageElement(element) && files[element.fileId];
+        isInitializedImageElement(element) && files[element.fileId as any];
       if (fileData) {
         const { reuseImages = true } = renderConfig;
 

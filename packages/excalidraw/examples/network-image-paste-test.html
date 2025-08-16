@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网络图片粘贴测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .test-urls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .url-item {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 12px;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .url-item:hover {
+            background: #e9ecef;
+        }
+        .instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .instructions h2 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        #excalidraw-container {
+            height: 600px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>网络图片粘贴功能测试</h1>
+        
+        <div class="instructions">
+            <h2>测试说明</h2>
+            <p>本页面用于测试修复后的网络图片粘贴功能，包括以下三个问题的修复：</p>
+            <ol>
+                <li><strong>加载特效</strong>：粘贴图片网络路径时，加载过程中应显示旋转的加载动画</li>
+                <li><strong>图片尺寸</strong>：网络图片应自动调整到合适的显示尺寸，无需手动拉伸</li>
+                <li><strong>缓存清理</strong>：粘贴非图片内容后，不应显示之前的网络图片</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>测试步骤 1：网络图片粘贴</h3>
+            <p>点击下面的图片URL复制到剪贴板，然后在画布中粘贴（Ctrl+V 或 Cmd+V）</p>
+            <div class="test-urls">
+                <div class="url-item" onclick="copyToClipboard('https://picsum.photos/800/600?random=1')">
+                    https://picsum.photos/800/600?random=1
+                </div>
+                <div class="url-item" onclick="copyToClipboard('https://picsum.photos/400/300?random=2')">
+                    https://picsum.photos/400/300?random=2
+                </div>
+                <div class="url-item" onclick="copyToClipboard('https://picsum.photos/1200/800?random=3')">
+                    https://picsum.photos/1200/800?random=3
+                </div>
+                <div class="url-item" onclick="copyToClipboard('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=300')">
+                    Unsplash 示例图片
+                </div>
+            </div>
+            <p><strong>预期结果</strong>：</p>
+            <ul>
+                <li>粘贴后立即显示加载动画（旋转的圆点）</li>
+                <li>图片加载完成后自动显示为合适的尺寸</li>
+                <li>无需手动拖拽调整即可看到完整图片</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>测试步骤 2：文本粘贴测试</h3>
+            <p>在粘贴了网络图片后，复制并粘贴下面的文本内容</p>
+            <div class="test-urls">
+                <div class="url-item" onclick="copyToClipboard('这是一段测试文本，用于验证缓存清理功能')">
+                    测试文本 1
+                </div>
+                <div class="url-item" onclick="copyToClipboard('Hello World! This is a test message.')">
+                    测试文本 2
+                </div>
+                <div class="url-item" onclick="copyToClipboard('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')">
+                    Base64 图片数据
+                </div>
+            </div>
+            <p><strong>预期结果</strong>：</p>
+            <ul>
+                <li>粘贴文本后应正常显示文本元素</li>
+                <li>不应显示之前粘贴的网络图片</li>
+                <li>缓存应被正确清理</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>测试步骤 3：本地图片上传测试</h3>
+            <p><strong>重要测试</strong>：验证本地图片先上传再使用网络地址显示</p>
+            <ol>
+                <li>复制一个本地图片文件（从文件管理器或其他应用）</li>
+                <li>使用 Ctrl+V 粘贴到画布</li>
+                <li>观察状态提示信息</li>
+                <li>或者拖拽一个本地图片文件到画布</li>
+                <li>或者点击工具栏的图片按钮选择本地图片</li>
+            </ol>
+            <p><strong>预期结果</strong>：</p>
+            <ul>
+                <li>应该显示"正在上传图片..."的状态提示</li>
+                <li>上传完成后显示"图片上传成功"的提示</li>
+                <li>图片应该使用上传后的网络地址显示</li>
+                <li>检查浏览器开发者工具，图片请求应该是网络URL而不是本地文件</li>
+                <li><strong>如果上传失败</strong>：应该显示错误信息，不会回退到本地文件处理</li>
+                <li><strong>如果没有配置上传服务</strong>：应该显示"未配置图片上传服务"的错误</li>
+            </ul>
+            <p><strong>注意</strong>：</p>
+            <ul>
+                <li>本测试页面默认使用模拟上传配置进行演示</li>
+                <li>实际项目中会自动使用ZZ-Infra配置（zzInfraCustomConfig）</li>
+                <li>要测试真实的ZZ-Infra上传，请将页面中的 <code>useRealZZInfraConfig</code> 设置为 <code>true</code></li>
+                <li>真实配置会上传到：<code>http://49.232.13.110:83/zz-infra/zz-resource/oss/endpoint/put-file-attach</code></li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>测试步骤 4：缓存清理测试</h3>
+            <p>验证本地图片不会被网络图片缓存干扰</p>
+            <ol>
+                <li>先粘贴一个网络图片URL（使用上面的测试URL）</li>
+                <li>等待网络图片加载完成并显示在画布上</li>
+                <li>然后粘贴一个本地图片文件</li>
+            </ol>
+            <p><strong>预期结果</strong>：</p>
+            <ul>
+                <li>每个图片元素应该显示其对应的正确图片内容</li>
+                <li>网络图片缓存不应该干扰本地图片的显示</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>测试步骤 5：混合内容测试</h3>
+            <p>测试同时包含图片和文本的复制粘贴</p>
+            <div class="test-urls">
+                <div class="url-item" onclick="copyToClipboard('<p>文本内容</p><img src=&quot;https://picsum.photos/300/200?random=4&quot; alt=&quot;测试图片&quot;>')">
+                    HTML 混合内容
+                </div>
+            </div>
+        </div>
+
+        <div id="status"></div>
+        
+        <div id="excalidraw-container"></div>
+    </div>
+
+    <script type="module">
+        import { Excalidraw } from "../index.js";
+        import { createElement } from "react";
+        import { createRoot } from "react-dom/client";
+
+        // 复制到剪贴板的辅助函数
+        window.copyToClipboard = async function(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showStatus(`已复制到剪贴板: ${text.substring(0, 50)}...`, 'success');
+            } catch (err) {
+                showStatus('复制失败: ' + err.message, 'error');
+            }
+        };
+
+        // 显示状态信息
+        window.showStatus = function(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 3000);
+        };
+
+        // 测试用的图片上传配置
+        // 注意：这里使用模拟配置，实际项目中会自动使用ZZ-Infra配置
+        const testImageUploadConfig = {
+            uploadUrl: 'https://httpbin.org/post', // 测试用的API
+            customUpload: async (file) => {
+                // 模拟ZZ-Infra上传过程
+                showStatus('正在上传图片到ZZ-Infra服务...', 'success');
+                
+                // 模拟上传延迟
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // 返回一个模拟的网络地址（模拟ZZ-Infra返回格式）
+                const mockUrl = `https://picsum.photos/400/300?random=${Date.now()}`;
+                showStatus(`ZZ-Infra上传成功: ${mockUrl}`, 'success');
+                return mockUrl;
+            }
+        };
+
+        // 如果要测试真实的ZZ-Infra配置，可以设置为null让系统自动使用
+        const useRealZZInfraConfig = false; // 设置为true使用真实配置
+
+        // 初始化 Excalidraw
+        const container = document.getElementById('excalidraw-container');
+        const root = createRoot(container);
+        
+        root.render(
+            createElement(Excalidraw, {
+                initialData: {
+                    elements: [],
+                    appState: {
+                        viewBackgroundColor: "#ffffff",
+                        currentItemStrokeColor: "#000000",
+                        currentItemBackgroundColor: "transparent",
+                    }
+                },
+                // 图片上传配置：如果useRealZZInfraConfig为true则不传配置（让系统自动使用ZZ-Infra），否则使用测试配置
+                imageUploadConfig: useRealZZInfraConfig ? undefined : testImageUploadConfig,
+                onPaste: (data, event) => {
+                    console.log('粘贴事件:', data);
+                    if (data.mixedContent) {
+                        const hasImages = data.mixedContent.some(item => item.type === 'imageUrl');
+                        const hasText = data.mixedContent.some(item => item.type === 'text');
+                        
+                        if (hasImages && hasText) {
+                            showStatus('检测到混合内容（图片+文本）', 'success');
+                        } else if (hasImages) {
+                            showStatus('检测到图片URL，开始加载...', 'success');
+                        } else if (hasText) {
+                            showStatus('检测到文本内容', 'success');
+                        }
+                    } else if (data.text) {
+                        showStatus('粘贴文本: ' + data.text.substring(0, 30) + '...', 'success');
+                    }
+                    
+                    // 返回 undefined 让 Excalidraw 继续处理
+                    return undefined;
+                }
+            })
+        );
+
+        console.log('网络图片粘贴测试页面已加载');
+        showStatus('测试页面已准备就绪，请按照说明进行测试', 'success');
+    </script>
+</body>
+</html>

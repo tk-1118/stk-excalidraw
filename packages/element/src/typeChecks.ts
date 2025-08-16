@@ -38,13 +38,34 @@ import type {
 export const isInitializedImageElement = (
   element: ExcalidrawElement | null,
 ): element is InitializedExcalidrawImageElement => {
-  return !!element && element.type === "image" && !!element.fileId;
+  return (
+    !!element &&
+    element.type === "image" &&
+    (!!element.fileId || !!element.imageUrl)
+  );
 };
 
 export const isImageElement = (
   element: ExcalidrawElement | null,
 ): element is ExcalidrawImageElement => {
   return !!element && element.type === "image";
+};
+
+export const isNetworkImageElement = (
+  element: ExcalidrawElement | null,
+): element is ExcalidrawImageElement & { imageUrl: string } => {
+  return !!element && element.type === "image" && !!element.imageUrl;
+};
+
+export const isFileBasedImageElement = (
+  element: ExcalidrawElement | null,
+): element is ExcalidrawImageElement & { fileId: string } => {
+  return (
+    !!element &&
+    element.type === "image" &&
+    !!element.fileId &&
+    !element.imageUrl
+  );
 };
 
 export const isEmbeddableElement = (

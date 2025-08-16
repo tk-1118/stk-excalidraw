@@ -570,6 +570,7 @@ export const newImageElement = (
     type: ExcalidrawImageElement["type"];
     status?: ExcalidrawImageElement["status"];
     fileId?: ExcalidrawImageElement["fileId"];
+    imageUrl?: ExcalidrawImageElement["imageUrl"];
     scale?: ExcalidrawImageElement["scale"];
     crop?: ExcalidrawImageElement["crop"];
   } & ElementConstructorOpts,
@@ -581,6 +582,7 @@ export const newImageElement = (
     strokeColor: "transparent",
     status: opts.status ?? "pending",
     fileId: opts.fileId ?? null,
+    imageUrl: opts.imageUrl ?? null,
     scale: opts.scale ?? [1, 1],
     crop: opts.crop ?? null,
   };

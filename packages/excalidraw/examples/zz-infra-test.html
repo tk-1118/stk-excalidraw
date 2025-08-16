@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZZ-Infra 图片上传测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .upload-area:hover {
+            border-color: #007bff;
+        }
+        .upload-area.dragover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .result.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ZZ-Infra 图片上传测试</h1>
+        <p>测试 ZZ-Infra 图片上传服务是否正常工作</p>
+        
+        <div class="upload-area" id="uploadArea">
+            <p>点击选择图片或拖拽图片到此处</p>
+            <p style="font-size: 14px; color: #666;">支持 JPEG, PNG, GIF, WebP, SVG 格式，最大 10MB</p>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在上传图片...</p>
+        </div>
+        
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        
+        // ZZ-Infra 上传配置
+        const ZZ_INFRA_UPLOAD_URL = 'http://49.232.13.110:83/zz-infra/zz-resource/oss/endpoint/put-file-attach';
+        
+        // 点击上传区域
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // 文件选择
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                uploadFile(file);
+            }
+        });
+        
+        // 拖拽上传
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                uploadFile(file);
+            } else {
+                showResult('请选择有效的图片文件', 'error');
+            }
+        });
+        
+        // 上传文件
+        async function uploadFile(file) {
+            // 验证文件
+            if (!file.type.startsWith('image/')) {
+                showResult('请选择图片文件', 'error');
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) {
+                showResult('文件大小不能超过 10MB', 'error');
+                return;
+            }
+            
+            // 显示加载状态
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch(ZZ_INFRA_UPLOAD_URL, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`上传失败: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('上传响应:', data);
+                
+                if (data.link) {
+                    showResult(`
+                        <strong>上传成功！</strong><br>
+                        <strong>图片链接:</strong> <a href="${data.link}" target="_blank">${data.link}</a><br>
+                        <strong>文件名:</strong> ${data.name || file.name}<br>
+                        <strong>原始名称:</strong> ${data.originalName || file.name}<br>
+                        <strong>附件ID:</strong> ${data.attachId}<br>
+                        <img src="${data.link}" alt="上传的图片" class="image-preview">
+                    `, 'success');
+                } else {
+                    throw new Error('服务器返回的数据中缺少图片链接');
+                }
+                
+            } catch (error) {
+                console.error('上传错误:', error);
+                showResult(`上传失败: ${error.message}`, 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        // 显示结果
+        function showResult(message, type) {
+            result.innerHTML = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+        }
+        
+        // 页面加载完成后测试连接
+        window.addEventListener('load', () => {
+            console.log('ZZ-Infra 上传测试页面已加载');
+            console.log('上传接口地址:', ZZ_INFRA_UPLOAD_URL);
+        });
+    </script>
+</body>
+</html>

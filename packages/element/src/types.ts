@@ -147,6 +147,8 @@ export type ExcalidrawImageElement = _ExcalidrawElementBase &
   Readonly<{
     type: "image";
     fileId: FileId | null;
+    /** 图片网络链接，优先使用此字段 */
+    imageUrl?: string | null;
     /** whether respective file is persisted */
     status: "pending" | "saved" | "error";
     /** X and Y scale factors <-1, 1>, used for image axis flipping */
@@ -155,10 +157,9 @@ export type ExcalidrawImageElement = _ExcalidrawElementBase &
     crop: ImageCrop | null;
   }>;
 
-export type InitializedExcalidrawImageElement = MarkNonNullable<
-  ExcalidrawImageElement,
-  "fileId"
->;
+export type InitializedExcalidrawImageElement =
+  | MarkNonNullable<ExcalidrawImageElement, "fileId">
+  | (ExcalidrawImageElement & { imageUrl: string; fileId: null });
 
 export type ExcalidrawFrameElement = _ExcalidrawElementBase & {
   type: "frame";

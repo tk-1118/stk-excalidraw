@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excalidraw 图片URL粘贴演示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: #fff;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #333;
+        }
+        .toolbar {
+            background: #fff;
+            padding: 10px 20px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .test-url {
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .copy-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .copy-btn:hover {
+            background: #0056b3;
+        }
+        .instructions {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px 20px;
+            border-bottom: 1px solid #bee5eb;
+            font-size: 14px;
+        }
+        .excalidraw-container {
+            height: calc(100vh - 140px);
+            width: 100%;
+        }
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-top: 1px solid #ddd;
+            padding: 8px 20px;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+    
+    <!-- 引入 Excalidraw -->
+    <script type="module">
+        import { Excalidraw } from "https://unpkg.com/@excalidraw/excalidraw@0.17.0/dist/excalidraw.esm.js";
+        
+        // ZZ-Infra 配置
+        const zzInfraConfig = {
+            uploadUrl: "http://49.232.13.110:83/zz-infra/zz-resource/oss/endpoint/put-file-attach",
+            method: 'POST',
+            formDataFieldName: 'file',
+            maxFileSize: 10 * 1024 * 1024, // 10MB
+            allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
+        };
+        
+        // 状态管理
+        let imageCount = 0;
+        let lastPastedUrl = '';
+        
+        // 更新状态栏
+        function updateStatus(message, type = 'info') {
+            const statusBar = document.getElementById('statusMessage');
+            statusBar.textContent = message;
+            statusBar.className = type === 'success' ? 'status-success' : 
+                                 type === 'error' ? 'status-error' : '';
+        }
+        
+        function updateImageCount(count) {
+            document.getElementById('imageCount').textContent = count;
+        }
+        
+        // 处理画布变更
+        function handleChange(elements, appState, files) {
+            // 统计网络图片
+            const networkImages = elements.filter(el => 
+                el.type === 'image' && el.imageUrl
+            );
+            
+            const newCount = networkImages.length;
+            if (newCount !== imageCount) {
+                imageCount = newCount;
+                updateImageCount(imageCount);
+                
+                // 获取最新添加的图片URL
+                const latestImage = networkImages[networkImages.length - 1];
+                if (latestImage && latestImage.imageUrl && latestImage.imageUrl !== lastPastedUrl) {
+                    lastPastedUrl = latestImage.imageUrl;
+                    updateStatus(`✅ 成功添加图片: ${latestImage.imageUrl.substring(0, 50)}...`, 'success');
+                }
+            }
+        }
+        
+        // 初始化 Excalidraw
+        window.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('excalidraw-container');
+            
+            const excalidrawAPI = Excalidraw({
+                // 使用 ZZ-Infra 图片上传配置
+                imageUploadConfig: zzInfraConfig,
+                
+                // 处理变更
+                onChange: handleChange,
+                
+                // 初始数据
+                initialData: {
+                    elements: [],
+                    appState: {
+                        viewBackgroundColor: "#ffffff",
+                    },
+                },
+                
+                // 其他配置
+                theme: "light",
+                name: "图片URL粘贴演示",
+            });
+            
+            container.appendChild(excalidrawAPI);
+            
+            updateStatus('Excalidraw 已加载，可以开始粘贴图片URL');
+        });
+        
+        // 复制URL到剪贴板
+        window.copyUrl = async function(url) {
+            try {
+                await navigator.clipboard.writeText(url);
+                updateStatus(`已复制: ${url.substring(0, 50)}... 现在可以在画布上按 Ctrl+V 粘贴`, 'success');
+            } catch (error) {
+                updateStatus(`复制失败: ${error.message}`, 'error');
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="header">
+        <h1>Excalidraw 图片URL粘贴功能演示</h1>
+    </div>
+    
+    <div class="toolbar">
+        <div class="test-url">
+            <span>https://picsum.photos/400/300</span>
+            <button class="copy-btn" onclick="copyUrl('https://picsum.photos/400/300')">复制</button>
+        </div>
+        
+        <div class="test-url">
+            <span>https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400</span>
+            <button class="copy-btn" onclick="copyUrl('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400')">复制</button>
+        </div>
+        
+        <div class="test-url">
+            <span>https://via.placeholder.com/300x200.png</span>
+            <button class="copy-btn" onclick="copyUrl('https://via.placeholder.com/300x200.png')">复制</button>
+        </div>
+    </div>
+    
+    <div class="instructions">
+        <strong>使用说明:</strong>
+        1. 点击上方的"复制"按钮复制测试URL
+        2. 在下方的画布上按 <kbd>Ctrl+V</kbd> (Mac: <kbd>Cmd+V</kbd>) 粘贴
+        3. 系统会自动识别图片URL并在画布上显示图片
+        4. 也可以直接复制任何图片URL进行粘贴测试
+    </div>
+    
+    <div id="excalidraw-container" class="excalidraw-container"></div>
+    
+    <div class="status-bar">
+        <div>
+            画布中的网络图片数量: <strong id="imageCount">0</strong>
+        </div>
+        <div id="statusMessage">正在加载...</div>
+    </div>
+</body>
+</html>

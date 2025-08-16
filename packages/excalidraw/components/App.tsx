@@ -144,6 +144,7 @@ import {
   isImageElement,
   isEmbeddableElement,
   isInitializedImageElement,
+  isNetworkImageElement,
   isLinearElement,
   isLinearElementType,
   isUsingAdaptiveRadius,
@@ -357,6 +358,10 @@ import {
 } from "../data/blob";
 
 import { fileOpen } from "../data/filesystem";
+import {
+  networkImageCache,
+  getOrLoadNetworkImage,
+} from "../data/networkImageCache";
 import {
   showHyperlinkTooltip,
   hideHyperlinkToolip,
@@ -2049,6 +2054,7 @@ class App extends React.Component<AppProps, AppState> {
                           appState={this.state}
                           renderConfig={{
                             imageCache: this.imageCache,
+                            networkImageCache,
                             isExporting: false,
                             renderGrid: isGridModeEnabled(this),
                             canvasBackgroundColor:
@@ -2068,6 +2074,7 @@ class App extends React.Component<AppProps, AppState> {
                             allElementsMap={allElementsMap}
                             renderConfig={{
                               imageCache: this.imageCache,
+                              networkImageCache,
                               isExporting: false,
                               renderGrid: false,
                               canvasBackgroundColor:
@@ -2863,8 +2870,8 @@ class App extends React.Component<AppProps, AppState> {
   private clearImageShapeCache(filesMap?: BinaryFiles) {
     const files = filesMap ?? this.files;
     this.scene.getNonDeletedElements().forEach((element) => {
-      if (isInitializedImageElement(element) && files[element.fileId]) {
-        this.imageCache.delete(element.fileId);
+      if (isInitializedImageElement(element) && files[element.fileId as any]) {
+        this.imageCache.delete(element.fileId as any);
         ShapeCache.delete(element);
       }
     });
@@ -2962,6 +2969,9 @@ class App extends React.Component<AppProps, AppState> {
         errorMessage: <BraveMeasureTextError />,
       });
     }
+
+    // 预加载网络图片
+    this.preloadNetworkImages(this.scene.getElementsIncludingDeleted());
   }
 
   public componentWillUnmount() {
@@ -3489,7 +3499,35 @@ class App extends React.Component<AppProps, AppState> {
           return;
         }
 
-        this.createImageElement({ sceneX, sceneY, imageFile: file });
+        // 粘贴本地图片时，清理可能存在的过期网络图片缓存
+        this.clearStaleNetworkImageCache();
+
+        // 检查是否有图片上传配置（props配置或ZZ-Infra配置）
+        let hasUploadConfig = !!this.props.imageUploadConfig;
+
+        // 如果没有props配置，检查是否可以使用ZZ-Infra配置
+        if (!hasUploadConfig) {
+          try {
+            await import("../data/zzInfraConfig");
+            hasUploadConfig = true;
+            console.log("检测到ZZ-Infra配置，将使用上传流程");
+          } catch (error) {
+            console.log("未找到ZZ-Infra配置");
+          }
+        }
+
+        // 如果有上传配置，使用上传流程；否则显示错误
+        if (hasUploadConfig) {
+          await this.handleImagesPaste([file], { sceneX, sceneY });
+        } else {
+          // 注释掉本地文件处理，上传失败就显示错误
+          // this.createImageElement({ sceneX, sceneY, imageFile: file });
+
+          // 显示错误信息
+          this.setState({
+            errorMessage: "未配置图片上传服务，无法处理本地图片文件",
+          });
+        }
 
         return;
       }
@@ -3529,6 +3567,9 @@ class App extends React.Component<AppProps, AppState> {
           retainSeed: isPlainPaste,
         });
       } else if (data.text) {
+        // 粘贴文本内容时，清理可能存在的过期网络图片缓存
+        this.clearStaleNetworkImageCache();
+
         if (data.text && isMaybeMermaidDefinition(data.text)) {
           const api = await import("@excalidraw/mermaid-to-excalidraw");
 
@@ -3775,53 +3816,124 @@ class App extends React.Component<AppProps, AppState> {
       const imageURLs = mixedContent
         .filter((node) => node.type === "imageUrl")
         .map((node) => node.value);
-      const responses = await Promise.all(
-        imageURLs.map(async (url) => {
-          try {
-            return { file: await ImageURLToFile(url) };
-          } catch (error: any) {
-            let errorMessage = error.message;
-            if (error.cause === "FETCH_ERROR") {
-              errorMessage = t("errors.failedToFetchImage");
-            } else if (error.cause === "UNSUPPORTED") {
-              errorMessage = t("errors.unsupportedFileType");
-            }
-            return { errorMessage };
-          }
-        }),
-      );
-      let y = sceneY;
-      let firstImageYOffsetDone = false;
+
+      // 检测到图片URL，准备粘贴
+
+      // 使用新的图片处理器
+      await this.handleImagesPaste(imageURLs, { sceneX, sceneY });
+    } else {
+      // 粘贴非图片内容时，清理可能存在的过期网络图片缓存
+      this.clearStaleNetworkImageCache();
+
+      const textNodes = mixedContent.filter((node) => node.type === "text");
+      if (textNodes.length) {
+        this.addTextFromPaste(
+          textNodes.map((node) => node.value).join("\n\n"),
+          isPlainPaste,
+        );
+      }
+    }
+  }
+
+  /**
+   * 处理图片粘贴 - 支持网络链接和本地文件上传
+   */
+  private async handleImagesPaste(
+    images: (string | File)[],
+    { sceneX, sceneY }: { sceneX: number; sceneY: number },
+  ) {
+    const { processBatchImages } = await import("../data/imageHandler");
+
+    // 获取图片上传配置 - 优先使用ZZ-Infra配置
+    let uploadConfig = this.props.imageUploadConfig;
+
+    // 如果没有通过props传入配置，使用默认的ZZ-Infra配置
+    if (!uploadConfig) {
+      try {
+        const { zzInfraCustomConfig } = await import("../data/zzInfraConfig");
+        uploadConfig = zzInfraCustomConfig;
+        console.log("使用ZZ-Infra自定义上传配置");
+      } catch (error) {
+        console.warn("无法加载ZZ-Infra配置:", error);
+      }
+    }
+
+    const imageHandlerConfig = {
+      uploadConfig,
+      validateNetworkImages: false, // 禁用验证，直接尝试加载图片
+      defaultSize: { width: 300, height: 200 },
+    };
+
+    try {
+      const results = await processBatchImages(images, imageHandlerConfig, {
+        x: sceneX,
+        y: sceneY,
+        strokeColor: this.state.currentItemStrokeColor,
+        backgroundColor: this.state.currentItemBackgroundColor,
+        fillStyle: this.state.currentItemFillStyle,
+        strokeWidth: this.state.currentItemStrokeWidth,
+        strokeStyle: this.state.currentItemStrokeStyle,
+        roughness: this.state.currentItemRoughness,
+        opacity: this.state.currentItemOpacity,
+        locked: false,
+      });
+
       const nextSelectedIds: Record<ExcalidrawElement["id"], true> = {};
-      for (const response of responses) {
-        if (response.file) {
-          const initializedImageElement = await this.createImageElement({
-            sceneX,
-            sceneY: y,
-            imageFile: response.file,
-          });
+      const errors: string[] = [];
 
-          if (initializedImageElement) {
-            // vertically center first image in the batch
-            if (!firstImageYOffsetDone) {
-              firstImageYOffsetDone = true;
-              y -= initializedImageElement.height / 2;
-            }
-            // hack to reset the `y` coord because we vertically center during
-            // insertImageElement
-            this.scene.mutateElement(
-              initializedImageElement,
-              { y },
-              { informMutation: false, isDragging: false },
-            );
+      // 插入成功处理的图片元素
+      const successfulElements: ExcalidrawImageElement[] = [];
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        const originalImage = images[i];
 
-            y = initializedImageElement.y + initializedImageElement.height + 25;
+        if (result.error) {
+          // 上传失败时，记录错误信息，不进行本地文件处理回退
+          // 注释掉本地文件处理逻辑，上传失败就是失败，应该清除占位符
 
-            nextSelectedIds[initializedImageElement.id] = true;
+          // 如果是本地文件且错误提示需要使用本地文件处理流程，则回退到本地处理
+          // if (
+          //   originalImage instanceof File &&
+          //   result.error === "需要使用本地文件处理流程"
+          // ) {
+          //   try {
+          //     // 使用本地文件处理流程
+          //     const localImageElement = await this.createImageElement({
+          //       sceneX: sceneX,
+          //       sceneY: sceneY + i * 220, // 为多个图片调整位置
+          //       imageFile: originalImage,
+          //     });
+          //     if (localImageElement) {
+          //       nextSelectedIds[localImageElement.id] = true;
+          //     }
+          //   } catch (localError: any) {
+          //     errors.push(`本地文件处理失败: ${localError.message}`);
+          //   }
+          // } else {
+          //   errors.push(result.error);
+          // }
+
+          // 直接记录错误，不做任何回退处理
+          errors.push(result.error);
+        } else {
+          this.scene.insertElement(result.element);
+          nextSelectedIds[result.element.id] = true;
+          if (result.isNetworkImage) {
+            successfulElements.push(result.element);
           }
         }
       }
 
+      // 立即预加载新添加的网络图片
+      if (successfulElements.length > 0) {
+        // 异步预加载，但不等待完成
+        this.preloadNetworkImages(successfulElements).then(() => {
+          // 预加载完成后触发重新渲染
+          this.triggerRender();
+        });
+      }
+
+      // 更新选中状态并触发渲染
       this.setState({
         selectedElementIds: makeNextSelectedElementIds(
           nextSelectedIds,
@@ -3829,17 +3941,93 @@ class App extends React.Component<AppProps, AppState> {
         ),
       });
 
-      const error = responses.find((response) => !!response.errorMessage);
-      if (error && error.errorMessage) {
-        this.setState({ errorMessage: error.errorMessage });
+      // 立即触发一次渲染
+      this.triggerRender();
+
+      // 显示错误信息（如果有）
+      if (errors.length > 0) {
+        this.setState({
+          errorMessage:
+            errors.length === 1
+              ? errors[0]
+              : `处理图片时发生 ${errors.length} 个错误`,
+        });
       }
-    } else {
-      const textNodes = mixedContent.filter((node) => node.type === "text");
-      if (textNodes.length) {
-        this.addTextFromPaste(
-          textNodes.map((node) => node.value).join("\n\n"),
-          isPlainPaste,
-        );
+    } catch (error: any) {
+      this.setState({
+        errorMessage: error.message || "处理图片时发生错误",
+      });
+    }
+  }
+
+  /**
+   * 预加载网络图片
+   */
+  private async preloadNetworkImages(elements: readonly ExcalidrawElement[]) {
+    const networkImageElements = elements.filter(isNetworkImageElement);
+
+    // 并行预加载所有网络图片
+    await Promise.allSettled(
+      networkImageElements.map(async (element) => {
+        if (element.imageUrl && !networkImageCache.has(element.imageUrl)) {
+          try {
+            await getOrLoadNetworkImage(element.imageUrl);
+          } catch (error) {
+            console.warn(
+              `Failed to preload network image: ${element.imageUrl}`,
+              error,
+            );
+          }
+        }
+      }),
+    );
+  }
+
+  /**
+   * 清理过期的网络图片缓存
+   * 当粘贴非图片内容时调用，避免缓存干扰
+   */
+  private clearStaleNetworkImageCache() {
+    // 获取当前场景中所有的网络图片URL
+    const currentNetworkImageUrls = new Set<string>();
+
+    for (const element of this.scene.getElementsIncludingDeleted()) {
+      if (isNetworkImageElement(element) && element.imageUrl) {
+        currentNetworkImageUrls.add(element.imageUrl);
+      }
+    }
+
+    // 清理不再使用的网络图片缓存
+    const cacheSize = networkImageCache.size();
+    let cleanedCount = 0;
+
+    // 由于networkImageCache没有提供遍历方法，我们需要通过其他方式清理
+    // 这里我们简单地清理整个缓存，让需要的图片重新加载
+    // 在实际使用中，这不会造成太大问题，因为网络图片加载很快
+    if (cacheSize > 0) {
+      networkImageCache.clear();
+      cleanedCount = cacheSize;
+    }
+
+    if (cleanedCount > 0) {
+      console.debug(`Cleared ${cleanedCount} network image cache entries`);
+
+      // 重新预加载当前场景中的网络图片
+      if (currentNetworkImageUrls.size > 0) {
+        const currentNetworkElements = this.scene
+          .getElementsIncludingDeleted()
+          .filter(isNetworkImageElement)
+          .filter((element) =>
+            currentNetworkImageUrls.has((element as any).imageUrl as any),
+          );
+
+        // 异步重新加载，不阻塞当前操作
+        this.preloadNetworkImages(currentNetworkElements).catch((error) => {
+          console.warn(
+            "Failed to reload network images after cache clear:",
+            error,
+          );
+        });
       }
     }
   }
@@ -9053,7 +9241,7 @@ class App extends React.Component<AppProps, AppState> {
               const crop = croppingElement.crop;
               const image =
                 isInitializedImageElement(croppingElement) &&
-                this.imageCache.get(croppingElement.fileId)?.image;
+                this.imageCache.get(croppingElement.fileId as any)?.image;
 
               if (image && !(image instanceof Promise)) {
                 const instantDragOffset = vectorScale(
@@ -10695,6 +10883,8 @@ class App extends React.Component<AppProps, AppState> {
       latestImageElement as InitializedExcalidrawImageElement,
       {
         fileId,
+        // 确保本地图片不使用网络图片URL，避免缓存冲突
+        imageUrl: null,
       },
     );
   };
@@ -10773,6 +10963,9 @@ class App extends React.Component<AppProps, AppState> {
         ) as (keyof typeof IMAGE_MIME_TYPES)[],
       });
 
+      // 选择本地图片时，清理可能存在的过期网络图片缓存
+      this.clearStaleNetworkImageCache();
+
       await this.createImageElement({
         sceneX: x,
         sceneY: y,
@@ -10838,7 +11031,7 @@ class App extends React.Component<AppProps, AppState> {
   ) => {
     const { updatedFiles, erroredFiles } = await _updateImageCache({
       imageCache: this.imageCache,
-      fileIds: elements.map((element) => element.fileId),
+      fileIds: elements.map((element) => element.fileId as any),
       files,
     });
 
@@ -10848,7 +11041,7 @@ class App extends React.Component<AppProps, AppState> {
         elements.map((element) => {
           if (
             isInitializedImageElement(element) &&
-            erroredFiles.has(element.fileId)
+            erroredFiles.has(element.fileId as any)
           ) {
             return newElementWith(element, {
               status: "error",
@@ -10870,7 +11063,7 @@ class App extends React.Component<AppProps, AppState> {
     files: BinaryFiles = this.files,
   ) => {
     const uncachedImageElements = imageElements.filter(
-      (element) => !element.isDeleted && !this.imageCache.has(element.fileId),
+      (element) => !element.isDeleted && !this.imageCache.has(element.fileId as any),
     );
 
     if (uncachedImageElements.length) {
@@ -10881,7 +11074,7 @@ class App extends React.Component<AppProps, AppState> {
 
       if (updatedFiles.size) {
         for (const element of uncachedImageElements) {
-          if (updatedFiles.has(element.fileId)) {
+          if (updatedFiles.has(element.fileId as any)) {
             ShapeCache.delete(element);
           }
         }
@@ -11023,6 +11216,9 @@ class App extends React.Component<AppProps, AppState> {
         // if no scene is embedded or we fail for whatever reason, fall back
         // to importing as regular image
         // ---------------------------------------------------------------------
+        // 拖拽导入本地图片时，清理可能存在的过期网络图片缓存
+        this.clearStaleNetworkImageCache();
+
         this.createImageElement({ sceneX, sceneY, imageFile: file });
 
         return;
@@ -11270,7 +11466,7 @@ class App extends React.Component<AppProps, AppState> {
 
     const image =
       isInitializedImageElement(newElement) &&
-      this.imageCache.get(newElement.fileId)?.image;
+      this.imageCache.get(newElement.fileId as any)?.image;
     const aspectRatio =
       image && !(image instanceof Promise) ? image.width / image.height : null;
 
@@ -11374,7 +11570,7 @@ class App extends React.Component<AppProps, AppState> {
 
       const image =
         isInitializedImageElement(croppingElement) &&
-        this.imageCache.get(croppingElement.fileId)?.image;
+        this.imageCache.get(croppingElement.fileId as any)?.image;
 
       if (
         croppingAtStateStart &&

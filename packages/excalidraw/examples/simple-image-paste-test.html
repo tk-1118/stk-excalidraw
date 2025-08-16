@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单图片粘贴测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-url {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        .paste-area {
+            width: 100%;
+            height: 200px;
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #666;
+            margin: 20px 0;
+            cursor: text;
+        }
+        .paste-area:focus {
+            outline: none;
+            border-color: #0056b3;
+            background-color: #f8f9fa;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .copy-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .copy-btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>简单图片URL粘贴测试</h1>
+        <p>测试图片URL文本的检测和处理功能</p>
+        
+        <h3>测试步骤：</h3>
+        <ol>
+            <li>点击下面的"复制"按钮复制测试URL</li>
+            <li>在粘贴区域点击并按 Ctrl+V (或 Cmd+V) 粘贴</li>
+            <li>查看检测结果</li>
+        </ol>
+
+        <h3>测试URL：</h3>
+        <div class="test-url">
+            https://picsum.photos/400/300
+            <button class="copy-btn" onclick="copyUrl('https://picsum.photos/400/300')">复制</button>
+        </div>
+        
+        <div class="test-url">
+            https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400
+            <button class="copy-btn" onclick="copyUrl('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400')">复制</button>
+        </div>
+        
+        <div class="test-url">
+            https://via.placeholder.com/300x200.png
+            <button class="copy-btn" onclick="copyUrl('https://via.placeholder.com/300x200.png')">复制</button>
+        </div>
+
+        <div class="paste-area" tabindex="0" id="pasteArea">
+            点击这里，然后按 Ctrl+V 或 Cmd+V 粘贴图片URL
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // 复制URL到剪贴板
+        async function copyUrl(url) {
+            try {
+                await navigator.clipboard.writeText(url);
+                alert('已复制到剪贴板: ' + url);
+            } catch (error) {
+                console.error('复制失败:', error);
+                // 降级方案
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('已复制到剪贴板: ' + url);
+            }
+        }
+
+        // 图片URL检测函数（从clipboard.ts复制）
+        function isNetworkImageUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+            } catch {
+                return false;
+            }
+        }
+
+        function detectImageUrlFromText(text) {
+            const trimmedText = text.trim();
+            
+            if (trimmedText.includes('\n') || trimmedText.includes(' ')) {
+                return null;
+            }
+            
+            try {
+                if (!isNetworkImageUrl(trimmedText)) {
+                    return null;
+                }
+                
+                const url = new URL(trimmedText);
+                const pathname = url.pathname.toLowerCase();
+                const hostname = url.hostname.toLowerCase();
+                
+                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico', '.tiff', '.tif'];
+                const hasImageExtension = imageExtensions.some(ext => pathname.endsWith(ext));
+                
+                const imageServiceDomains = [
+                    'imgur.com', 'i.imgur.com',
+                    'cloudinary.com',
+                    'unsplash.com', 'images.unsplash.com',
+                    'pixabay.com', 'pexels.com',
+                    'flickr.com', 'live.staticflickr.com',
+                    'googleusercontent.com',
+                    'amazonaws.com', 'aliyuncs.com', 'qcloud.com',
+                    'github.com', 'githubusercontent.com',
+                    'gravatar.com', 'wp.com', 'blogspot.com',
+                    'photobucket.com', 'tinypic.com', 'imageshack.com',
+                    'postimg.cc', 'imgbb.com', 'sm.ms',
+                    'telegraph-image.pages.dev',
+                    'picsum.photos', 'placeholder.com', 'via.placeholder.com'
+                ];
+                
+                const isImageServiceDomain = imageServiceDomains.some(domain => 
+                    hostname === domain || hostname.endsWith('.' + domain)
+                );
+                
+                const pathPatterns = [
+                    '/image', '/img', '/photo', '/pic', '/picture',
+                    '/upload', '/media', '/assets', '/static',
+                    '/thumb', '/thumbnail', '/preview'
+                ];
+                const hasImagePath = pathPatterns.some(pattern => pathname.includes(pattern));
+                
+                const hasImageParams = url.searchParams.has('format') || 
+                                      url.searchParams.has('w') || 
+                                      url.searchParams.has('h') ||
+                                      url.searchParams.has('width') ||
+                                      url.searchParams.has('height') ||
+                                      url.searchParams.has('resize');
+                
+                if (hasImageExtension || isImageServiceDomain || hasImagePath || hasImageParams) {
+                    return trimmedText;
+                }
+            } catch (error) {
+                return null;
+            }
+            
+            return null;
+        }
+
+        // 测试图片加载
+        function testImageLoad(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    resolve({
+                        success: true,
+                        width: img.naturalWidth,
+                        height: img.naturalHeight
+                    });
+                };
+                img.onerror = (error) => {
+                    resolve({
+                        success: false,
+                        error: error.message || '图片加载失败'
+                    });
+                };
+                img.src = url;
+                
+                // 超时处理
+                setTimeout(() => {
+                    resolve({
+                        success: false,
+                        error: '加载超时'
+                    });
+                }, 10000);
+            });
+        }
+
+        // 粘贴事件处理
+        document.getElementById('pasteArea').addEventListener('paste', async (e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text');
+            const resultDiv = document.getElementById('result');
+            
+            console.log('粘贴的文本:', text);
+            
+            // 检测是否为图片URL
+            const imageUrl = detectImageUrlFromText(text);
+            
+            if (imageUrl) {
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <strong>✅ 检测成功!</strong><br>
+                    <strong>原始文本:</strong> ${text}<br>
+                    <strong>识别为图片URL:</strong> ${imageUrl}<br>
+                    <strong>正在测试图片加载...</strong>
+                `;
+                
+                // 测试图片是否能加载
+                const loadResult = await testImageLoad(imageUrl);
+                if (loadResult.success) {
+                    resultDiv.innerHTML += `<br><strong>✅ 图片加载成功!</strong> 尺寸: ${loadResult.width} x ${loadResult.height}`;
+                } else {
+                    resultDiv.innerHTML += `<br><strong>❌ 图片加载失败:</strong> ${loadResult.error}`;
+                }
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ 检测失败</strong><br>
+                    <strong>原始文本:</strong> ${text}<br>
+                    <strong>结果:</strong> 未识别为图片URL
+                `;
+            }
+        });
+
+        // 页面加载完成
+        window.addEventListener('load', () => {
+            console.log('图片URL检测测试页面已加载');
+            document.getElementById('pasteArea').focus();
+        });
+    </script>
+</body>
+</html>

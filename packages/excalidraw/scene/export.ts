@@ -234,7 +234,7 @@ export const exportToCanvas = async (
     imageCache: new Map(),
     fileIds: getInitializedImageElements(elementsForRender).map(
       (element) => element.fileId,
-    ),
+    ) as any,
     files,
   });
 

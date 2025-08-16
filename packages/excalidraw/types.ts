@@ -640,6 +640,8 @@ export interface ExcalidrawProps {
   aiEnabled?: boolean;
   showDeprecatedFonts?: boolean;
   renderScrollbars?: boolean;
+  /** 图片上传配置 */
+  imageUploadConfig?: import("./data/imageUpload").ImageUploadConfig;
 }
 
 export type SceneData = {

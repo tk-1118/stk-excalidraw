@@ -86,7 +86,7 @@ const isPendingImageElement = (
   renderConfig: StaticCanvasRenderConfig,
 ) =>
   isInitializedImageElement(element) &&
-  !renderConfig.imageCache.has(element.fileId);
+  !renderConfig.imageCache.has(element.fileId as any);
 
 const shouldResetImageFilter = (
   element: ExcalidrawElement,
@@ -97,7 +97,7 @@ const shouldResetImageFilter = (
     appState.theme === THEME.DARK &&
     isInitializedImageElement(element) &&
     !isPendingImageElement(element, renderConfig) &&
-    renderConfig.imageCache.get(element.fileId)?.mimeType !== MIME_TYPES.svg
+    renderConfig.imageCache.get(element.fileId as any)?.mimeType !== MIME_TYPES.svg
   );
 };
 
@@ -375,9 +375,46 @@ IMAGE_ERROR_PLACEHOLDER_IMG.src = `data:${MIME_TYPES.svg},${encodeURIComponent(
   `<svg viewBox="0 0 668 668" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2"><path d="M464 448H48c-26.51 0-48-21.49-48-48V112c0-26.51 21.49-48 48-48h416c26.51 0 48 21.49 48 48v288c0 26.51-21.49 48-48 48ZM112 120c-30.928 0-56 25.072-56 56s25.072 56 56 56 56-25.072 56-56-25.072-56-56-56ZM64 384h384V272l-87.515-87.515c-4.686-4.686-12.284-4.686-16.971 0L208 320l-55.515-55.515c-4.686-4.686-12.284-4.686-16.971 0L64 336v48Z" style="fill:#888;fill-rule:nonzero" transform="matrix(.81709 0 0 .81709 124.825 145.825)"/><path d="M256 8C119.034 8 8 119.033 8 256c0 136.967 111.034 248 248 248s248-111.034 248-248S392.967 8 256 8Zm130.108 117.892c65.448 65.448 70 165.481 20.677 235.637L150.47 105.216c70.204-49.356 170.226-44.735 235.638 20.676ZM125.892 386.108c-65.448-65.448-70-165.481-20.677-235.637L361.53 406.784c-70.203 49.356-170.226 44.736-235.638-20.676Z" style="fill:#888;fill-rule:nonzero" transform="matrix(.30366 0 0 .30366 506.822 60.065)"/></svg>`,
 )}`;
 
+/**
+ * 绘制加载动画
+ */
+const drawLoadingSpinner = (
+  context: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  radius: number,
+) => {
+  const time = Date.now() / 100; // 控制动画速度
+  const segments = 8;
+  const segmentAngle = (Math.PI * 2) / segments;
+
+  context.save();
+  context.translate(centerX, centerY);
+
+  for (let i = 0; i < segments; i++) {
+    const angle = i * segmentAngle + time;
+    const opacity = 0.3 + (0.7 * (i + 1)) / segments;
+
+    context.save();
+    context.rotate(angle);
+    context.globalAlpha = opacity;
+    context.fillStyle = "#666";
+
+    // 绘制小圆点
+    context.beginPath();
+    context.arc(radius * 0.7, 0, radius * 0.15, 0, Math.PI * 2);
+    context.fill();
+
+    context.restore();
+  }
+
+  context.restore();
+};
+
 const drawImagePlaceholder = (
   element: ExcalidrawImageElement,
   context: CanvasRenderingContext2D,
+  isLoading: boolean = false,
 ) => {
   context.fillStyle = "#E7E7E7";
   context.fillRect(0, 0, element.width, element.height);
@@ -388,6 +425,17 @@ const drawImagePlaceholder = (
     imageMinWidthOrHeight,
     Math.min(imageMinWidthOrHeight * 0.4, 100),
   );
+
+  // 如果是加载中状态，显示加载动画
+  if (isLoading) {
+    drawLoadingSpinner(
+      context,
+      element.width / 2,
+      element.height / 2,
+      size / 4,
+    );
+    return;
+  }
 
   context.drawImage(
     element.status === "error"
@@ -447,10 +495,39 @@ const drawElementOnCanvas = (
       break;
     }
     case "image": {
-      const img = isInitializedImageElement(element)
-        ? renderConfig.imageCache.get(element.fileId)?.image
-        : undefined;
-      if (img != null && !(img instanceof Promise)) {
+      let img: HTMLImageElement | undefined;
+      let isLoading = false;
+
+      if (isInitializedImageElement(element)) {
+        // 优先使用本地文件缓存（fileId），只有在没有fileId时才使用网络图片链接
+        if (element.fileId as any) {
+          // 使用文件缓存
+          const fileImageEntry = renderConfig.imageCache.get(element.fileId as any);
+          if (
+            fileImageEntry?.image &&
+            !(fileImageEntry.image instanceof Promise)
+          ) {
+            img = fileImageEntry.image;
+          } else if (fileImageEntry?.image instanceof Promise) {
+            isLoading = true;
+          }
+        } else if (element.imageUrl) {
+          // 从网络图片缓存获取
+          const networkImageEntry = renderConfig.networkImageCache?.get(
+            element.imageUrl,
+          );
+          if (
+            networkImageEntry?.status === "loaded" &&
+            networkImageEntry.image instanceof HTMLImageElement
+          ) {
+            img = networkImageEntry.image;
+          } else if (networkImageEntry?.status === "loading") {
+            isLoading = true;
+          }
+        }
+      }
+
+      if (img != null) {
         if (element.roundness && context.roundRect) {
           context.beginPath();
           context.roundRect(
@@ -484,7 +561,7 @@ const drawElementOnCanvas = (
           element.height,
         );
       } else {
-        drawImagePlaceholder(element, context);
+        drawImagePlaceholder(element, context, isLoading);
       }
       break;
     }

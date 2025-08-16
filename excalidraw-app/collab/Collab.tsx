@@ -427,7 +427,7 @@ class Collab extends PureComponent<CollabProps, CollabState> {
       .filter((element) => {
         return (
           isInitializedImageElement(element) &&
-          !this.fileManager.isFileTracked(element.fileId) &&
+          !this.fileManager.isFileTracked(element.fileId as any) &&
           !element.isDeleted &&
           (opts.forceFetchFiles
             ? element.status !== "pending" ||

@@ -429,7 +429,7 @@ const ExcalidrawWrapper = () => {
         const fileIds =
           data.scene.elements?.reduce((acc, element) => {
             if (isInitializedImageElement(element)) {
-              return acc.concat(element.fileId);
+              return acc.concat(element.fileId as any);
             }
             return acc;
           }, [] as FileId[]) || [];
@@ -539,9 +539,9 @@ const ExcalidrawWrapper = () => {
               if (
                 isInitializedImageElement(element) &&
                 // only load and update images that aren't already loaded
-                !currFiles[element.fileId]
+                !currFiles[element.fileId as any]
               ) {
-                return acc.concat(element.fileId);
+                return acc.concat(element.fileId as any);
               }
               return acc;
             }, [] as FileId[]) || [];

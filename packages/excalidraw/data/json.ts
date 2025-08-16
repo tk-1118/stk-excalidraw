@@ -28,6 +28,7 @@ import type {
 
 /**
  * Strips out files which are only referenced by deleted elements
+ * 网络图片元素不需要文件数据，所以不会被包含在这里
  */
 const filterOutDeletedFiles = (
   elements: readonly ExcalidrawElement[],
@@ -39,9 +40,11 @@ const filterOutDeletedFiles = (
       !element.isDeleted &&
       "fileId" in element &&
       element.fileId &&
-      files[element.fileId]
+      files[element.fileId as any] &&
+      // 只有基于文件的图片元素才需要文件数据
+      !("imageUrl" in element && element.imageUrl)
     ) {
-      nextFiles[element.fileId] = files[element.fileId];
+      nextFiles[element.fileId as any] = files[element.fileId as any];
     }
   }
   return nextFiles;

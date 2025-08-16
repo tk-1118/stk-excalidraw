@@ -23,6 +23,7 @@ import type {
 
 import { ExcalidrawError } from "./errors";
 import { createFile, isSupportedImageFileType } from "./data/blob";
+import { isNetworkImageUrl } from "./data/imageUpload";
 import { tryParseSpreadsheet, VALID_SPREADSHEET } from "./charts";
 
 import type { Spreadsheet } from "./charts";
@@ -150,8 +151,8 @@ export const serializeAsClipboardJSON = ({
   const _files = elements.reduce((acc, element) => {
     if (isInitializedImageElement(element)) {
       foundFile = true;
-      if (files && files[element.fileId]) {
-        acc[element.fileId] = files[element.fileId];
+      if (files && files[element.fileId as any]) {
+        acc[element.fileId as any] = files[element.fileId as any];
       }
     }
     return acc;
@@ -228,6 +229,130 @@ function parseHTMLTree(el: ChildNode) {
   }
   return result;
 }
+
+/**
+ * 检测文本是否为图片URL
+ */
+const detectImageUrlFromText = (text: string): string | null => {
+  const trimmedText = text.trim();
+
+  // 如果文本包含换行或空格，可能不是单个URL
+  if (trimmedText.includes("\n") || trimmedText.includes(" ")) {
+    return null;
+  }
+
+  try {
+    // 检查是否为有效的网络URL
+    if (!isNetworkImageUrl(trimmedText)) {
+      return null;
+    }
+
+    const url = new URL(trimmedText);
+    const pathname = url.pathname.toLowerCase();
+    const hostname = url.hostname.toLowerCase();
+
+    // 常见图片文件扩展名
+    const imageExtensions = [
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".gif",
+      ".webp",
+      ".svg",
+      ".bmp",
+      ".ico",
+      ".tiff",
+      ".tif",
+    ];
+
+    // 检查文件扩展名
+    const hasImageExtension = imageExtensions.some((ext) =>
+      pathname.endsWith(ext),
+    );
+
+    // 常见图片服务域名
+    const imageServiceDomains = [
+      "imgur.com",
+      "i.imgur.com",
+      "cloudinary.com",
+      "unsplash.com",
+      "images.unsplash.com",
+      "pixabay.com",
+      "pexels.com",
+      "flickr.com",
+      "live.staticflickr.com",
+      "googleusercontent.com",
+      "amazonaws.com",
+      "aliyuncs.com",
+      "qcloud.com",
+      "github.com",
+      "githubusercontent.com",
+      "gravatar.com",
+      "wp.com",
+      "blogspot.com",
+      "photobucket.com",
+      "tinypic.com",
+      "imageshack.com",
+      "postimg.cc",
+      "imgbb.com",
+      "sm.ms",
+      "telegraph-image.pages.dev",
+    ];
+
+    // 检查是否为已知的图片服务域名
+    const isImageServiceDomain = imageServiceDomains.some(
+      (domain) => hostname === domain || hostname.endsWith("." + domain),
+    );
+
+    // 路径模式检查
+    const pathPatterns = [
+      "/image",
+      "/img",
+      "/photo",
+      "/pic",
+      "/picture",
+      "/upload",
+      "/media",
+      "/assets",
+      "/static",
+      "/thumb",
+      "/thumbnail",
+      "/preview",
+    ];
+    const hasImagePath = pathPatterns.some((pattern) =>
+      pathname.includes(pattern),
+    );
+
+    // URL参数检查
+    const hasImageParams =
+      url.searchParams.has("format") ||
+      url.searchParams.has("w") ||
+      url.searchParams.has("h") ||
+      url.searchParams.has("width") ||
+      url.searchParams.has("height") ||
+      url.searchParams.has("resize");
+
+    // 如果满足以下任一条件，认为是图片URL：
+    // 1. 有图片文件扩展名
+    // 2. 是已知的图片服务域名
+    // 3. 路径包含图片相关关键词
+    // 4. URL参数表明是图片处理
+    if (
+      hasImageExtension ||
+      isImageServiceDomain ||
+      hasImagePath ||
+      hasImageParams
+    ) {
+      // 检测到图片URL
+      return trimmedText;
+    }
+  } catch (error) {
+    // URL解析失败，不是有效URL
+    return null;
+  }
+
+  return null;
+};
 
 const maybeParseHTMLPaste = (
   event: ClipboardEvent,
@@ -408,6 +533,16 @@ export const parseClipboard = async (
       };
     }
   } catch {}
+
+  // 检测纯文本中的图片URL
+  if (!isPlainPaste && parsedEventData.value) {
+    const imageUrl = detectImageUrlFromText(parsedEventData.value);
+    if (imageUrl) {
+      return {
+        mixedContent: [{ type: "imageUrl", value: imageUrl }],
+      };
+    }
+  }
 
   return { text: parsedEventData.value };
 };

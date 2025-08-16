@@ -22,6 +22,7 @@ polyfill();
 
 const ExcalidrawBase = (props: ExcalidrawProps) => {
   const {
+    imageUploadConfig,
     onHemaButtonClick,
     onChange,
     onIncrement,
@@ -124,6 +125,7 @@ const ExcalidrawBase = (props: ExcalidrawProps) => {
     <EditorJotaiProvider store={editorJotaiStore}>
       <InitializeApp langCode={langCode} theme={theme}>
         <App
+          imageUploadConfig={imageUploadConfig}
           onHemaButtonClick={onHemaButtonClick}
           onChange={onChange}
           onIncrement={onIncrement}
