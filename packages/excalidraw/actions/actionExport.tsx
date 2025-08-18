@@ -192,7 +192,11 @@ export const actionSaveToActiveFile = register({
     console.log("framesData", framesData);
     app.onHemaButtonClick("framesDataExport", {
       type: "FRAMES_DATA_CHANGED",
-      data: framesData,
+      data: {
+        frames: framesData,
+        timestamp: Date.now(),
+        totalFrames: frames.length,
+      },
       timestamp: Date.now(),
     });
     // const fileHandleExists = !!appState.fileHandle;
