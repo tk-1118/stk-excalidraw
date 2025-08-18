@@ -166,7 +166,7 @@ export const actionSaveToActiveFile = register({
   },
   perform: async (elements, appState, value, app) => {
     const frames = elements.filter((el) => isFrameLikeElement(el));
-    const framesData: any[] = frames.map((frame) => {
+    const framesData: any[] = frames.map((frame: any) => {
       // 获取frame内的所有子元素
       const childrenElements = getFrameChildren(elements, frame.id);
 

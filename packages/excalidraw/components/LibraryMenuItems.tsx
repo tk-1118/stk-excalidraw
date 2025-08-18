@@ -8,7 +8,7 @@ import React, {
 
 import { MIME_TYPES, arrayToMap } from "@excalidraw/common";
 
-import { duplicateElements } from "@excalidraw/element";
+import { duplicateElements, newElement } from "@excalidraw/element";
 
 import { serializeLibraryAsJSON } from "../data/json";
 import { useLibraryCache } from "../hooks/useLibraryItemSvg";
@@ -34,12 +34,111 @@ import type {
   UIAppState,
 } from "../types";
 
+// IconsAPI相关类型定义
+interface IconElement {
+  _id: string;
+  iconName: string;
+  url: string;
+}
+
+interface IconsAPIResponse {
+  q: string;
+  pages: {
+    curPage: number;
+    elements: IconElement[];
+    elementsCount: number;
+    pageCount: number;
+    pageSize: number;
+  };
+}
+
+interface IconItem {
+  id: string;
+  name: string;
+  url: string;
+  elements: LibraryItem["elements"];
+}
+
 // using an odd number of items per batch so the rendering creates an irregular
 // pattern which looks more organic
 const ITEMS_RENDERED_PER_BATCH = 17;
 // when render outputs cached we can render many more items per batch to
 // speed it up
 const CACHED_ITEMS_RENDERED_PER_BATCH = 64;
+
+// IconsAPI配置
+const ICONS_API_BASE_URL = "https://iconsapi.com";
+const ICONS_API_KEY = "68a2cc9de4b04803016349a1"; // 示例中的appkey
+
+// 从IconsAPI获取图标
+const fetchIconsFromAPI = async (
+  query: string,
+  page = 1,
+  size = 20,
+): Promise<IconsAPIResponse> => {
+  try {
+    const response = await fetch(
+      `${ICONS_API_BASE_URL}/api/search?appkey=${ICONS_API_KEY}&query=${encodeURIComponent(
+        query,
+      )}&page=${page}&size=${size}`,
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to fetch icons:", error);
+    return {
+      q: query,
+      pages: {
+        curPage: 1,
+        elements: [],
+        elementsCount: 0,
+        pageCount: 0,
+        pageSize: 20,
+      },
+    };
+  }
+};
+
+// 将SVG URL转换为Excalidraw元素
+const convertSvgToExcalidrawElement = async (
+  iconId: string,
+): Promise<LibraryItem["elements"]> => {
+  try {
+    // 获取SVG内容
+    const svgUrl = `${ICONS_API_BASE_URL}/${iconId}.svg`;
+    const response = await fetch(svgUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch SVG: ${response.status}`);
+    }
+
+    const svgText = await response.text();
+
+    // 创建一个简单的矩形元素来表示SVG图标
+    // 这里我们创建一个矩形元素作为占位符，实际项目中可能需要更复杂的SVG解析
+    const element = newElement({
+      type: "rectangle",
+      x: 0,
+      y: 0,
+      width: 64,
+      height: 64,
+      strokeColor: "#1e1e1e",
+      backgroundColor: "transparent",
+      strokeWidth: 2,
+      customData: {
+        svgContent: svgText,
+        iconId,
+        isIcon: true,
+      },
+    });
+
+    return [element];
+  } catch (error) {
+    console.error("Failed to convert SVG to element:", error);
+    return [];
+  }
+};
 
 export default function LibraryMenuItems({
   isLoading,
@@ -67,12 +166,76 @@ export default function LibraryMenuItems({
   const libraryContainerRef = useRef<HTMLDivElement>(null);
   const scrollPosition = useScrollPosition<HTMLDivElement>(libraryContainerRef);
 
+  // 图标搜索相关状态
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<IconItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showIconSearch, setShowIconSearch] = useState(true);
+
   // This effect has to be called only on first render, therefore  `scrollPosition` isn't in the dependency array
   useEffect(() => {
     if (scrollPosition > 0) {
       libraryContainerRef.current?.scrollTo(0, scrollPosition);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 处理图标搜索
+  const handleIconSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetchIconsFromAPI(query);
+      const iconItems: IconItem[] = await Promise.all(
+        response.pages.elements.map(async (iconElement) => {
+          const elements = await convertSvgToExcalidrawElement(iconElement._id);
+          return {
+            id: iconElement._id,
+            name: iconElement.iconName,
+            url: iconElement.url,
+            elements,
+          };
+        }),
+      );
+      setSearchResults(iconItems);
+    } catch (error) {
+      console.error("Search failed:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  // 防抖搜索
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery && showIconSearch) {
+        handleIconSearch(searchQuery);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, showIconSearch, handleIconSearch]);
+
+  // 处理搜索输入变化
+  const handleSearchInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(event.target.value);
+    },
+    [],
+  );
+
+  // 切换图标搜索显示
+  const toggleIconSearch = useCallback(() => {
+    setShowIconSearch(!showIconSearch);
+    if (!showIconSearch) {
+      setSearchQuery("");
+      setSearchResults([]);
+    }
+  }, [showIconSearch]);
 
   const { svgCache } = useLibraryCache();
   const unpublishedItems = useMemo(
@@ -207,6 +370,41 @@ export default function LibraryMenuItems({
     [getInsertedElements, onInsertLibraryItems],
   );
 
+  // 处理图标点击
+  const onIconClick = useCallback(
+    (iconItem: IconItem) => {
+      // 创建一个临时的LibraryItem来插入图标
+      const libraryItem: LibraryItem = {
+        id: iconItem.id,
+        status: "unpublished",
+        elements: iconItem.elements,
+        created: Date.now(),
+      };
+      onInsertLibraryItems([libraryItem]);
+    },
+    [onInsertLibraryItems],
+  );
+
+  // 处理图标拖拽
+  const onIconDrag = useCallback(
+    (iconItem: IconItem, event: React.DragEvent) => {
+      // 创建一个临时的LibraryItem来进行拖拽
+      const libraryItem: LibraryItem = {
+        id: iconItem.id,
+        status: "unpublished",
+        elements: iconItem.elements,
+        created: Date.now(),
+      };
+
+      // 设置拖拽数据，使用与现有素材库相同的格式
+      event.dataTransfer.setData(
+        MIME_TYPES.excalidrawlib,
+        serializeLibraryAsJSON([libraryItem]),
+      );
+    },
+    [],
+  );
+
   const itemsRenderedPerBatch =
     svgCache.size >= libraryItems.length
       ? CACHED_ITEMS_RENDERED_PER_BATCH
@@ -230,6 +428,169 @@ export default function LibraryMenuItems({
           className="library-menu-dropdown-container--in-heading"
         />
       )}
+
+      {/* 图标搜索区域 */}
+      <div
+        style={{
+          padding: "8px 16px",
+          borderBottom: "1px solid var(--color-border)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "8px",
+          }}
+        >
+          {/* <button
+            onClick={toggleIconSearch}
+            style={{
+              background: "none",
+              border: "1px solid var(--color-border)",
+              borderRadius: "4px",
+              padding: "4px 8px",
+              cursor: "pointer",
+              fontSize: "12px",
+              color: "var(--color-text)",
+            }}
+          >
+            {showIconSearch ? "隐藏图标搜索" : "搜索图标"}
+          </button> */}
+        </div>
+
+        {showIconSearch && (
+          <div>
+            <div style={{ position: "relative", marginBottom: "8px" }}>
+              <input
+                type="text"
+                placeholder="搜索图标..."
+                value={searchQuery}
+                onChange={handleSearchInputChange}
+                style={{
+                  width: "80%",
+                  padding: "8px 12px",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "4px",
+                  fontSize: "14px",
+                  backgroundColor: "var(--color-surface-low)",
+                  color: "var(--color-text)",
+                }}
+              />
+              {isSearching && (
+                <div
+                  style={{
+                    position: "absolute",
+                    right: "8px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                  }}
+                >
+                  <Spinner size="16px" />
+                </div>
+              )}
+            </div>
+
+            {searchResults.length > 0 && (
+              <div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--color-text-secondary)",
+                    marginBottom: "8px",
+                  }}
+                >
+                  找到 {searchResults.length} 个图标
+                </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(48px, 1fr))",
+                    gap: "4px",
+                    maxHeight: "200px",
+                    overflowY: "auto",
+                    padding: "4px",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "4px",
+                    backgroundColor: "var(--color-surface-low)",
+                  }}
+                >
+                  {searchResults.map((iconItem) => (
+                    <div
+                      key={iconItem.id}
+                      draggable={true}
+                      onClick={() => onIconClick(iconItem)}
+                      style={{
+                        width: "48px",
+                        height: "48px",
+                        border: "1px solid var(--color-border)",
+                        borderRadius: "4px",
+                        cursor: "grab",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: "var(--color-surface)",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          "var(--color-surface-high)";
+                        e.currentTarget.style.transform = "scale(1.05)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          "var(--color-surface)";
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                      onDragStart={(e) => {
+                        e.currentTarget.style.cursor = "grabbing";
+                        onIconDrag(iconItem, e);
+                      }}
+                      onDragEnd={(e) => {
+                        e.currentTarget.style.cursor = "grab";
+                      }}
+                    >
+                      <img
+                        src={iconItem.url}
+                        alt={iconItem.name || `Icon ${iconItem.id}`}
+                        title={iconItem.name || iconItem.id}
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          objectFit: "contain",
+                        }}
+                        onError={(e) => {
+                          // 如果图标加载失败，显示一个占位符
+                          e.currentTarget.style.display = "none";
+                          e.currentTarget.parentElement!.innerHTML = "?";
+                          e.currentTarget.parentElement!.style.fontSize =
+                            "20px";
+                          e.currentTarget.parentElement!.style.color =
+                            "var(--color-text-secondary)";
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {searchQuery && !isSearching && searchResults.length === 0 && (
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "var(--color-text-secondary)",
+                  fontSize: "14px",
+                  padding: "16px",
+                }}
+              >
+                未找到相关图标
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       <Stack.Col
         className="library-menu-items-container__items"
         align="start"
