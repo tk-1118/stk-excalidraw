@@ -99,6 +99,31 @@
   - 拖拽时鼠标样式变为 "grabbing"
   - 与现有素材库拖拽行为保持一致
 
+### 2024-01-XX: 图标显示问题修复
+- **问题**: 图标能拖拽但无法在画布上显示
+- **原因**: 使用矩形元素作为占位符，没有利用Excalidraw的网络图片支持
+- **修复**:
+  - 改用 `newImageElement` 创建图像元素而不是矩形元素
+  - 直接使用图标URL作为 `dataURL`
+  - 在拖拽数据中包含文件信息 (`files` 对象)
+  - 设置正确的MIME类型为 `image/svg+xml`
+- **技术细节**:
+  - 创建包含 `libraryItems` 和 `files` 的拖拽数据结构
+  - 使用图标ID作为 `fileId` 进行文件关联
+  - 支持SVG图标的直接显示
+
+### 2024-01-XX: "Invalid library"错误修复
+- **问题**: 拖拽图标到画布时出现"Invalid library"错误
+- **原因**: 拖拽数据格式不符合Excalidraw库的标准格式
+- **修复**:
+  - 使用标准的 `serializeLibraryAsJSON` 函数序列化库数据
+  - 移除自定义的拖拽数据格式，使用Excalidraw标准格式
+  - 简化图像元素创建，直接使用 `imageUrl` 属性
+- **最终方案**:
+  - 创建网络图像元素：`newImageElement({ imageUrl: iconUrl })`
+  - 使用 `isNetworkImageElement` 检查，支持网络图片直接显示
+  - 无需复杂的文件处理，直接使用URL
+
 ## 未来改进
 
 1. 完整的SVG解析和渲染

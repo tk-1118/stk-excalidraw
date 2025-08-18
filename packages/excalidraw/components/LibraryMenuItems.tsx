@@ -8,7 +8,7 @@ import React, {
 
 import { MIME_TYPES, arrayToMap } from "@excalidraw/common";
 
-import { duplicateElements, newElement } from "@excalidraw/element";
+import { duplicateElements, newImageElement } from "@excalidraw/element";
 
 import { serializeLibraryAsJSON } from "../data/json";
 import { useLibraryCache } from "../hooks/useLibraryItemSvg";
@@ -101,42 +101,31 @@ const fetchIconsFromAPI = async (
   }
 };
 
-// 将SVG URL转换为Excalidraw元素
+// 将SVG URL转换为Excalidraw图像元素
 const convertSvgToExcalidrawElement = async (
   iconId: string,
-): Promise<LibraryItem["elements"]> => {
+  iconUrl: string,
+): Promise<{ element: LibraryItem["elements"]; fileData?: any }> => {
   try {
-    // 获取SVG内容
-    const svgUrl = `${ICONS_API_BASE_URL}/${iconId}.svg`;
-    const response = await fetch(svgUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch SVG: ${response.status}`);
-    }
-
-    const svgText = await response.text();
-
-    // 创建一个简单的矩形元素来表示SVG图标
-    // 这里我们创建一个矩形元素作为占位符，实际项目中可能需要更复杂的SVG解析
-    const element = newElement({
-      type: "rectangle",
+    // 创建网络图像元素，直接使用imageUrl
+    const element = newImageElement({
+      type: "image",
       x: 0,
       y: 0,
       width: 64,
       height: 64,
-      strokeColor: "#1e1e1e",
-      backgroundColor: "transparent",
-      strokeWidth: 2,
-      customData: {
-        svgContent: svgText,
-        iconId,
-        isIcon: true,
-      },
+      imageUrl: iconUrl, // 直接使用网络图片URL
+      status: "saved",
+      scale: [1, 1],
     });
 
-    return [element];
+    // 网络图像不需要文件数据
+    return {
+      element: [element],
+    };
   } catch (error) {
     console.error("Failed to convert SVG to element:", error);
-    return [];
+    return { element: [] };
   }
 };
 
@@ -170,7 +159,7 @@ export default function LibraryMenuItems({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<IconItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [showIconSearch, setShowIconSearch] = useState(true);
+  const showIconSearch = true; // 默认显示图标搜索
 
   // This effect has to be called only on first render, therefore  `scrollPosition` isn't in the dependency array
   useEffect(() => {
@@ -191,12 +180,15 @@ export default function LibraryMenuItems({
       const response = await fetchIconsFromAPI(query);
       const iconItems: IconItem[] = await Promise.all(
         response.pages.elements.map(async (iconElement) => {
-          const elements = await convertSvgToExcalidrawElement(iconElement._id);
+          const result = await convertSvgToExcalidrawElement(
+            iconElement._id,
+            iconElement.url,
+          );
           return {
             id: iconElement._id,
             name: iconElement.iconName,
             url: iconElement.url,
-            elements,
+            elements: result.element,
           };
         }),
       );
@@ -228,14 +220,14 @@ export default function LibraryMenuItems({
     [],
   );
 
-  // 切换图标搜索显示
-  const toggleIconSearch = useCallback(() => {
-    setShowIconSearch(!showIconSearch);
-    if (!showIconSearch) {
-      setSearchQuery("");
-      setSearchResults([]);
-    }
-  }, [showIconSearch]);
+  // 切换图标搜索显示 (暂时未使用，保留以备后用)
+  // const toggleIconSearch = useCallback(() => {
+  //   setShowIconSearch(!showIconSearch);
+  //   if (!showIconSearch) {
+  //     setSearchQuery("");
+  //     setSearchResults([]);
+  //   }
+  // }, [showIconSearch]);
 
   const { svgCache } = useLibraryCache();
   const unpublishedItems = useMemo(
@@ -380,6 +372,9 @@ export default function LibraryMenuItems({
         elements: iconItem.elements,
         created: Date.now(),
       };
+
+      // TODO: 需要找到一种方式将文件数据传递给应用
+      // 目前先使用标准的库项目插入方式
       onInsertLibraryItems([libraryItem]);
     },
     [onInsertLibraryItems],
@@ -396,7 +391,7 @@ export default function LibraryMenuItems({
         created: Date.now(),
       };
 
-      // 设置拖拽数据，使用与现有素材库相同的格式
+      // 使用标准的库序列化格式
       event.dataTransfer.setData(
         MIME_TYPES.excalidrawlib,
         serializeLibraryAsJSON([libraryItem]),
