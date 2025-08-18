@@ -656,6 +656,14 @@ const drawElementOnCanvas = (
               detailedError: networkImageEntry.detailedError,
               errorType: networkImageEntry.errorType,
             };
+          } else if (!networkImageEntry) {
+            // 如果缓存中没有该图片，触发加载
+            isLoading = true;
+            // 异步加载图片，加载完成后会通过回调触发重绘
+            if (renderConfig.onNetworkImageLoad) {
+              console.log(`[网络图片] 触发加载: ${element.imageUrl}`);
+              renderConfig.onNetworkImageLoad(element.imageUrl);
+            }
           }
         }
       }

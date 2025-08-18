@@ -2055,6 +2055,21 @@ class App extends React.Component<AppProps, AppState> {
                           renderConfig={{
                             imageCache: this.imageCache,
                             networkImageCache,
+                            onNetworkImageLoad: (imageUrl: string) => {
+                              // 触发网络图片加载并在完成后重绘
+                              console.log(`[网络图片] 开始加载: ${imageUrl}`);
+                              getOrLoadNetworkImage(imageUrl, () => {
+                                console.log(
+                                  `[网络图片] 加载完成，触发重绘: ${imageUrl}`,
+                                );
+                                this.triggerRender(true);
+                              }).catch((error) => {
+                                console.warn(
+                                  `Failed to load network image: ${imageUrl}`,
+                                  error,
+                                );
+                              });
+                            },
                             isExporting: false,
                             renderGrid: isGridModeEnabled(this),
                             canvasBackgroundColor:
@@ -2075,6 +2090,23 @@ class App extends React.Component<AppProps, AppState> {
                             renderConfig={{
                               imageCache: this.imageCache,
                               networkImageCache,
+                              onNetworkImageLoad: (imageUrl: string) => {
+                                // 触发网络图片加载并在完成后重绘
+                                console.log(
+                                  `[网络图片] NewElement 开始加载: ${imageUrl}`,
+                                );
+                                getOrLoadNetworkImage(imageUrl, () => {
+                                  console.log(
+                                    `[网络图片] NewElement 加载完成，触发重绘: ${imageUrl}`,
+                                  );
+                                  this.triggerRender(true);
+                                }).catch((error) => {
+                                  console.warn(
+                                    `Failed to load network image: ${imageUrl}`,
+                                    error,
+                                  );
+                                });
+                              },
                               isExporting: false,
                               renderGrid: false,
                               canvasBackgroundColor:
@@ -3942,9 +3974,9 @@ class App extends React.Component<AppProps, AppState> {
         }
       }
 
-      // 立即预加载新添加的网络图片（跳过已有本地缓存的图片）
+      // 立即预加载新添加的网络图片（跳过已有缓存的图片）
       if (successfulElements.length > 0) {
-        // 过滤出需要网络加载的图片（排除已有本地缓存的）
+        // 过滤出需要网络加载的图片（排除已有缓存的）
         const elementsNeedingNetworkLoad = successfulElements.filter(
           (element) =>
             element.imageUrl && !networkImageCache.has(element.imageUrl),
@@ -3953,8 +3985,8 @@ class App extends React.Component<AppProps, AppState> {
         if (elementsNeedingNetworkLoad.length > 0) {
           // 异步预加载，但不等待完成
           this.preloadNetworkImages(elementsNeedingNetworkLoad).then(() => {
-            // 预加载完成后强制触发重新渲染以清除加载动画
-            this.triggerRender(true);
+            // 预加载完成后触发重新渲染
+            this.triggerRender();
           });
         }
       }
@@ -3969,6 +4001,11 @@ class App extends React.Component<AppProps, AppState> {
 
       // 立即触发一次渲染
       this.triggerRender();
+
+      // 延迟触发强制渲染，确保所有异步操作完成后能正确显示
+      setTimeout(() => {
+        this.triggerRender(true);
+      }, 300);
 
       // 显示错误信息（如果有）
       if (errors.length > 0) {
@@ -3997,7 +4034,10 @@ class App extends React.Component<AppProps, AppState> {
       networkImageElements.map(async (element) => {
         if (element.imageUrl && !networkImageCache.has(element.imageUrl)) {
           try {
-            await getOrLoadNetworkImage(element.imageUrl);
+            await getOrLoadNetworkImage(element.imageUrl, () => {
+              // 图片加载完成后触发重绘
+              this.triggerRender(true);
+            });
           } catch (error) {
             console.warn(
               `Failed to preload network image: ${element.imageUrl}`,
@@ -4066,7 +4106,10 @@ class App extends React.Component<AppProps, AppState> {
       networkImageElements.map(async (element) => {
         if (element.imageUrl) {
           try {
-            await getOrLoadNetworkImage(element.imageUrl);
+            await getOrLoadNetworkImage(element.imageUrl, () => {
+              // 图片加载完成后触发重绘
+              this.triggerRender(true);
+            });
             console.log(`成功预加载网络图片: ${element.imageUrl}`);
           } catch (error) {
             console.warn(`初始网络图片预加载失败: ${element.imageUrl}`, error);
@@ -4074,9 +4117,9 @@ class App extends React.Component<AppProps, AppState> {
         }
       }),
     ).then(() => {
-      console.log("初始网络图片预加载完成，强制触发重新渲染");
-      // 预加载完成后强制触发重新渲染以清除加载动画
-      this.triggerRender(true);
+      console.log("初始网络图片预加载完成，触发重新渲染");
+      // 预加载完成后触发重新渲染
+      this.triggerRender();
     });
   }
 

@@ -5,7 +5,12 @@ import {
   THEME,
 } from "@excalidraw/common";
 
-import { getNonDeletedElements } from "@excalidraw/element";
+import {
+  getDefaultFrameName,
+  getFrameChildren,
+  getNonDeletedElements,
+  isFrameLikeElement,
+} from "@excalidraw/element";
 
 import { CaptureUpdateAction } from "@excalidraw/element";
 
@@ -19,9 +24,9 @@ import { ToolButton } from "../components/ToolButton";
 import { Tooltip } from "../components/Tooltip";
 import { ExportIcon, questionCircle, saveAs } from "../components/icons";
 import { loadFromJSON, saveAsJSON } from "../data";
-import { isImageFileHandle } from "../data/blob";
+// import { isImageFileHandle } from "../data/blob";
 import { nativeFileSystemSupported } from "../data/filesystem";
-import { resaveAsImageWithScene } from "../data/resave";
+// import { resaveAsImageWithScene } from "../data/resave";
 
 import { t } from "../i18n";
 import { getSelectedElements, isSomeElementSelected } from "../scene";
@@ -29,7 +34,10 @@ import { getExportSize } from "../scene/export";
 
 import "../components/ToolIcon.scss";
 
+import { serializeAsJSON } from "../data/json";
+
 import { register } from "./register";
+
 
 export const actionChangeProjectName = register({
   name: "changeProjectName",
@@ -157,43 +165,73 @@ export const actionSaveToActiveFile = register({
     );
   },
   perform: async (elements, appState, value, app) => {
-    const fileHandleExists = !!appState.fileHandle;
+    const frames = elements.filter((el) => isFrameLikeElement(el));
+    const framesData: any[] = frames.map((frame) => {
+      // 获取frame内的所有子元素
+      const childrenElements = getFrameChildren(elements, frame.id);
 
-    try {
-      const { fileHandle } = isImageFileHandle(appState.fileHandle)
-        ? await resaveAsImageWithScene(
-            elements,
-            appState,
-            app.files,
-            app.getName(),
-          )
-        : await saveAsJSON(elements, appState, app.files, app.getName());
+      // 构建包含frame和其子元素的完整元素列表
+      const frameElements = [frame, ...childrenElements];
+
+      // 生成Excalidraw格式的JSON数据
+      const excalidrawData = serializeAsJSON(
+        frameElements,
+        app.state,
+        app.files,
+        "local",
+      );
 
       return {
-        captureUpdate: CaptureUpdateAction.EVENTUALLY,
-        appState: {
-          ...appState,
-          fileHandle,
-          toast: fileHandleExists
-            ? {
-                message: fileHandle?.name
-                  ? t("toast.fileSavedToFilename").replace(
-                      "{filename}",
-                      `"${fileHandle.name}"`,
-                    )
-                  : t("toast.fileSaved"),
-              }
-            : null,
-        },
+        frameId: frame.id,
+        frameName: frame.name || getDefaultFrameName(frame),
+        frameElement: frame,
+        childrenElements,
+        excalidrawData,
       };
-    } catch (error: any) {
-      if (error?.name !== "AbortError") {
-        console.error(error);
-      } else {
-        console.warn(error);
-      }
-      return { captureUpdate: CaptureUpdateAction.EVENTUALLY };
-    }
+    });
+    console.log("framesData", framesData);
+    app.onHemaButtonClick("framesDataExport", {
+      type: "FRAMES_DATA_CHANGED",
+      data: framesData,
+      timestamp: Date.now(),
+    });
+    // const fileHandleExists = !!appState.fileHandle;
+
+    // try {
+    //   const { fileHandle } = isImageFileHandle(appState.fileHandle)
+    //     ? await resaveAsImageWithScene(
+    //         elements,
+    //         appState,
+    //         app.files,
+    //         app.getName(),
+    //       )
+    //     : await saveAsJSON(elements, appState, app.files, app.getName());
+
+    //   return {
+    //     captureUpdate: CaptureUpdateAction.EVENTUALLY,
+    //     appState: {
+    //       ...appState,
+    //       fileHandle,
+    //       toast: fileHandleExists
+    //         ? {
+    //             message: fileHandle?.name
+    //               ? t("toast.fileSavedToFilename").replace(
+    //                   "{filename}",
+    //                   `"${fileHandle.name}"`,
+    //                 )
+    //               : t("toast.fileSaved"),
+    //           }
+    //         : null,
+    //     },
+    //   };
+    // } catch (error: any) {
+    //   if (error?.name !== "AbortError") {
+    //     console.error(error);
+    //   } else {
+    //     console.warn(error);
+    //   }
+    return { captureUpdate: CaptureUpdateAction.EVENTUALLY };
+    // }
   },
   keyTest: (event) =>
     event.key === KEYS.S && event[KEYS.CTRL_OR_CMD] && !event.shiftKey,

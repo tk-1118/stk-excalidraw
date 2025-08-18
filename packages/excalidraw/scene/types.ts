@@ -32,6 +32,8 @@ export type StaticCanvasRenderConfig = {
   imageCache: AppClassProperties["imageCache"];
   /** 网络图片缓存 */
   networkImageCache?: import("../data/networkImageCache").NetworkImageCache;
+  /** 网络图片加载回调 */
+  onNetworkImageLoad?: (imageUrl: string) => void;
   renderGrid: boolean;
   /** when exporting the behavior is slightly different (e.g. we can't use
    CSS filters), and we disable render optimizations for best output */

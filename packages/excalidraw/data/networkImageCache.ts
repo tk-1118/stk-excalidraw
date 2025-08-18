@@ -206,6 +206,7 @@ export const loadNetworkImage = async (
  */
 export const getOrLoadNetworkImage = async (
   url: string,
+  onLoadCallback?: () => void,
 ): Promise<HTMLImageElement> => {
   // 检查缓存
   const cached = networkImageCache.get(url);
@@ -245,6 +246,12 @@ export const getOrLoadNetworkImage = async (
       status: "loaded",
       created: Date.now(),
     });
+
+    // 图片加载完成后触发回调（用于重绘画布）
+    if (onLoadCallback) {
+      console.log(`[网络图片] 执行加载完成回调: ${url}`);
+      onLoadCallback();
+    }
 
     return image;
   } catch (error: any) {
