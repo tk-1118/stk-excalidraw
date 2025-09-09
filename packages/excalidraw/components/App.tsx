@@ -2797,6 +2797,62 @@ class App extends React.Component<AppProps, AppState> {
         },
       };
     }
+
+    // 检查IndexedDB缓存，根据元素数量决定使用哪个数据源
+    // const businessServiceSN =
+    //   this.props.UIOptions?.businessServiceInfo?.businessServiceSN;
+
+    // if (businessServiceSN) {
+    //   try {
+    //     const cachedData = await canvasStorage.loadCanvasData(
+    //       businessServiceSN,
+    //     );
+
+    //     if (cachedData && cachedData.elements) {
+    //       const initialElementsCount = initialData?.elements?.length || 0;
+    //       const cachedElementsCount = cachedData.elements.length || 0;
+
+    //       // 如果缓存的元素数量大于或等于initialData的元素数量，使用缓存数据
+    //       // 特别处理：如果initialData没有elements或为空，且缓存有数据，则使用缓存
+    //       if (
+    //         cachedElementsCount >= initialElementsCount ||
+    //         (!initialData?.elements && cachedElementsCount > 0)
+    //       ) {
+    //         // eslint-disable-next-line no-console
+    //         console.log(
+    //           `[${businessServiceSN}] 使用IndexedDB缓存数据初始化画布 (缓存:${cachedElementsCount}个元素 >= 初始:${initialElementsCount}个元素)`,
+    //         );
+
+    //         // 使用缓存数据替换initialData
+    //         initialData = {
+    //           ...initialData,
+    //           elements: cachedData.elements,
+    //           appState: {
+    //             ...initialData?.appState,
+    //             ...cachedData.appState,
+    //           },
+    //         };
+    //       } else {
+    //         // eslint-disable-next-line no-console
+    //         console.log(
+    //           `[${businessServiceSN}] 使用initialData初始化画布 (初始:${initialElementsCount}个元素 > 缓存:${cachedElementsCount}个元素)`,
+    //         );
+    //       }
+    //     } else {
+    //       // eslint-disable-next-line no-console
+    //       console.log(
+    //         `[${businessServiceSN}] IndexedDB中无缓存数据，使用initialData初始化画布`,
+    //       );
+    //     }
+    //   } catch (error) {
+    //     // eslint-disable-next-line no-console
+    //     console.error(
+    //       `[${businessServiceSN}] 检查IndexedDB缓存失败，使用initialData初始化:`,
+    //       error,
+    //     );
+    //   }
+    // }
+
     const scene = restore(initialData, null, null, { repairBindings: true });
     scene.appState = {
       ...scene.appState,
