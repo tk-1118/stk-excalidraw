@@ -2,6 +2,7 @@ import clsx from "clsx";
 import throttle from "lodash.throttle";
 import React, { useContext } from "react";
 import {
+  getDefaultFrameName,
   getNonDeletedElements,
   isAnnotationElement,
 } from "@excalidraw/element";
@@ -241,6 +242,8 @@ import {
   isSimpleArrow,
 } from "@excalidraw/element";
 
+import { exportToCanvas } from "@excalidraw/utils";
+
 import type { LocalPoint, Radians } from "@excalidraw/math";
 
 import type {
@@ -404,6 +407,8 @@ import { LassoTrail } from "../lasso";
 
 import { EraserTrail } from "../eraser";
 
+import { serializeAsJSON } from "../data/json";
+
 import { AnnotationLayer } from "./Annotation/AnnotationLayer";
 
 import ConvertElementTypePopup, {
@@ -485,7 +490,6 @@ import type {
 } from "../types";
 import type { RoughCanvas } from "roughjs/bin/canvas";
 import type { Action, ActionResult } from "../actions/types";
-import { exportToCanvas } from "@excalidraw/utils";
 
 const AppContext = React.createContext<AppClassProperties>(null!);
 const AppPropsContext = React.createContext<AppProps>(null!);
@@ -1632,6 +1636,60 @@ class App extends React.Component<AppProps, AppState> {
               AI生成
             </div>
           )}
+          {(this.props.UIOptions.visibility?.customButtons === true ||
+            (typeof this.props.UIOptions.visibility?.customButtons ===
+              "object" &&
+              this.props.UIOptions.visibility?.customButtons?.aiGenerate !==
+                false)) && (
+            <div
+              key={`spec-button-${f.id}-copy`}
+              className="frame-copy-button"
+              style={{
+                position: "absolute",
+                left: `${
+                  specButtonX -
+                  this.state.offsetLeft +
+                  (this.props.UIOptions.visibility?.customButtons === true ||
+                  (typeof this.props.UIOptions.visibility?.customButtons ===
+                    "object" &&
+                    this.props.UIOptions.visibility?.customButtons
+                      ?.specButton !== false)
+                    ? specButtonWidth + 10
+                    : 0)
+                }px`,
+                top: `${specButtonY - this.state.offsetTop}px`,
+                width: `${specButtonWidth}px`,
+                height: `${specButtonHeight}px`,
+                backgroundColor: "#6965DB",
+                border: "2px solid #6965DB",
+                borderRadius: "4px",
+                cursor: "pointer",
+                zIndex: 2,
+                pointerEvents: this.state.viewModeEnabled
+                  ? POINTER_EVENTS.disabled
+                  : POINTER_EVENTS.enabled,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "12px",
+                color: "white",
+                fontWeight: "bold",
+                textAlign: "center",
+                lineHeight: "1",
+              }}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation(); // 阻止事件冒泡到画布
+
+                // 收集frame数据，参考BusinessServiceProtoNav的generateFrameData逻辑
+                const frameData = this.generateFrameDataForCopy(f);
+                this.onHemaButtonClick("copyFrontPage", frameData);
+              }}
+              title="复制"
+            >
+              复制
+            </div>
+          )}
           {/* 扫描特效覆盖层（与frame同位） */}
           {this.activeScanFrameIds.has(f.id) && (
             <div
@@ -2752,6 +2810,60 @@ class App extends React.Component<AppProps, AppState> {
 
   private disableEvent: EventListener = (event) => {
     event.preventDefault();
+  };
+
+  /**
+   * 为复制功能生成frame数据，参考BusinessServiceProtoNav的generateFrameData逻辑
+   * 收集frame及其关联的所有子元素（包括frameId匹配和几何范围内的元素）
+   * @param frame - 要复制的frame元素
+   * @returns 包含frame和子元素的完整数据结构
+   */
+  private generateFrameDataForCopy = (frame: ExcalidrawFrameLikeElement) => {
+    const elements = this.scene.getNonDeletedElements();
+
+    // 获取frame内已正确关联的子元素（frameId匹配）
+    const associatedChildren = getFrameChildren(elements, frame.id);
+
+    // 获取所有与frame重叠/包含在frame内的元素（包括未正确关联frameId的元素）
+    const overlappingElements = getElementsOverlappingFrame(elements, frame);
+
+    // 合并两个集合，去重，确保收集到所有相关元素
+    const allChildrenMap = new Map<string, ExcalidrawElement>();
+
+    // 添加已关联的子元素
+    associatedChildren.forEach((element) => {
+      allChildrenMap.set(element.id, element);
+    });
+
+    // 添加重叠的元素（排除frame自身和其他frame元素）
+    overlappingElements.forEach((element) => {
+      if (element.id !== frame.id && !isFrameLikeElement(element)) {
+        allChildrenMap.set(element.id, element);
+      }
+    });
+
+    // 转换为数组
+    const childrenElements = Array.from(allChildrenMap.values());
+
+    // 构建包含frame和其子元素的完整元素列表
+    const frameElements = [frame, ...childrenElements];
+
+    // 生成Excalidraw格式的JSON数据
+    const excalidrawData = serializeAsJSON(
+      frameElements,
+      this.state,
+      this.files,
+      "local",
+    );
+
+    return {
+      frameId: frame.id,
+      frameName: frame.name || getDefaultFrameName(frame),
+      frameElement: frame,
+      childrenElements,
+      excalidrawData,
+      timestamp: Date.now(),
+    };
   };
 
   private resetHistory = () => {
@@ -11425,7 +11537,6 @@ class App extends React.Component<AppProps, AppState> {
     this.lastSavedElementsRef = elements;
     return elements.length > 0;
   }
-
 
   /**
    * 极简保存触发检查：只检查元素变化
