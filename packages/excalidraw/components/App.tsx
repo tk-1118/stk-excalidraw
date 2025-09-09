@@ -326,6 +326,7 @@ import {
 } from "../appState";
 import { copyTextToSystemClipboard, parseClipboard } from "../clipboard";
 import { exportCanvas, loadFromBlob } from "../data";
+import { canvasStorage } from "../data/CanvasStorage";
 import Library, { distributeLibraryItemsOnSquareGrid } from "../data/library";
 import { restore, restoreElements } from "../data/restore";
 import { getCenter, getDistance } from "../gesture";
@@ -3363,6 +3364,15 @@ class App extends React.Component<AppProps, AppState> {
     if (!this.state.isLoading) {
       this.props.onChange?.(elements, this.state, this.files);
       this.onChangeEmitter.trigger(elements, this.state, this.files);
+
+      // 自动保存到IndexedDB（如果配置了businessServiceSN）
+      const businessServiceSN =
+        this.props.UIOptions?.businessServiceInfo?.businessServiceSN;
+
+      if (businessServiceSN) {
+        // 使用防抖避免频繁保存
+        this.debouncedSaveToIndexedDB(businessServiceSN, elements, this.state);
+      }
     }
   }
 
@@ -11246,6 +11256,27 @@ class App extends React.Component<AppProps, AppState> {
   private scheduleImageRefresh = throttle(() => {
     this.addNewImagesToImageCache();
   }, IMAGE_RENDER_TIMEOUT);
+
+  /** 防抖保存到IndexedDB，避免频繁保存 */
+  private debouncedSaveToIndexedDB = throttle(
+    async (
+      businessServiceSN: string,
+      elements: readonly ExcalidrawElement[],
+      appState: AppState,
+    ) => {
+      try {
+        await canvasStorage.saveCanvasData(
+          businessServiceSN,
+          elements as ExcalidrawElement[],
+          appState,
+        );
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(`[${businessServiceSN}] IndexedDB自动保存失败:`, error);
+      }
+    },
+    1000, // 1秒防抖
+  );
 
   private updateBindingEnabledOnPointerMove = (
     event: React.PointerEvent<HTMLElement>,

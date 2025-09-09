@@ -695,6 +695,8 @@ export type UIOptions = Partial<{
     designTitle?: string;
     /** 业务服务名称 */
     serviceName?: string;
+    /** 业务服务唯一标识，用于区分不同画布实例的缓存数据 */
+    businessServiceSN?: string;
   };
   /**
    * 控制内置 UI 的可见性

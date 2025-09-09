@@ -87,6 +87,8 @@ const saveDataStateToLocalStorage = (
       _appState.openSidebar = null;
     }
 
+    // 注意：这里仍然保存到原有的localStorage键名
+    // 主要用于excalidraw-app的兼容性，不会与新的IndexedDB方案冲突
     localStorage.setItem(
       STORAGE_KEYS.LOCAL_STORAGE_ELEMENTS,
       JSON.stringify(clearElementsForLocalStorage(elements)),

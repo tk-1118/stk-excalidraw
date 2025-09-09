@@ -8,7 +8,6 @@ import {
   getFrameChildren,
 } from "@excalidraw/element/frame";
 import { newFrameElement } from "@excalidraw/element";
-import { clearElementsForLocalStorage } from "@excalidraw/element";
 import { randomId } from "@excalidraw/common";
 
 import type {
@@ -21,19 +20,10 @@ import { frameToolIcon, moreIcon } from "../icons";
 import { useApp, useAppProps, useExcalidrawSetAppState } from "../App";
 import { serializeAsJSON } from "../../data/json";
 import { restore } from "../../data/restore";
-import {
-  clearAppStateForLocalStorage,
-  getDefaultAppState,
-} from "../../appState";
+import { canvasStorage } from "../../data/CanvasStorage";
 
 import "./BusinessServiceProtoNav.scss";
 import excalidrawTemplate from "./excalidraw-template.json";
-
-// 本地存储键名常量
-const STORAGE_KEYS = {
-  LOCAL_STORAGE_ELEMENTS: "excalidraw",
-  LOCAL_STORAGE_APP_STATE: "excalidraw-state",
-} as const;
 
 // 定义单个Frame数据结构
 export interface FrameData {
@@ -680,59 +670,72 @@ export const BusinessServiceProtoNav = () => {
   ]);
 
   /**
-   * 从本地localStorage导入数据的函数
+   * 从IndexedDB导入画布数据的函数
    */
-  const importFromLocalStorage = useCallback(() => {
-    let savedElements = null;
-    let savedState = null;
+  const importFromCanvasStorage = useCallback(async () => {
+    const businessServiceSN =
+      appProps.UIOptions.businessServiceInfo?.businessServiceSN || "default";
 
     try {
-      savedElements = localStorage.getItem(STORAGE_KEYS.LOCAL_STORAGE_ELEMENTS);
-      savedState = localStorage.getItem(STORAGE_KEYS.LOCAL_STORAGE_APP_STATE);
+      const canvasData = await canvasStorage.loadCanvasData(businessServiceSN);
+
+      if (canvasData) {
+        return {
+          elements: canvasData.elements,
+          appState: canvasData.appState,
+        };
+      }
+
+      return { elements: [], appState: null };
     } catch (error: any) {
       // eslint-disable-next-line no-console
-      console.error("无法访问localStorage:", error);
+      console.error(
+        `[${businessServiceSN}] 从IndexedDB导入画布数据失败:`,
+        error,
+      );
       return { elements: [], appState: null };
     }
-
-    let elements: ExcalidrawElement[] = [];
-    if (savedElements) {
-      try {
-        elements = clearElementsForLocalStorage(JSON.parse(savedElements));
-      } catch (error: any) {
-        // eslint-disable-next-line no-console
-        console.error("解析localStorage中的elements失败:", error);
-      }
-    }
-
-    let appState = null;
-    if (savedState) {
-      try {
-        appState = {
-          ...getDefaultAppState(),
-          ...clearAppStateForLocalStorage(JSON.parse(savedState)),
-        };
-      } catch (error: any) {
-        // eslint-disable-next-line no-console
-        console.error("解析localStorage中的appState失败:", error);
-      }
-    }
-
-    return { elements, appState };
-  }, []);
+  }, [appProps.UIOptions.businessServiceInfo?.businessServiceSN]);
 
   /**
-   * 从本地缓存恢复画布数据的函数
+   * 检查IndexedDB中是否有缓存数据
+   * 为了更好的用户体验，按钮始终显示，在点击时再检查数据
+   */
+  const [hasLocalCacheData, setHasLocalCacheData] = useState(true);
+
+  // 确认对话框状态管理
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+
+  /**
+   * 显示恢复确认对话框
+   */
+  const showRestoreConfirmDialog = useCallback(() => {
+    // 如果按钮被禁用，直接返回
+    if (!hasLocalCacheData) {
+      alert("当前没有可用的缓存数据");
+      return;
+    }
+    setShowRestoreConfirm(true);
+  }, [hasLocalCacheData]);
+
+  /**
+   * 从IndexedDB缓存恢复画布数据的函数
    * 提供手动恢复功能，避免意外丢失数据
    */
-  const restoreFromLocalCache = useCallback(() => {
+  const executeRestoreFromCache = useCallback(async () => {
+    const businessServiceSN =
+      appProps.UIOptions.businessServiceInfo?.businessServiceSN || "default";
+
+    setShowRestoreConfirm(false);
+
     try {
-      // 从localStorage获取缓存数据
-      const localData = importFromLocalStorage();
+      // 从IndexedDB获取缓存数据
+      const localData = await importFromCanvasStorage();
 
       if (!localData.elements.length && !localData.appState) {
         // eslint-disable-next-line no-console
-        console.warn("本地缓存中没有找到有效数据");
+        console.warn(`[${businessServiceSN}] 缓存中没有找到有效数据`);
+        alert("缓存中没有找到有效的画布数据");
         return;
       }
 
@@ -753,34 +756,44 @@ export const BusinessServiceProtoNav = () => {
       }
 
       // eslint-disable-next-line no-console
-      console.log("成功从本地缓存恢复画布数据:", {
+      console.log(`[${businessServiceSN}] 成功从IndexedDB缓存恢复画布数据:`, {
         elementsCount: restoredData.elements.length,
         hasAppState: !!restoredData.appState,
       });
+
+      // 显示成功提示
+      alert(
+        `✅ 成功恢复画布数据！\n恢复了 ${restoredData.elements.length} 个元素`,
+      );
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error("从本地缓存恢复失败:", error);
+      console.error(`[${businessServiceSN}] 从IndexedDB缓存恢复失败:`, error);
+      alert("恢复缓存数据失败，请稍后重试");
     }
-  }, [app, setAppState, importFromLocalStorage]);
+  }, [
+    app,
+    setAppState,
+    importFromCanvasStorage,
+    appProps.UIOptions.businessServiceInfo?.businessServiceSN,
+  ]);
 
-  /**
-   * 检查本地是否有缓存数据
-   */
-  const hasLocalCacheData = useMemo(() => {
-    try {
-      // 检查localStorage中是否有excalidraw相关的数据
-      const localStorageKeys = Object.keys(localStorage);
-      const hasExcalidrawData = localStorageKeys.some(
-        (key) =>
-          key.includes("excalidraw") ||
-          key.includes("elements") ||
-          key.includes("appState"),
-      );
-      return hasExcalidrawData;
-    } catch (error) {
-      return false;
-    }
-  }, []);
+  // 异步检查缓存数据（用于更新按钮状态，但不影响显示）
+  useEffect(() => {
+    const checkCacheData = async () => {
+      const businessServiceSN =
+        appProps.UIOptions.businessServiceInfo?.businessServiceSN || "default";
+      try {
+        const hasData = await canvasStorage.hasCanvasData(businessServiceSN);
+        setHasLocalCacheData(hasData);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(`[${businessServiceSN}] 检查缓存数据失败:`, error);
+        setHasLocalCacheData(false);
+      }
+    };
+
+    checkCacheData();
+  }, [appProps.UIOptions.businessServiceInfo?.businessServiceSN, app]);
 
   const handleImagePreview = (imageUrl: string) => {
     setImagePreviewUrl(imageUrl);
@@ -824,16 +837,17 @@ export const BusinessServiceProtoNav = () => {
               (typeof appProps.UIOptions.visibility?.customButtons ===
                 "object" &&
                 appProps.UIOptions.visibility?.customButtons?.restoreCache !==
-                  false)) &&
-              hasLocalCacheData && (
-                <div
-                  className="restore-cache-button"
-                  onClick={restoreFromLocalCache}
-                  title="从本地缓存恢复画布数据（用于意外关闭后的数据找回）"
-                >
-                  📥 从缓存恢复
-                </div>
-              )}
+                  false)) && (
+              <div
+                className={`restore-cache-button ${
+                  !hasLocalCacheData ? "disabled" : ""
+                }`}
+                onClick={showRestoreConfirmDialog}
+                title="从本地缓存恢复画布数据（用于意外关闭后的数据找回）"
+              >
+                📥 从缓存恢复
+              </div>
+            )}
             {(appProps.UIOptions.visibility?.customButtons === true ||
               (typeof appProps.UIOptions.visibility?.customButtons ===
                 "object" &&
@@ -1077,6 +1091,41 @@ export const BusinessServiceProtoNav = () => {
               alt="Preview"
               className="image-preview-content"
             />
+          </div>
+        </div>
+      )}
+
+      {/* 恢复画布数据确认对话框 */}
+      {showRestoreConfirm && (
+        <div className="restore-confirm-overlay">
+          <div className="restore-confirm-dialog">
+            <div className="restore-confirm-header">
+              <h3>恢复画布数据</h3>
+            </div>
+            <div className="restore-confirm-content">
+              <p>确定要从缓存中恢复画布数据吗？</p>
+              <div className="restore-confirm-warning">
+                <span className="warning-icon">⚠️</span>
+                <span>注意：这将会替换当前画布上的所有内容！</span>
+              </div>
+              {/* <p className="restore-confirm-tip">
+                建议在恢复前先保存当前画布数据。
+              </p> */}
+            </div>
+            <div className="restore-confirm-actions">
+              <button
+                className="restore-confirm-button cancel"
+                onClick={() => setShowRestoreConfirm(false)}
+              >
+                取消
+              </button>
+              <button
+                className="restore-confirm-button confirm"
+                onClick={executeRestoreFromCache}
+              >
+                确认恢复
+              </button>
+            </div>
           </div>
         </div>
       )}

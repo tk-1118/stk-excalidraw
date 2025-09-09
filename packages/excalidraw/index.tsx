@@ -81,6 +81,8 @@ const ExcalidrawBase = (props: ExcalidrawProps) => {
         props.UIOptions?.businessServiceInfo?.serviceName ??
         DEFAULT_UI_OPTIONS.businessServiceInfo?.serviceName ??
         "业务服务名称",
+      businessServiceSN:
+        props.UIOptions?.businessServiceInfo?.businessServiceSN ?? "default",
     },
     visibility: {
       toolbar: props.UIOptions?.visibility?.toolbar ?? true,

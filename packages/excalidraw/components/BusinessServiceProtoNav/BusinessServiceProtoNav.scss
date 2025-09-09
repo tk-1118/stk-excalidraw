@@ -299,18 +299,26 @@
   .export-all-button {
     top: 0px;
   }
-  .restore-cache-button {
-    top: 40px;
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeaa7;
-    
-    &:hover {
-      background-color: #ffc107;
-      color: white;
-      border-color: #ffc107;
-    }
+.restore-cache-button {
+  top: 40px;
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+
+  &:hover:not(.disabled) {
+    background-color: #ffc107;
+    color: white;
+    border-color: #ffc107;
   }
+
+  &.disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border-color: #dee2e6;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
   .add-page-button {
     top: 80px;
   }
@@ -439,5 +447,123 @@
     max-height: 90vh;
     object-fit: contain;
     border-radius: 4px;
+  }
+}
+
+/* 恢复画布数据确认对话框样式 */
+.restore-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.restore-confirm-dialog {
+  background: var(--color-surface-lowest);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 480px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.restore-confirm-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--color-border);
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+}
+
+.restore-confirm-content {
+  padding: 20px 24px;
+
+  p {
+    margin: 0 0 16px;
+    color: var(--color-text);
+    line-height: 1.5;
+  }
+
+  .restore-confirm-warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background-color: var(--color-warning-muted);
+    border: 1px solid var(--color-warning);
+    border-radius: 6px;
+    margin-bottom: 16px;
+
+    .warning-icon {
+      font-size: 16px;
+    }
+
+    span:last-child {
+      color: var(--color-warning-darker);
+      font-weight: 500;
+    }
+  }
+
+  .restore-confirm-tip {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin-bottom: 0 !important;
+  }
+}
+
+.restore-confirm-actions {
+  padding: 16px 24px 20px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  border-top: 1px solid var(--color-border);
+}
+
+.restore-confirm-button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+
+  &.cancel {
+    background-color: transparent;
+    color: var(--color-text-secondary);
+    border-color: var(--color-border);
+
+    &:hover {
+      background-color: var(--color-surface-low);
+      color: var(--color-text);
+    }
+  }
+
+  &.confirm {
+    background-color: var(--color-warning);
+    color: white;
+    border-color: var(--color-warning);
+
+    &:hover {
+      background-color: var(--color-warning-darker);
+      border-color: var(--color-warning-darker);
+    }
+  }
+
+  &:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 }
