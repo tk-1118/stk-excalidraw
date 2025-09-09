@@ -722,6 +722,8 @@ export type UIOptions = Partial<{
           ai?: boolean;
           /** 左侧导航：保存画布 */
           saveCanvas?: boolean;
+          /** 左侧导航：从缓存恢复 */
+          restoreCache?: boolean;
           /** 左侧导航：添加页面 */
           addPage?: boolean;
           /** 左侧导航：单个条目的更多菜单 */

@@ -110,10 +110,11 @@ import {
 } from "./data";
 
 import { updateStaleImageStatuses } from "./data/FileManager";
-import {
-  importFromLocalStorage,
-  importUsernameFromLocalStorage,
-} from "./data/localStorage";
+// 注释：暂时禁用本地缓存相关导入，避免与服务端数据冲突
+// import {
+//   importFromLocalStorage,
+//   importUsernameFromLocalStorage,
+// } from "./data/localStorage";
 
 import { loadFilesFromFirebase } from "./data/firebase";
 import {
@@ -121,11 +122,13 @@ import {
   LibraryLocalStorageMigrationAdapter,
   LocalData,
 } from "./data/LocalData";
-import { isBrowserStorageStateNewer } from "./data/tabSync";
+// 注释：暂时禁用本地缓存同步相关导入
+// import { isBrowserStorageStateNewer } from "./data/tabSync";
 import { ShareDialog, shareDialogStateAtom } from "./share/ShareDialog";
 import CollabError, { collabErrorIndicatorAtom } from "./collab/CollabError";
 import { useHandleAppTheme } from "./useHandleAppTheme";
-import { getPreferredLanguage } from "./app-language/language-detector";
+// 注释：暂时禁用语言偏好设置导入
+// import { getPreferredLanguage } from "./app-language/language-detector";
 import { useAppLangCode } from "./app-language/language-state";
 import DebugCanvas, {
   debugRenderer,
@@ -218,7 +221,9 @@ const initializeScene = async (opts: {
   );
   const externalUrlMatch = window.location.hash.match(/^#url=(.*)$/);
 
-  const localDataState = importFromLocalStorage();
+  // 注释：暂时禁用本地缓存数据加载，避免与服务端数据冲突
+  // const localDataState = importFromLocalStorage();
+  const localDataState = null; // 强制使用空的本地数据状态
 
   let scene: RestoredDataState & {
     scrollToContent?: boolean;
@@ -239,7 +244,7 @@ const initializeScene = async (opts: {
         scene = await loadScene(
           jsonBackendMatch[1],
           jsonBackendMatch[2],
-          localDataState,
+          null, // 注释：不传递本地缓存数据，避免与服务端数据冲突
         );
       }
       scene.scrollToContent = true;
@@ -512,53 +517,59 @@ const ExcalidrawWrapper = () => {
         !document.hidden &&
         ((collabAPI && !collabAPI.isCollaborating()) || isCollabDisabled)
       ) {
+        // 注释：暂时禁用本地缓存数据同步，避免与服务端数据冲突
         // don't sync if local state is newer or identical to browser state
-        if (isBrowserStorageStateNewer(STORAGE_KEYS.VERSION_DATA_STATE)) {
-          const localDataState = importFromLocalStorage();
-          const username = importUsernameFromLocalStorage();
-          setLangCode(getPreferredLanguage());
-          excalidrawAPI.updateScene({
-            ...localDataState,
-            captureUpdate: CaptureUpdateAction.NEVER,
-          });
-          LibraryIndexedDBAdapter.load().then((data) => {
-            if (data) {
-              excalidrawAPI.updateLibrary({
-                libraryItems: data.libraryItems,
-              });
-            }
-          });
-          collabAPI?.setUsername(username || "");
+        if (false) {
+          // 临时禁用本地缓存同步逻辑
+          // const localDataState = importFromLocalStorage();
+          // const username = importUsernameFromLocalStorage();
+          // setLangCode(getPreferredLanguage());
+          // excalidrawAPI.updateScene({
+          //   ...localDataState,
+          //   captureUpdate: CaptureUpdateAction.NEVER,
+          // });
+          // LibraryIndexedDBAdapter.load().then((data) => {
+          //   if (data) {
+          //     excalidrawAPI.updateLibrary({
+          //       libraryItems: data.libraryItems,
+          //     });
+          //   }
+          // });
+          // collabAPI?.setUsername(username || "");
         }
 
-        if (isBrowserStorageStateNewer(STORAGE_KEYS.VERSION_FILES)) {
-          const elements = excalidrawAPI.getSceneElementsIncludingDeleted();
-          const currFiles = excalidrawAPI.getFiles();
-          const fileIds =
-            elements?.reduce((acc, element) => {
-              if (
-                isInitializedImageElement(element) &&
-                // only load and update images that aren't already loaded
-                !currFiles[element.fileId as any]
-              ) {
-                return acc.concat(element.fileId as any);
-              }
-              return acc;
-            }, [] as FileId[]) || [];
-          if (fileIds.length) {
-            LocalData.fileStorage
-              .getFiles(fileIds)
-              .then(({ loadedFiles, erroredFiles }) => {
-                if (loadedFiles.length) {
-                  excalidrawAPI.addFiles(loadedFiles);
-                }
-                updateStaleImageStatuses({
-                  excalidrawAPI,
-                  erroredFiles,
-                  elements: excalidrawAPI.getSceneElementsIncludingDeleted(),
-                });
-              });
-          }
+        // 注释：暂时禁用文件缓存同步检查
+        if (
+          false &&
+          /* isBrowserStorageStateNewer(STORAGE_KEYS.VERSION_FILES) */ false
+        ) {
+          // const elements = excalidrawAPI.getSceneElementsIncludingDeleted();
+          // const currFiles = excalidrawAPI.getFiles();
+          // const fileIds =
+          //   elements?.reduce((acc, element) => {
+          //     if (
+          //       isInitializedImageElement(element) &&
+          //       // only load and update images that aren't already loaded
+          //       !currFiles[element.fileId as any]
+          //     ) {
+          //       return acc.concat(element.fileId as any);
+          //     }
+          //     return acc;
+          //   }, [] as FileId[]) || [];
+          // if (fileIds.length) {
+          //   LocalData.fileStorage
+          //     .getFiles(fileIds)
+          //     .then(({ loadedFiles, erroredFiles }) => {
+          //       if (loadedFiles.length) {
+          //         excalidrawAPI.addFiles(loadedFiles);
+          //       }
+          //       updateStaleImageStatuses({
+          //         excalidrawAPI,
+          //         erroredFiles,
+          //         elements: excalidrawAPI.getSceneElementsIncludingDeleted(),
+          //       });
+          //     });
+          // }
         }
       }
     }, SYNC_BROWSER_TABS_TIMEOUT);

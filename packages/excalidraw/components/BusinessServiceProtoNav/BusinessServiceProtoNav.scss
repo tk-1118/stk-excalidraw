@@ -266,7 +266,7 @@
   flex-direction: column;
   padding: 1rem 0.75rem;
 
-  .export-all-button, .add-page-button {
+  .export-all-button, .add-page-button, .restore-cache-button {
     position: sticky;
     font-size: 0.875rem;
     margin-bottom: 0.5rem;
@@ -299,8 +299,20 @@
   .export-all-button {
     top: 0px;
   }
-  .add-page-button {
+  .restore-cache-button {
     top: 40px;
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+    
+    &:hover {
+      background-color: #ffc107;
+      color: white;
+      border-color: #ffc107;
+    }
+  }
+  .add-page-button {
+    top: 80px;
   }
 
   .business-service-proto-nav-body-frames-item {

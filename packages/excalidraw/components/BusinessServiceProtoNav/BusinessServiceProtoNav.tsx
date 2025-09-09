@@ -7,8 +7,8 @@ import {
   // getElementsOverlappingFrame,
   getFrameChildren,
 } from "@excalidraw/element/frame";
-
 import { newFrameElement } from "@excalidraw/element";
+import { clearElementsForLocalStorage } from "@excalidraw/element";
 import { randomId } from "@excalidraw/common";
 
 import type {
@@ -20,9 +20,20 @@ import type {
 import { frameToolIcon, moreIcon } from "../icons";
 import { useApp, useAppProps, useExcalidrawSetAppState } from "../App";
 import { serializeAsJSON } from "../../data/json";
+import { restore } from "../../data/restore";
+import {
+  clearAppStateForLocalStorage,
+  getDefaultAppState,
+} from "../../appState";
 
 import "./BusinessServiceProtoNav.scss";
 import excalidrawTemplate from "./excalidraw-template.json";
+
+// 本地存储键名常量
+const STORAGE_KEYS = {
+  LOCAL_STORAGE_ELEMENTS: "excalidraw",
+  LOCAL_STORAGE_APP_STATE: "excalidraw-state",
+} as const;
 
 // 定义单个Frame数据结构
 export interface FrameData {
@@ -572,7 +583,7 @@ export const BusinessServiceProtoNav = () => {
           ...el,
           x: el.x - minTemplateX + newX,
           y: el.y - minTemplateY + newY,
-          id: randomId(),
+          // 注意：不要重新生成ID，因为regenerateElementIds已经处理了ID和引用关系
         };
       });
 
@@ -668,6 +679,109 @@ export const BusinessServiceProtoNav = () => {
     isCanvasEmpty,
   ]);
 
+  /**
+   * 从本地localStorage导入数据的函数
+   */
+  const importFromLocalStorage = useCallback(() => {
+    let savedElements = null;
+    let savedState = null;
+
+    try {
+      savedElements = localStorage.getItem(STORAGE_KEYS.LOCAL_STORAGE_ELEMENTS);
+      savedState = localStorage.getItem(STORAGE_KEYS.LOCAL_STORAGE_APP_STATE);
+    } catch (error: any) {
+      // eslint-disable-next-line no-console
+      console.error("无法访问localStorage:", error);
+      return { elements: [], appState: null };
+    }
+
+    let elements: ExcalidrawElement[] = [];
+    if (savedElements) {
+      try {
+        elements = clearElementsForLocalStorage(JSON.parse(savedElements));
+      } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error("解析localStorage中的elements失败:", error);
+      }
+    }
+
+    let appState = null;
+    if (savedState) {
+      try {
+        appState = {
+          ...getDefaultAppState(),
+          ...clearAppStateForLocalStorage(JSON.parse(savedState)),
+        };
+      } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error("解析localStorage中的appState失败:", error);
+      }
+    }
+
+    return { elements, appState };
+  }, []);
+
+  /**
+   * 从本地缓存恢复画布数据的函数
+   * 提供手动恢复功能，避免意外丢失数据
+   */
+  const restoreFromLocalCache = useCallback(() => {
+    try {
+      // 从localStorage获取缓存数据
+      const localData = importFromLocalStorage();
+
+      if (!localData.elements.length && !localData.appState) {
+        // eslint-disable-next-line no-console
+        console.warn("本地缓存中没有找到有效数据");
+        return;
+      }
+
+      // 使用restore函数恢复数据
+      const restoredData = restore(
+        { elements: localData.elements, appState: localData.appState },
+        null,
+        null,
+        { repairBindings: true, refreshDimensions: false },
+      );
+
+      // 更新画布
+      app.scene.replaceAllElements(restoredData.elements);
+
+      // 如果有appState，也更新应用状态
+      if (restoredData.appState) {
+        setAppState(restoredData.appState);
+      }
+
+      // eslint-disable-next-line no-console
+      console.log("成功从本地缓存恢复画布数据:", {
+        elementsCount: restoredData.elements.length,
+        hasAppState: !!restoredData.appState,
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("从本地缓存恢复失败:", error);
+    }
+  }, [app, setAppState, importFromLocalStorage]);
+
+  /**
+   * 检查本地是否有缓存数据
+   */
+  const hasLocalCacheData = useMemo(() => {
+    try {
+      // 检查localStorage中是否有excalidraw相关的数据
+      const localStorageKeys = Object.keys(localStorage);
+      const hasExcalidrawData = localStorageKeys.some(
+        (key) =>
+          key.includes("excalidraw") ||
+          key.includes("elements") ||
+          key.includes("appState"),
+      );
+      return hasExcalidrawData;
+    } catch (error) {
+      return false;
+    }
+  }, []);
+
   const handleImagePreview = (imageUrl: string) => {
     setImagePreviewUrl(imageUrl);
   };
@@ -706,6 +820,20 @@ export const BusinessServiceProtoNav = () => {
                 保存画布
               </div>
             )}
+            {(appProps.UIOptions.visibility?.customButtons === true ||
+              (typeof appProps.UIOptions.visibility?.customButtons ===
+                "object" &&
+                appProps.UIOptions.visibility?.customButtons?.restoreCache !==
+                  false)) &&
+              hasLocalCacheData && (
+                <div
+                  className="restore-cache-button"
+                  onClick={restoreFromLocalCache}
+                  title="从本地缓存恢复画布数据（用于意外关闭后的数据找回）"
+                >
+                  📥 从缓存恢复
+                </div>
+              )}
             {(appProps.UIOptions.visibility?.customButtons === true ||
               (typeof appProps.UIOptions.visibility?.customButtons ===
                 "object" &&

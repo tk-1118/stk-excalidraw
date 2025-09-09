@@ -70,6 +70,14 @@ const saveDataStateToLocalStorage = (
   appState: AppState,
 ) => {
   try {
+    // 如果画布数据为空（没有任何非删除的元素），跳过保存以保护现有缓存
+    const nonDeletedElements = elements.filter((el) => !el.isDeleted);
+    if (nonDeletedElements.length === 0) {
+      // eslint-disable-next-line no-console
+      console.log("画布为空，跳过localStorage保存以保护现有缓存数据");
+      return;
+    }
+
     const _appState = clearAppStateForLocalStorage(appState);
 
     if (
