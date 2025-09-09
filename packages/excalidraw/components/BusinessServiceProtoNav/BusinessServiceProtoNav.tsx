@@ -762,9 +762,9 @@ export const BusinessServiceProtoNav = () => {
       });
 
       // 显示成功提示
-      alert(
-        `✅ 成功恢复画布数据！\n恢复了 ${restoredData.elements.length} 个元素`,
-      );
+      // alert(
+      //   `✅ 成功恢复画布数据！\n恢复了 ${restoredData.elements.length} 个元素`,
+      // );
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error(`[${businessServiceSN}] 从IndexedDB缓存恢复失败:`, error);
