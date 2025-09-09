@@ -627,7 +627,7 @@ export const BusinessServiceProtoNav = () => {
       newElements = [...app.scene.getElementsIncludingDeleted(), newFrame];
     }
 
-    // app.scene.replaceAllElements(newElements);
+    app.scene.replaceAllElements(newElements);
     app.onHemaButtonClick("addNewFrame", {
       data: {
         frames: [
@@ -738,26 +738,12 @@ export const BusinessServiceProtoNav = () => {
     }
   }, [appProps.UIOptions.businessServiceInfo?.businessServiceSN]);
 
-  /**
-   * 检查IndexedDB中是否有缓存数据
-   * 为了更好的用户体验，按钮始终显示，在点击时再检查数据
-   */
-  const [hasLocalCacheData, setHasLocalCacheData] = useState(true);
+  // 移除了hasLocalCacheData状态，快捷键功能不再依赖缓存数据检查
 
   // 确认对话框状态管理
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
 
-  /**
-   * 显示恢复确认对话框
-   */
-  const showRestoreConfirmDialog = useCallback(() => {
-    // 如果按钮被禁用，直接返回
-    if (!hasLocalCacheData) {
-      alert("当前没有可用的缓存数据");
-      return;
-    }
-    setShowRestoreConfirm(true);
-  }, [hasLocalCacheData]);
+  // 移除了showRestoreConfirmDialog函数，快捷键直接调用setShowRestoreConfirm(true)
 
   /**
    * 从IndexedDB缓存恢复画布数据的函数
@@ -818,23 +804,63 @@ export const BusinessServiceProtoNav = () => {
     appProps.UIOptions.businessServiceInfo?.businessServiceSN,
   ]);
 
-  // 异步检查缓存数据（用于更新按钮状态，但不影响显示）
+  // 开发人员隐藏功能：点击标题六次触发恢复弹框
+  const [titleClickCount, setTitleClickCount] = useState(0);
+  const [titleClickTimer, setTitleClickTimer] = useState<NodeJS.Timeout | null>(
+    null,
+  );
+
+  /**
+   * 处理标题点击事件
+   * 短时间内点击6次触发恢复功能（开发人员专用隐藏功能）
+   */
+  const handleTitleClick = useCallback(() => {
+    const newCount = titleClickCount + 1;
+
+    // 清除之前的定时器
+    if (titleClickTimer) {
+      clearTimeout(titleClickTimer);
+    }
+
+    // 如果达到6次点击，触发恢复功能
+    if (newCount >= 6) {
+      setTitleClickCount(0);
+      setTitleClickTimer(null);
+
+      // 触发恢复确认对话框
+      setShowRestoreConfirm(true);
+
+      // eslint-disable-next-line no-console
+      console.log("🔧 开发人员隐藏功能触发：从缓存恢复画布数据（标题点击6次）");
+      return;
+    }
+
+    // 更新点击次数
+    setTitleClickCount(newCount);
+
+    // 设置3秒后重置计数器
+    const timer = setTimeout(() => {
+      setTitleClickCount(0);
+      setTitleClickTimer(null);
+    }, 3000);
+
+    setTitleClickTimer(timer);
+
+    // 调试日志（仅在开发环境）
+    if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
+      console.log(`🔍 标题点击次数: ${newCount}/6`);
+    }
+  }, [titleClickCount, titleClickTimer]);
+
+  // 清理定时器
   useEffect(() => {
-    const checkCacheData = async () => {
-      const businessServiceSN =
-        appProps.UIOptions.businessServiceInfo?.businessServiceSN || "default";
-      try {
-        const hasData = await canvasStorage.hasCanvasData(businessServiceSN);
-        setHasLocalCacheData(hasData);
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error(`[${businessServiceSN}] 检查缓存数据失败:`, error);
-        setHasLocalCacheData(false);
+    return () => {
+      if (titleClickTimer) {
+        clearTimeout(titleClickTimer);
       }
     };
-
-    checkCacheData();
-  }, [appProps.UIOptions.businessServiceInfo?.businessServiceSN, app]);
+  }, [titleClickTimer]);
 
   const handleImagePreview = (imageUrl: string) => {
     setImagePreviewUrl(imageUrl);
@@ -848,7 +874,12 @@ export const BusinessServiceProtoNav = () => {
     <>
       <div className="business-service-proto-nav">
         <div className="business-service-proto-nav-header">
-          <h4 className="business-service-proto-design">
+          <h4
+            className="business-service-proto-design"
+            onClick={handleTitleClick}
+            style={{ cursor: "pointer", userSelect: "none" }}
+            title="业务服务原型设计"
+          >
             {appProps.UIOptions.businessServiceInfo?.designTitle ||
               "业务服务原型设计"}
           </h4>
@@ -872,21 +903,6 @@ export const BusinessServiceProtoNav = () => {
                 title={isCanvasEmpty ? "画布为空，无法保存" : "保存画布"}
               >
                 保存画布
-              </div>
-            )}
-            {(appProps.UIOptions.visibility?.customButtons === true ||
-              (typeof appProps.UIOptions.visibility?.customButtons ===
-                "object" &&
-                appProps.UIOptions.visibility?.customButtons?.restoreCache !==
-                  false)) && (
-              <div
-                className={`restore-cache-button ${
-                  !hasLocalCacheData ? "disabled" : ""
-                }`}
-                onClick={showRestoreConfirmDialog}
-                title="从本地缓存恢复画布数据（用于意外关闭后的数据找回）"
-              >
-                📥 从缓存恢复
               </div>
             )}
             {(appProps.UIOptions.visibility?.customButtons === true ||

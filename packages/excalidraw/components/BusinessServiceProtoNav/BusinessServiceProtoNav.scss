@@ -254,19 +254,21 @@
 }
 
 .business-service-proto-nav-body {
-  height: 100%;
-  overflow-y: auto;
+  height: calc(100% - 100px); // 减去header的高度
+  overflow: hidden; // 防止双滚动条
+  display: flex;
+  flex-direction: column;
 }
 
 .business-service-proto-nav-body-frames {
   position: relative;
-  overflow-y: auto;
-  height: calc(100% - 32px);
+  overflow-y: auto; // 启用垂直滚动
+  height: 100%; // 占满父容器
   display: flex;
   flex-direction: column;
   padding: 1rem 0.75rem;
 
-  .export-all-button, .add-page-button, .restore-cache-button {
+  .export-all-button, .add-page-button {
     position: sticky;
     font-size: 0.875rem;
     margin-bottom: 0.5rem;
@@ -299,28 +301,8 @@
   .export-all-button {
     top: 0px;
   }
-.restore-cache-button {
-  top: 40px;
-  background-color: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeaa7;
-
-  &:hover:not(.disabled) {
-    background-color: #ffc107;
-    color: white;
-    border-color: #ffc107;
-  }
-
-  &.disabled {
-    background-color: #f8f9fa;
-    color: #6c757d;
-    border-color: #dee2e6;
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-}
   .add-page-button {
-    top: 80px;
+    top: 40px; // 调整为紧跟在保存按钮后面
   }
 
   .business-service-proto-nav-body-frames-item {

@@ -81,6 +81,19 @@ class CanvasStorageManager {
         return;
       }
 
+      // 检查现有缓存数据，如果缓存的元素数量大于当前非删除元素数量，则跳过保存
+      const existingData = await this.loadCanvasData(businessServiceSN);
+      if (
+        existingData &&
+        existingData.elements.length > nonDeletedElements.length
+      ) {
+        // eslint-disable-next-line no-console
+        console.log(
+          `[${businessServiceSN}] 缓存数据元素数量(${existingData.elements.length})大于当前元素数量(${nonDeletedElements.length})，跳过保存以保护现有缓存数据`,
+        );
+        return;
+      }
+
       const db = await this.initDB();
       const transaction = db.transaction([this.storeName], "readwrite");
       const store = transaction.objectStore(this.storeName);
