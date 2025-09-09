@@ -174,9 +174,15 @@ const MenuItemLiveCollaborationTrigger = ({
 }) => {
   const { t } = useI18n();
   return (
-    <WelcomeScreenMenuItem shortcut={null} onSelect={onSelect} icon={usersIcon}>
-      {t("labels.liveCollaboration")}
-    </WelcomeScreenMenuItem>
+    <>
+      {/* <WelcomeScreenMenuItem
+        shortcut={null}
+        onSelect={onSelect}
+        icon={usersIcon}
+      >
+        {t("labels.liveCollaboration")}
+      </WelcomeScreenMenuItem> */}
+    </>
   );
 };
 MenuItemLiveCollaborationTrigger.displayName =
