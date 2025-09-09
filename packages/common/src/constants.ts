@@ -331,6 +331,10 @@ export const DEFAULT_UI_OPTIONS: AppProps["UIOptions"] = {
   tools: {
     image: true,
   },
+  businessServiceInfo: {
+    designTitle: "业务服务原型设计",
+    serviceName: "业务服务名称",
+  },
 };
 
 // breakpoints

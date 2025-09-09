@@ -687,6 +687,16 @@ export type UIOptions = Partial<{
     image: boolean;
   };
   /**
+   * 业务服务信息配置
+   * 用于控制业务服务原型导航头部显示的内容
+   */
+  businessServiceInfo?: {
+    /** 业务服务原型设计标题 */
+    designTitle?: string;
+    /** 业务服务名称 */
+    serviceName?: string;
+  };
+  /**
    * 控制内置 UI 的可见性
    * - toolbar: 顶部工具栏（形状工具等）
    * - library: 右侧栏（素材库/搜索/标准组件库）及其默认触发按钮
