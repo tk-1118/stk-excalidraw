@@ -64,13 +64,16 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
     const app = useApp();
     const appProps = useAppProps();
     const setAppState = useExcalidrawSetAppState();
-    const elements = app.scene.getNonDeletedElements();
-    //   console.log("elements:", elements);
 
-    const frames = elements.filter((el) =>
-      isFrameLikeElement(el),
-    ) as ExcalidrawFrameLikeElement[];
-    frames.sort((a, b) => a.y - b.y);
+    const elements = app.scene.getNonDeletedElements();
+    // 使用 useMemo 缓存 frames 数组，避免每次渲染都重新计算
+    const frames = useMemo(() => {
+      const frameElements = elements.filter((el) =>
+        isFrameLikeElement(el),
+      ) as ExcalidrawFrameLikeElement[];
+      frameElements.sort((a, b) => a.y - b.y);
+      return frameElements;
+    }, [elements]);
     //   console.log("frames:", frames);
 
     const [selectedFrame, setSelectedFrame] =
@@ -91,6 +94,14 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
     // 防抖定时器引用
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
+    // 统一的定时器清理函数
+    const clearDebounceTimer = useCallback(() => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+        debounceTimer.current = null;
+      }
+    }, []);
+
     // 存储上一次的frames快照，用于快速比较
     const prevFramesSnapshot = useRef<string>("");
     // 标记是否已完成初始化聚焦，避免多次触发
@@ -104,15 +115,17 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
           menuRef.current &&
           !menuRef.current.contains(event.target as Node)
         ) {
-          // 检查点击的是否是其他frame的more-icon
+          // 优化：缓存 DOM 查询结果，避免重复查询
           const moreIconElements = document.querySelectorAll(".more-icon");
           let clickedOnMoreIcon = false;
 
-          moreIconElements.forEach((icon) => {
+          // 使用 for...of 循环，可以提前退出
+          for (const icon of moreIconElements) {
             if (icon.contains(event.target as Node)) {
               clickedOnMoreIcon = true;
+              break; // 找到后立即退出循环
             }
-          });
+          }
 
           // 只有当点击的不是more-icon时才隐藏菜单
           if (!clickedOnMoreIcon) {
@@ -356,27 +369,23 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
 
     /**
      * 快速检测frames是否发生变化（使用快照比较）
+     * 修复：移除useCallback，直接使用函数避免依赖问题
      */
-    const hasFramesChangedQuick = useCallback(
-      (currentSnapshot: string): boolean => {
-        const hasChanged = currentSnapshot !== prevFramesSnapshot.current;
-        if (hasChanged) {
-          prevFramesSnapshot.current = currentSnapshot;
-        }
-        return hasChanged;
-      },
-      [],
-    );
+    const hasFramesChangedQuick = (currentSnapshot: string): boolean => {
+      const hasChanged = currentSnapshot !== prevFramesSnapshot.current;
+      if (hasChanged) {
+        prevFramesSnapshot.current = currentSnapshot;
+      }
+      return hasChanged;
+    };
 
     /**
      * 防抖导出函数
      */
     const debouncedExportFramesData = useCallback(
       (framesData: FramesExportData) => {
-        // 清除之前的定时器
-        if (debounceTimer.current) {
-          clearTimeout(debounceTimer.current);
-        }
+        // 使用统一的清理函数
+        clearDebounceTimer();
 
         // 设置新的定时器
         debounceTimer.current = setTimeout(() => {
@@ -384,40 +393,53 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
           setPrevFramesData(framesData);
         }, 300); // 300ms 防抖延迟
       },
-      [],
+      [clearDebounceTimer],
     );
 
     /**
      * 监听frames变化的Effect（优化版本）
+     * 修复循环依赖问题：使用防抖机制避免频繁触发
      */
     useEffect(() => {
-      // 首先进行快速检测
-      if (!hasFramesChangedQuick(generateFramesSnapshot)) {
-        return; // 没有变化，直接返回
-      }
+      // 防抖定时器，避免频繁触发
+      const timeoutId = setTimeout(() => {
+        // 首先进行快速检测
+        if (!hasFramesChangedQuick(generateFramesSnapshot)) {
+          return; // 没有变化，直接返回
+        }
 
-      // 有变化时才生成完整数据（延迟处理）
-      const currentFramesData = generateFramesExportData();
+        // 有变化时才生成完整数据（延迟处理）
+        const currentFramesData = generateFramesExportData();
 
-      // 使用防抖导出
-      debouncedExportFramesData(currentFramesData);
+        // 使用防抖导出
+        debouncedExportFramesData(currentFramesData);
+      }, 100); // 100ms 防抖延迟
+
+      return () => clearTimeout(timeoutId);
     }, [
       generateFramesSnapshot,
-      hasFramesChangedQuick,
       generateFramesExportData,
       debouncedExportFramesData,
     ]);
 
+    // 开发人员隐藏功能：点击标题六次触发恢复弹框
+    const [titleClickCount, setTitleClickCount] = useState(0);
+    const [titleClickTimer, setTitleClickTimer] =
+      useState<NodeJS.Timeout | null>(null);
+
     /**
-     * 组件卸载时清理定时器
+     * 组件卸载时清理所有定时器
      */
     useEffect(() => {
       return () => {
-        if (debounceTimer.current) {
-          clearTimeout(debounceTimer.current);
+        // 使用统一的清理函数
+        clearDebounceTimer();
+        // 清理标题点击定时器
+        if (titleClickTimer) {
+          clearTimeout(titleClickTimer);
         }
       };
-    }, []);
+    }, [titleClickTimer, clearDebounceTimer]);
 
     // 模板类型数据
     const templateTypes = excalidrawTemplate?.map((temp) => {
@@ -525,9 +547,7 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
       setActiveMenuFrameId(null);
 
       // 手动触发一次数据导出（删除操作使用较短的防抖延迟）
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
+      clearDebounceTimer();
       debounceTimer.current = setTimeout(() => {
         const updatedFramesData = generateFramesExportData();
         // exportFramesData(updatedFramesData);
@@ -651,7 +671,7 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
         newElements = [...app.scene.getElementsIncludingDeleted(), newFrame];
       }
 
-      // app.scene.replaceAllElements(newElements);
+      app.scene.replaceAllElements(newElements);
       app.onHemaButtonClick("addNewFrame", {
         data: {
           frames: [
@@ -685,9 +705,7 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
       });
 
       // 手动触发一次数据导出（新建frame使用较短延迟）
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
+      clearDebounceTimer();
       debounceTimer.current = setTimeout(() => {
         const updatedFramesData = generateFramesExportData();
         // exportFramesData(updatedFramesData);
@@ -715,9 +733,7 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
       }
 
       // 清除防抖定时器，立即执行
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
+      clearDebounceTimer();
 
       const currentFramesData = generateFramesExportData();
       exportFramesData(currentFramesData);
@@ -732,6 +748,7 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
       exportFramesData,
       generateFramesSnapshot,
       isCanvasEmpty,
+      clearDebounceTimer,
     ]);
 
     // 使用 useImperativeHandle 暴露方法给父组件
@@ -838,11 +855,6 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
       importFromCanvasStorage,
       appProps.UIOptions.businessServiceInfo?.businessServiceSN,
     ]);
-
-    // 开发人员隐藏功能：点击标题六次触发恢复弹框
-    const [titleClickCount, setTitleClickCount] = useState(0);
-    const [titleClickTimer, setTitleClickTimer] =
-      useState<NodeJS.Timeout | null>(null);
 
     /**
      * 处理标题点击事件
