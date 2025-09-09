@@ -5945,13 +5945,35 @@ class App extends React.Component<AppProps, AppState> {
     )
       .filter((el) => this.hitElement(x, y, el))
       .filter((element) => {
-        // hitting a frame's element from outside the frame is not considered a hit
+        // 检查元素是否在frame内的逻辑
         const containingFrame = getContainingFrame(element, elementsMap);
-        return containingFrame &&
-          this.state.frameRendering.enabled &&
-          this.state.frameRendering.clip
-          ? isCursorInFrame({ x, y }, containingFrame, elementsMap)
-          : true;
+
+        // 如果元素没有包含frame，或者frame渲染未启用，或者未启用裁剪，则允许选择
+        if (
+          !containingFrame ||
+          !this.state.frameRendering.enabled ||
+          !this.state.frameRendering.clip
+        ) {
+          return true;
+        }
+
+        // 对于frame内的元素，我们需要更宽松的选择策略
+        // 允许选择与frameElement有关联的元素，即使它们超出frame边界
+        const isInFrameBounds = isCursorInFrame(
+          { x, y },
+          containingFrame,
+          elementsMap,
+        );
+
+        // 如果光标在frame边界内，直接允许选择
+        if (isInFrameBounds) {
+          return true;
+        }
+
+        // 如果光标在frame边界外，但元素与frame有关联（frameId匹配），
+        // 并且元素本身被点击到了，也允许选择
+        // 这样可以选择那些部分超出frame边界的元素
+        return element.frameId === containingFrame.id;
       })
       .filter((el) => {
         // The parameter elements comes ordered from lower z-index to higher.
