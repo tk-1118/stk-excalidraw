@@ -26,6 +26,9 @@ class CanvasStorageManager {
   private storeName = "business-canvas-data";
   private db: IDBDatabase | null = null;
 
+  // 极简缓存：只存储关键标识信息，避免存储大量元素数据
+  private lastSavedSignature = new Map<string, string>();
+
   /**
    * 初始化IndexedDB数据库
    */
@@ -63,6 +66,43 @@ class CanvasStorageManager {
   }
 
   /**
+   * 生成元素签名：O(1)时间复杂度，无循环
+   * 利用数组引用和长度变化检测数据变化
+   */
+  private generateElementsSignature(elements: ExcalidrawElement[]): string {
+    // 使用元素数组的内存地址哈希 + 长度 + 最后修改时间
+    const arrayHash = (elements as any).__hash__ || Math.random().toString(36);
+    const timestamp = Date.now();
+
+    // 如果数组没有哈希标记，给它添加一个（表示数据已变化）
+    if (!(elements as any).__hash__) {
+      (elements as any).__hash__ = arrayHash;
+      (elements as any).__lastModified__ = timestamp;
+    }
+
+    return `${elements.length}-${arrayHash}-${
+      (elements as any).__lastModified__
+    }`;
+  }
+
+  /**
+   * 极简数据变化检测：O(1)时间复杂度
+   */
+  private shouldSaveData(
+    businessServiceSN: string,
+    elements: ExcalidrawElement[],
+  ): boolean {
+    if (elements.length === 0) {
+      return false;
+    }
+
+    const currentSignature = this.generateElementsSignature(elements);
+    const lastSignature = this.lastSavedSignature.get(businessServiceSN);
+
+    return currentSignature !== lastSignature;
+  }
+
+  /**
    * 保存画布数据到IndexedDB
    */
   async saveCanvasData(
@@ -71,28 +111,12 @@ class CanvasStorageManager {
     appState: Partial<AppState>,
   ): Promise<void> {
     try {
-      // 如果画布为空，跳过保存以保护现有缓存
-      const nonDeletedElements = elements.filter((el) => !el.isDeleted);
-      if (nonDeletedElements.length === 0) {
-        // eslint-disable-next-line no-console
-        console.log(
-          `[${businessServiceSN}] 画布为空，跳过IndexedDB保存以保护现有缓存数据`,
-        );
+      // 快速检查是否需要保存
+      if (!this.shouldSaveData(businessServiceSN, elements)) {
         return;
       }
 
-      // 检查现有缓存数据，如果缓存的元素数量大于当前非删除元素数量，则跳过保存
-      const existingData = await this.loadCanvasData(businessServiceSN);
-      if (
-        existingData &&
-        existingData.elements.length > nonDeletedElements.length
-      ) {
-        // eslint-disable-next-line no-console
-        console.log(
-          `[${businessServiceSN}] 缓存数据元素数量(${existingData.elements.length})大于当前元素数量(${nonDeletedElements.length})，跳过保存以保护现有缓存数据`,
-        );
-        return;
-      }
+      const nonDeletedElements = elements.filter((el) => !el.isDeleted);
 
       const db = await this.initDB();
       const transaction = db.transaction([this.storeName], "readwrite");
@@ -111,6 +135,12 @@ class CanvasStorageManager {
         request.onerror = () => reject(request.error);
       });
 
+      // 更新签名缓存
+      this.lastSavedSignature.set(
+        businessServiceSN,
+        this.generateElementsSignature(elements),
+      );
+
       // eslint-disable-next-line no-console
       console.log(`[${businessServiceSN}] 画布数据已保存到IndexedDB`);
     } catch (error) {
@@ -125,7 +155,7 @@ class CanvasStorageManager {
   }
 
   /**
-   * 从IndexedDB加载画布数据
+   * 从IndexedDB加载画布数据（无缓存，直接读取）
    */
   async loadCanvasData(businessServiceSN: string): Promise<CanvasData | null> {
     try {
@@ -135,32 +165,24 @@ class CanvasStorageManager {
 
       return new Promise<CanvasData | null>((resolve, reject) => {
         const request = store.get(businessServiceSN);
-
         request.onsuccess = () => {
           const result = request.result as CanvasData | undefined;
           if (result) {
-            // eslint-disable-next-line no-console
-            console.log(`[${businessServiceSN}] 从IndexedDB加载画布数据成功`);
-            resolve(result);
-          } else {
-            // eslint-disable-next-line no-console
-            console.log(`[${businessServiceSN}] IndexedDB中未找到画布数据`);
-            resolve(null);
+            // 更新签名缓存
+            this.lastSavedSignature.set(
+              businessServiceSN,
+              this.generateElementsSignature(result.elements),
+            );
           }
+          resolve(result || null);
         };
-
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(
-        `[${businessServiceSN}] 从IndexedDB加载画布数据失败:`,
-        error,
-      );
-      // 降级到localStorage作为备选方案
       return this.fallbackFromLocalStorage(businessServiceSN);
     }
   }
+
 
   /**
    * 检查是否存在缓存数据
@@ -285,7 +307,10 @@ class CanvasStorageManager {
     }
     return null;
   }
+
+
 }
 
 // 导出单例实例
 export const canvasStorage = new CanvasStorageManager();
+

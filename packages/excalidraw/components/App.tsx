@@ -3127,6 +3127,10 @@ class App extends React.Component<AppProps, AppState> {
     selectGroupsForSelectedElements.clearCache();
     touchTimeout = 0;
     document.documentElement.style.overscrollBehaviorX = "";
+
+    // 清理CanvasStorage相关资源
+    this.debouncedSaveToIndexedDB.cancel();
+    this.lastSavedElementsRef = null;
   }
 
   private onResize = withBatchedUpdates(() => {
@@ -3452,8 +3456,14 @@ class App extends React.Component<AppProps, AppState> {
         this.props.UIOptions?.businessServiceInfo?.businessServiceSN;
 
       if (businessServiceSN) {
-        // 使用防抖避免频繁保存
-        this.debouncedSaveToIndexedDB(businessServiceSN, elements, this.state);
+        // 只有在元素或重要状态发生变化时才触发保存，避免视口滚动等操作触发保存
+        if (this.shouldTriggerSave(prevState, this.state, elements)) {
+          this.debouncedSaveToIndexedDB(
+            businessServiceSN,
+            elements,
+            this.state,
+          );
+        }
       }
     }
   }
@@ -11392,8 +11402,35 @@ class App extends React.Component<AppProps, AppState> {
         console.error(`[${businessServiceSN}] IndexedDB自动保存失败:`, error);
       }
     },
-    1000, // 1秒防抖
+    2000, // 调整为2秒防抖，平衡性能和用户体验
   );
+
+  // 极简元素变化检测：只记录上次保存的元素引用
+  private lastSavedElementsRef: readonly ExcalidrawElement[] | null = null;
+
+  /**
+   * O(1)检查元素是否变化：直接比较数组引用
+   */
+  private hasElementsChanged(elements: readonly ExcalidrawElement[]): boolean {
+    if (this.lastSavedElementsRef === elements) {
+      return false; // 引用相同，数据未变化
+    }
+
+    this.lastSavedElementsRef = elements;
+    return elements.length > 0;
+  }
+
+
+  /**
+   * 极简保存触发检查：只检查元素变化
+   */
+  private shouldTriggerSave(
+    prevState: AppState,
+    currentState: AppState,
+    elements: readonly ExcalidrawElement[],
+  ): boolean {
+    return this.hasElementsChanged(elements);
+  }
 
   private updateBindingEnabledOnPointerMove = (
     event: React.PointerEvent<HTMLElement>,
