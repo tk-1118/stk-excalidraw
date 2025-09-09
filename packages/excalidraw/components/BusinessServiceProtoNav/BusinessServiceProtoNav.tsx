@@ -671,7 +671,7 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
         newElements = [...app.scene.getElementsIncludingDeleted(), newFrame];
       }
 
-      app.scene.replaceAllElements(newElements);
+      // app.scene.replaceAllElements(newElements);
       app.onHemaButtonClick("addNewFrame", {
         data: {
           frames: [

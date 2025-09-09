@@ -106,6 +106,7 @@ import {
   CLASSES,
   Emitter,
   MINIMUM_ARROW_SIZE,
+  randomId,
 } from "@excalidraw/common";
 
 import {
@@ -1683,6 +1684,7 @@ class App extends React.Component<AppProps, AppState> {
 
                 // 收集frame数据，参考BusinessServiceProtoNav的generateFrameData逻辑
                 const frameData = this.generateFrameDataForCopy(f);
+
                 this.onHemaButtonClick("copyFrontPage", frameData);
               }}
               title="复制"
@@ -2819,6 +2821,8 @@ class App extends React.Component<AppProps, AppState> {
    * @returns 包含frame和子元素的完整数据结构
    */
   private generateFrameDataForCopy = (frame: ExcalidrawFrameLikeElement) => {
+    frame = JSON.parse(JSON.stringify(frame));
+
     const elements = this.scene.getNonDeletedElements();
 
     // 获取frame内已正确关联的子元素（frameId匹配）
@@ -2845,9 +2849,11 @@ class App extends React.Component<AppProps, AppState> {
     // 转换为数组
     const childrenElements = Array.from(allChildrenMap.values());
 
+    (frame as any).id = randomId();
+    delete frame.customData?.designPageSN;
+
     // 构建包含frame和其子元素的完整元素列表
     const frameElements = [frame, ...childrenElements];
-
     // 生成Excalidraw格式的JSON数据
     const excalidrawData = serializeAsJSON(
       frameElements,
@@ -2857,12 +2863,18 @@ class App extends React.Component<AppProps, AppState> {
     );
 
     return {
-      frameId: frame.id,
-      frameName: frame.name || getDefaultFrameName(frame),
-      frameElement: frame,
-      childrenElements,
-      excalidrawData,
-      timestamp: Date.now(),
+      data: {
+        frames: [
+          {
+            frameId: frame.id,
+            frameName: frame.name || getDefaultFrameName(frame),
+            frameElement: frame,
+            childrenElements,
+            excalidrawData,
+            timestamp: Date.now(),
+          },
+        ],
+      },
     };
   };
 
