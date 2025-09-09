@@ -630,13 +630,11 @@ export const BusinessServiceProtoNav = () => {
   };
 
   /**
-   * 检查画布是否为空（没有任何非删除的元素）
+   * 检查画布是否为空（没有任何非删除的元素或frame元素）
    */
   const isCanvasEmpty = useMemo(() => {
-    // 获取所有非删除的元素，排除frame元素
-    const nonDeletedElements = elements.filter(
-      (el) => !el.isDeleted && !isFrameLikeElement(el),
-    );
+    // 获取所有非删除的元素，包括frame元素
+    const nonDeletedElements = elements.filter((el) => !el.isDeleted);
     return nonDeletedElements.length === 0;
   }, [elements]);
 
@@ -645,7 +643,7 @@ export const BusinessServiceProtoNav = () => {
    * 可以被外部调用或在特定事件时触发（立即执行，不使用防抖）
    */
   const manualExportFramesData = useCallback(() => {
-    // 如果画布为空，不执行保存操作
+    // 如果画布为空（没有任何元素包括frame），不执行保存操作
     if (isCanvasEmpty) {
       return null;
     }
