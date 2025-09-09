@@ -412,8 +412,6 @@ import ConvertElementTypePopup, {
   convertElementTypes,
 } from "./ConvertElementTypePopup";
 
-// stk - 引入BusinessServiceProtoNav组件
-import { BusinessServiceProtoNav } from "./BusinessServiceProtoNav/BusinessServiceProtoNav";
 import { activeConfirmDialogAtom } from "./ActiveConfirmDialog";
 import BraveMeasureTextError from "./BraveMeasureTextError";
 import { ContextMenu, CONTEXT_MENU_SEPARATOR } from "./ContextMenu";
@@ -442,6 +440,11 @@ import {
 import { findShapeByKey } from "./shapes";
 
 import UnlockPopup from "./UnlockPopup";
+
+// stk - 引入BusinessServiceProtoNav组件
+import { BusinessServiceProtoNav } from "./BusinessServiceProtoNav/BusinessServiceProtoNav";
+
+import type { BusinessServiceProtoNavRef } from "./BusinessServiceProtoNav/BusinessServiceProtoNav";
 
 import type {
   RenderInteractiveSceneCallback,
@@ -585,6 +588,8 @@ class App extends React.Component<AppProps, AppState> {
   device: Device = deviceContextInitialValue;
 
   private excalidrawContainerRef = React.createRef<HTMLDivElement>();
+  private businessServiceProtoNavRef =
+    React.createRef<BusinessServiceProtoNavRef>();
 
   public scene: Scene;
   public fonts: Fonts;
@@ -762,6 +767,12 @@ class App extends React.Component<AppProps, AppState> {
         onPointerUp: (cb) => this.onPointerUpEmitter.on(cb),
         onScrollChange: (cb) => this.onScrollChangeEmitter.on(cb),
         onUserFollow: (cb) => this.onUserFollowEmitter.on(cb),
+        manualExportFramesData: () => {
+          return (
+            this.businessServiceProtoNavRef.current?.manualExportFramesData() ||
+            null
+          );
+        },
       } as const;
       if (typeof excalidrawAPI === "function") {
         excalidrawAPI(api);
@@ -1883,7 +1894,9 @@ class App extends React.Component<AppProps, AppState> {
                       <ExcalidrawActionManagerContext.Provider
                         value={this.actionManager}
                       >
-                        <BusinessServiceProtoNav></BusinessServiceProtoNav>
+                        <BusinessServiceProtoNav
+                          ref={this.businessServiceProtoNavRef}
+                        ></BusinessServiceProtoNav>
 
                         <LayerUI
                           canvas={this.canvas}

@@ -947,6 +947,12 @@ export interface ExcalidrawImperativeAPI {
   onUserFollow: (
     callback: (payload: OnUserFollowedPayload) => void,
   ) => UnsubscribeCallback;
+  /**
+   * 手动导出当前所有frames数据的方法
+   * 可以被外部应用调用来保存画布数据
+   * @returns 导出的frames数据，如果画布为空则返回null
+   */
+  manualExportFramesData: () => any | null;
 }
 
 export type Device = Readonly<{
