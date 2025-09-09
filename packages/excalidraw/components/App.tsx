@@ -2308,8 +2308,21 @@ class App extends React.Component<AppProps, AppState> {
   };
 
   public onInsertElements = (elements: readonly ExcalidrawElement[]) => {
+    // 过滤掉frame元素，禁止插入frame
+    const elementsToAdd = elements.filter(
+      (element) => !isFrameLikeElement(element),
+    );
+
+    // 如果没有可插入的元素（全部都是frame），显示错误信息
+    if (elementsToAdd.length === 0 && elements.length > 0) {
+      this.setState({
+        errorMessage: "不能粘贴页面框架元素",
+      });
+      return;
+    }
+
     this.addElementsFromPasteOrLibrary({
-      elements,
+      elements: elementsToAdd,
       position: "center",
       files: null,
     });
@@ -3665,9 +3678,22 @@ class App extends React.Component<AppProps, AppState> {
               )
             : data.elements
         ) as readonly ExcalidrawElement[];
+        // 过滤掉frame元素，禁止粘贴frame
+        const elementsToAdd = elements.filter(
+          (element) => !isFrameLikeElement(element),
+        );
+
+        // 如果没有可粘贴的元素（全部都是frame），显示错误信息
+        if (elementsToAdd.length === 0 && elements.length > 0) {
+          this.setState({
+            errorMessage: "不能粘贴页面框架元素",
+          });
+          return;
+        }
+
         // TODO remove formatting from elements if isPlainPaste
         this.addElementsFromPasteOrLibrary({
-          elements,
+          elements: elementsToAdd,
           files: data.files || null,
           position: "cursor",
           retainSeed: isPlainPaste,
@@ -11476,8 +11502,23 @@ class App extends React.Component<AppProps, AppState> {
     if (libraryJSON && typeof libraryJSON === "string") {
       try {
         const libraryItems = parseLibraryJSON(libraryJSON);
+        const distributedElements =
+          distributeLibraryItemsOnSquareGrid(libraryItems);
+        // 过滤掉frame元素，禁止拖拽粘贴frame
+        const elementsToAdd = distributedElements.filter(
+          (element) => !isFrameLikeElement(element),
+        );
+
+        // 如果没有可粘贴的元素（全部都是frame），显示错误信息
+        if (elementsToAdd.length === 0 && distributedElements.length > 0) {
+          this.setState({
+            errorMessage: "不能粘贴页面框架元素",
+          });
+          return;
+        }
+
         this.addElementsFromPasteOrLibrary({
-          elements: distributeLibraryItemsOnSquareGrid(libraryItems),
+          elements: elementsToAdd,
           position: event,
           files: null,
         });
