@@ -1427,6 +1427,7 @@ class App extends React.Component<AppProps, AppState> {
           {/* 拖拽手把 */}
           <div
             key={`drag-handle-${f.id}`}
+            className="frame-drag-handle"
             style={{
               position: "absolute",
               left: `${handleX - this.state.offsetLeft}px`,
@@ -1446,6 +1447,8 @@ class App extends React.Component<AppProps, AppState> {
               justifyContent: "center",
             }}
             onPointerDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
               // 先清空当前选中状态，防止与拉伸事件冲突
               this.setState((prevState) => ({
                 selectedElementIds: makeNextSelectedElementIds({}, prevState),
@@ -1483,6 +1486,7 @@ class App extends React.Component<AppProps, AppState> {
           >
             {/* 绘制四个拖拽点 */}
             <div
+              data-drag-handle
               style={{
                 width: "8px",
                 height: "8px",
@@ -1534,6 +1538,7 @@ class App extends React.Component<AppProps, AppState> {
                 false)) && (
             <div
               key={`spec-button-${f.id}`}
+              className="frame-spec-button"
               style={{
                 position: "absolute",
                 left: `${specButtonX - this.state.offsetLeft}px`,
@@ -1559,7 +1564,7 @@ class App extends React.Component<AppProps, AppState> {
               }}
               onClick={(event) => {
                 event.preventDefault();
-                event.stopPropagation();
+                event.stopPropagation(); // 阻止事件冒泡到画布
                 // 打开规约构建弹框
                 // this.setState({
                 //   openDialog: {
@@ -1567,7 +1572,7 @@ class App extends React.Component<AppProps, AppState> {
                 //     frameId: f.id,
                 //   },
                 // });
-                // 启动扫描特效（3 秒）
+                // 启动扫描特效（6 秒）
                 this.startFrameScanEffect(f.id, 6000);
                 this.onHemaButtonClick("buildProtocol", f);
               }}
@@ -1583,6 +1588,7 @@ class App extends React.Component<AppProps, AppState> {
                 false)) && (
             <div
               key={`spec-button-${f.id}-build-page`}
+              className="frame-ai-button"
               style={{
                 position: "absolute",
                 left: `${
@@ -1618,7 +1624,7 @@ class App extends React.Component<AppProps, AppState> {
               }}
               onClick={(event) => {
                 event.preventDefault();
-                event.stopPropagation();
+                event.stopPropagation(); // 阻止事件冒泡到画布
                 this.onHemaButtonClick("buildFrontPage", f);
               }}
               title="AI生成"
