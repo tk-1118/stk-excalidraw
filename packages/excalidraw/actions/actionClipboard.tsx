@@ -1,4 +1,8 @@
-import { isAnnotationElement, isTextElement } from "@excalidraw/element";
+import {
+  isAnnotationElement,
+  isTextElement,
+  isFrameLikeElement,
+} from "@excalidraw/element";
 import { getTextFromElements } from "@excalidraw/element";
 
 import { CODES, KEYS, isFirefox } from "@excalidraw/common";
@@ -95,11 +99,27 @@ export const actionCopy = register({
   icon: DuplicateIcon,
   trackEvent: { category: "element" },
   perform: async (elements, appState, event: ClipboardEvent | null, app) => {
-    const elementsToCopy = app.scene.getSelectedElements({
+    const selectedElements = app.scene.getSelectedElements({
       selectedElementIds: appState.selectedElementIds,
       includeBoundTextElement: true,
       includeElementsInFrames: true,
     });
+
+    // 过滤掉frame元素，禁止复制frame
+    const elementsToCopy = selectedElements.filter(
+      (element) => !isFrameLikeElement(element),
+    );
+
+    // 如果没有可复制的元素（全部都是frame），返回错误信息
+    if (elementsToCopy.length === 0 && selectedElements.length > 0) {
+      return {
+        captureUpdate: CaptureUpdateAction.EVENTUALLY,
+        appState: {
+          ...appState,
+          errorMessage: "不能复制页面框架元素",
+        },
+      };
+    }
 
     try {
       await copyToClipboard(elementsToCopy, app.files, event);
@@ -116,6 +136,17 @@ export const actionCopy = register({
     return {
       captureUpdate: CaptureUpdateAction.EVENTUALLY,
     };
+  },
+  // 添加predicate函数，当选中的元素中包含非frame元素时才显示复制按钮
+  predicate: (elements, appState, appProps, app) => {
+    const selectedElements = app.scene.getSelectedElements({
+      selectedElementIds: appState.selectedElementIds,
+      includeBoundTextElement: true,
+      includeElementsInFrames: true,
+    });
+
+    // 只有当选中的元素中包含非frame元素时才显示复制操作
+    return selectedElements.some((element) => !isFrameLikeElement(element));
   },
   // don't supply a shortcut since we handle this conditionally via onCopy event
   keyTest: undefined,
@@ -186,6 +217,17 @@ export const actionCut = register({
   perform: (elements, appState, event: ClipboardEvent | null, app) => {
     actionCopy.perform(elements, appState, event, app);
     return actionDeleteSelected.perform(elements, appState, null, app);
+  },
+  // 添加predicate函数，与actionCopy保持一致
+  predicate: (elements, appState, appProps, app) => {
+    const selectedElements = app.scene.getSelectedElements({
+      selectedElementIds: appState.selectedElementIds,
+      includeBoundTextElement: true,
+      includeElementsInFrames: true,
+    });
+
+    // 只有当选中的元素中包含非frame元素时才显示剪切操作
+    return selectedElements.some((element) => !isFrameLikeElement(element));
   },
   keyTest: (event) => event[KEYS.CTRL_OR_CMD] && event.key === KEYS.X,
 });

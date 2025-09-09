@@ -585,7 +585,7 @@ export const BusinessServiceProtoNav = () => {
       newElements = [...app.scene.getElementsIncludingDeleted(), newFrame];
     }
 
-    // app.scene.replaceAllElements(newElements);
+    app.scene.replaceAllElements(newElements);
     app.onHemaButtonClick("addNewFrame", {
       data: {
         frames: [
@@ -630,10 +630,26 @@ export const BusinessServiceProtoNav = () => {
   };
 
   /**
+   * 检查画布是否为空（没有任何非删除的元素）
+   */
+  const isCanvasEmpty = useMemo(() => {
+    // 获取所有非删除的元素，排除frame元素
+    const nonDeletedElements = elements.filter(
+      (el) => !el.isDeleted && !isFrameLikeElement(el),
+    );
+    return nonDeletedElements.length === 0;
+  }, [elements]);
+
+  /**
    * 手动导出当前所有frames数据的函数
    * 可以被外部调用或在特定事件时触发（立即执行，不使用防抖）
    */
   const manualExportFramesData = useCallback(() => {
+    // 如果画布为空，不执行保存操作
+    if (isCanvasEmpty) {
+      return null;
+    }
+
     // 清除防抖定时器，立即执行
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
@@ -647,7 +663,12 @@ export const BusinessServiceProtoNav = () => {
     prevFramesSnapshot.current = generateFramesSnapshot;
 
     return currentFramesData;
-  }, [generateFramesExportData, exportFramesData, generateFramesSnapshot]);
+  }, [
+    generateFramesExportData,
+    exportFramesData,
+    generateFramesSnapshot,
+    isCanvasEmpty,
+  ]);
 
   const handleImagePreview = (imageUrl: string) => {
     setImagePreviewUrl(imageUrl);
@@ -672,8 +693,11 @@ export const BusinessServiceProtoNav = () => {
                 appProps.UIOptions.visibility?.customButtons?.saveCanvas !==
                   false)) && (
               <div
-                className="export-all-button"
-                onClick={manualExportFramesData}
+                className={`export-all-button ${
+                  isCanvasEmpty ? "disabled" : ""
+                }`}
+                onClick={isCanvasEmpty ? undefined : manualExportFramesData}
+                title={isCanvasEmpty ? "画布为空，无法保存" : "保存画布"}
               >
                 保存画布
               </div>
