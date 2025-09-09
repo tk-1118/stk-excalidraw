@@ -164,8 +164,25 @@ const distanceToLinearOrFreeDraElement = (
   p: GlobalPoint,
 ) => {
   const [lines, curves] = deconstructLinearOrFreeDrawElement(element);
-  return Math.min(
+  const minDistance = Math.min(
     ...lines.map((s) => distanceToLineSegment(p, s)),
     ...curves.map((a) => curvePointDistance(a, p)),
   );
+
+  // 为线性元素提供更宽松的碰撞检测
+  // 当距离在合理范围内时，将其视为命中
+  const isLinearElement = element.type === "arrow" || element.type === "line";
+  if (isLinearElement) {
+    const toleranceThreshold = Math.max(
+      element.strokeWidth + 4, // 基于线条粗细的容错
+      8, // 最小8px的容错区域
+    );
+
+    // 如果在容错范围内，返回0表示命中
+    if (minDistance <= toleranceThreshold) {
+      return 0;
+    }
+  }
+
+  return minDistance;
 };

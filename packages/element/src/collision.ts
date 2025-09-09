@@ -510,7 +510,15 @@ const isPointOnElementOutline = (
   element: ExcalidrawElement,
   elementsMap: ElementsMap,
   tolerance = 1,
-) => distanceToElement(element, elementsMap, point) <= tolerance;
+) => {
+  // 为线性元素提供更宽松的轮廓检测
+  const isLinearElement = element.type === "arrow" || element.type === "line";
+  const adjustedTolerance = isLinearElement
+    ? Math.max(tolerance, 6) // 线性元素最小6px容错
+    : tolerance;
+
+  return distanceToElement(element, elementsMap, point) <= adjustedTolerance;
+};
 
 /**
  * Check if the given point is considered inside the element's border

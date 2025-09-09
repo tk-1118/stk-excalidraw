@@ -5878,13 +5878,27 @@ class App extends React.Component<AppProps, AppState> {
   }
 
   getElementHitThreshold(element: ExcalidrawElement) {
-    return Math.max(
+    // 为线性元素（箭头、线条）提供更大的碰撞检测区域
+    const isLinearElement = element.type === "arrow" || element.type === "line";
+
+    const baseThreshold = Math.max(
       element.strokeWidth / 2 + 0.1,
       // NOTE: Here be dragons. Do not go under the 0.63 multiplier unless you're
       // willing to test extensively. The hit testing starts to become unreliable
       // due to FP imprecision under 0.63 in high zoom levels.
       0.85 * (DEFAULT_COLLISION_THRESHOLD / this.state.zoom.value),
     );
+
+    // 为线性元素增加额外的碰撞检测区域，提高用户体验
+    if (isLinearElement) {
+      const additionalThreshold = Math.max(
+        6, // 最小6px的额外区域
+        12 / this.state.zoom.value, // 在不同缩放级别下保持合理的区域
+      );
+      return baseThreshold + additionalThreshold;
+    }
+
+    return baseThreshold;
   }
 
   private hitElement(
