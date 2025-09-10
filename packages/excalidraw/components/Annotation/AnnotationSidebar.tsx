@@ -272,6 +272,56 @@ export const AnnotationSidebar = ({
     };
   }, [handleMouseMove, handleMouseUp, isResizing]);
 
+  // 使用原生事件监听器阻止wheel事件冒泡到画布
+  useEffect(() => {
+    if (!sidebarRef.current || !isVisible) {
+      return;
+    }
+
+    const sidebar = sidebarRef.current;
+
+    const handleWheelEvent = (e: WheelEvent) => {
+      // 阻止wheel事件冒泡到Excalidraw容器
+      e.stopPropagation();
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      // 阻止触摸事件冒泡到Excalidraw容器
+      e.stopPropagation();
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      // 阻止触摸移动事件冒泡到Excalidraw容器
+      e.stopPropagation();
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      // 阻止触摸结束事件冒泡到Excalidraw容器
+      e.stopPropagation();
+    };
+
+    // 使用原生addEventListener，设置passive: false以便能够调用preventDefault
+    sidebar.addEventListener("wheel", handleWheelEvent, {
+      passive: false,
+    });
+    sidebar.addEventListener("touchstart", handleTouchStart, {
+      passive: false,
+    });
+    sidebar.addEventListener("touchmove", handleTouchMove, {
+      passive: false,
+    });
+    sidebar.addEventListener("touchend", handleTouchEnd, {
+      passive: false,
+    });
+
+    return () => {
+      sidebar.removeEventListener("wheel", handleWheelEvent);
+      sidebar.removeEventListener("touchstart", handleTouchStart);
+      sidebar.removeEventListener("touchmove", handleTouchMove);
+      sidebar.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [isVisible]);
+
   if (!isVisible) {
     return null;
   }
