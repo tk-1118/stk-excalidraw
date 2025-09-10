@@ -17,6 +17,8 @@ interface AnnotationDialogProps {
   defaultValue?: string;
   /** 是否使用侧边栏模式（默认true，提供更好的用户体验） */
   useSidebar?: boolean;
+  /** 强制重置表单的标识符，当此值变化时会重置表单 */
+  resetKey?: string | number;
 }
 
 /**
@@ -29,6 +31,7 @@ export const AnnotationDialog = ({
   onConfirm,
   defaultValue = "",
   useSidebar = true,
+  resetKey,
 }: AnnotationDialogProps) => {
   const { t } = useI18n();
   const [formData, setFormData] = useState({
@@ -104,7 +107,65 @@ export const AnnotationDialog = ({
           return;
         }
       } catch (e) {
-        // 如果不是JSON，按原有方式解析
+        // 尝试解析显示文本格式（从App.tsx生成的格式）
+        if (
+          defaultValue.includes("作用对象:") ||
+          defaultValue.includes("需求说明:")
+        ) {
+          const parsedData: Record<string, string> = {};
+
+          // 解析显示文本格式
+          const purposeMatch = defaultValue.match(/作用对象:\s*([^\n]*)/);
+          const operationMatch = defaultValue.match(/需求说明:\s*([^\n]*)/);
+          const resultMatch = defaultValue.match(/用户操作与交互:\s*([^\n]*)/);
+          const interactionMatch =
+            defaultValue.match(/服务端接口交互:\s*([^\n]*)/);
+          const requirementsMatch = defaultValue.match(/特殊要求:\s*([^\n]*)/);
+
+          if (
+            purposeMatch &&
+            purposeMatch[1] &&
+            purposeMatch[1].trim() !== "无描述"
+          ) {
+            parsedData.purpose = purposeMatch[1].trim();
+          }
+          if (
+            operationMatch &&
+            operationMatch[1] &&
+            operationMatch[1].trim() !== "无描述"
+          ) {
+            parsedData.operation = operationMatch[1].trim();
+          }
+          if (
+            resultMatch &&
+            resultMatch[1] &&
+            resultMatch[1].trim() !== "无描述"
+          ) {
+            parsedData.result = resultMatch[1].trim();
+          }
+          if (
+            interactionMatch &&
+            interactionMatch[1] &&
+            interactionMatch[1].trim() !== "无描述"
+          ) {
+            parsedData.interaction = interactionMatch[1].trim();
+          }
+          if (
+            requirementsMatch &&
+            requirementsMatch[1] &&
+            requirementsMatch[1].trim() !== "无描述"
+          ) {
+            parsedData.requirements = requirementsMatch[1].trim();
+          }
+
+          setFormData((prev) => ({
+            ...prev,
+            ...parsedData,
+          }));
+          return;
+        }
+
+        // 兼容旧格式的解析逻辑（key=value，key=value格式）
         const fields = defaultValue.split("，").filter(Boolean);
         const parsedData: Record<string, string> = {};
 
@@ -156,6 +217,7 @@ export const AnnotationDialog = ({
         onConfirm={onConfirm}
         defaultValue={defaultValue}
         isVisible={true}
+        resetKey={resetKey}
       />
     );
   }

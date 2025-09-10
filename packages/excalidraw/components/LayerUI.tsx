@@ -58,7 +58,7 @@ import { ImageExportDialog } from "./ImageExportDialog";
 import { Island } from "./Island";
 import { JSONExportDialog } from "./JSONExportDialog";
 import { LaserPointerButton } from "./LaserPointerButton";
-import { AnnotationDialog } from "./Annotation/AnnotationDialog";
+import { AnnotationSidebar } from "./Annotation/AnnotationSidebar";
 import { RemarkDialog } from "./RemarkDialog";
 import { SpecificationDialog } from "./SpecificationDialog";
 
@@ -570,10 +570,12 @@ const LayerUI = ({
         />
       )}
       {appState.openDialog?.name === "annotation" && (
-        <AnnotationDialog
+        <AnnotationSidebar
           onClose={appState.openDialog.onClose}
           onConfirm={appState.openDialog.onConfirm}
           defaultValue={appState.openDialog.defaultValue || ""}
+          isVisible={true}
+          resetKey={appState.openDialog.defaultValue}
         />
       )}
       {appState.openDialog?.name === "remark" && (

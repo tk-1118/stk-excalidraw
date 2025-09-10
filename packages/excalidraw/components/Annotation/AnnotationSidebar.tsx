@@ -14,6 +14,8 @@ interface AnnotationSidebarProps {
   defaultValue?: string;
   /** 侧边栏是否可见 */
   isVisible: boolean;
+  /** 强制重置表单的标识符，当此值变化时会重置表单 */
+  resetKey?: string | number;
 }
 
 /**
@@ -25,10 +27,11 @@ export const AnnotationSidebar = ({
   onConfirm,
   defaultValue = "",
   isVisible,
+  resetKey,
 }: AnnotationSidebarProps) => {
   const { t } = useI18n();
 
-  // 表单数据状态管理
+  // 完全照抄 AnnotationDialog 的状态管理
   const [formData, setFormData] = useState({
     purpose: "",
     operation: "",
@@ -37,8 +40,6 @@ export const AnnotationSidebar = ({
     requirements: "",
     mapping: "",
   });
-
-  // 展开/折叠状态管理
   const [expandedSections, setExpandedSections] = useState({
     purpose: true,
     operation: false,
@@ -48,15 +49,13 @@ export const AnnotationSidebar = ({
     mapping: false,
   });
 
-  // 侧边栏宽度状态
+  // 侧边栏特有的状态（保留）
   const [sidebarWidth, setSidebarWidth] = useState(400);
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const firstFieldRef = useRef<HTMLTextAreaElement>(null);
 
-  /**
-   * 处理表单字段输入变化
-   */
+  // 完全照抄 AnnotationDialog 的 handleInputChange
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -64,11 +63,9 @@ export const AnnotationSidebar = ({
     }));
   };
 
-  /**
-   * 处理确认提交
-   * 将表单数据转换为JSON格式并提交
-   */
+  // 完全照抄 AnnotationDialog 的 handleConfirm
   const handleConfirm = () => {
+    // 以JSON格式存储数据
     const jsonData = {
       purpose: formData.purpose || "无描述",
       operation: formData.operation || "无描述",
@@ -78,19 +75,158 @@ export const AnnotationSidebar = ({
       mapping: formData.mapping || "无描述",
     };
 
+    // 将JSON数据作为字符串传递
     onConfirm(JSON.stringify(jsonData));
     onClose();
   };
 
-  /**
-   * 切换分类区域的展开/折叠状态
-   */
+  // 完全照抄 AnnotationDialog 的 toggleSection
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
     }));
   };
+
+  // 完全照抄 AnnotationDialog 的第一个 useEffect（聚焦逻辑）
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      if (firstFieldRef.current) {
+        firstFieldRef.current.focus();
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, []);
+
+  // 完全照抄 AnnotationDialog 的第二个 useEffect（解析 defaultValue）
+  useEffect(() => {
+    if (defaultValue) {
+      try {
+        // 尝试解析默认值为JSON
+        const parsedData = JSON.parse(defaultValue);
+        if (typeof parsedData === "object" && parsedData !== null) {
+          setFormData({
+            purpose: parsedData.purpose || "",
+            operation: parsedData.operation || "",
+            result: parsedData.result || "",
+            interaction: parsedData.interaction || "",
+            requirements: parsedData.requirements || "",
+            mapping: parsedData.mapping || "",
+          });
+          return;
+        }
+      } catch (e) {
+        // 尝试解析显示文本格式（从App.tsx生成的格式）
+        if (
+          defaultValue.includes("作用对象:") ||
+          defaultValue.includes("需求说明:")
+        ) {
+          const parsedData: Record<string, string> = {};
+
+          // 解析显示文本格式
+          const purposeMatch = defaultValue.match(/作用对象:\s*([^\n]*)/);
+          const operationMatch = defaultValue.match(/需求说明:\s*([^\n]*)/);
+          const resultMatch = defaultValue.match(/用户操作与交互:\s*([^\n]*)/);
+          const interactionMatch =
+            defaultValue.match(/服务端接口交互:\s*([^\n]*)/);
+          const requirementsMatch = defaultValue.match(/特殊要求:\s*([^\n]*)/);
+
+          if (
+            purposeMatch &&
+            purposeMatch[1] &&
+            purposeMatch[1].trim() !== "无描述"
+          ) {
+            parsedData.purpose = purposeMatch[1].trim();
+          }
+          if (
+            operationMatch &&
+            operationMatch[1] &&
+            operationMatch[1].trim() !== "无描述"
+          ) {
+            parsedData.operation = operationMatch[1].trim();
+          }
+          if (
+            resultMatch &&
+            resultMatch[1] &&
+            resultMatch[1].trim() !== "无描述"
+          ) {
+            parsedData.result = resultMatch[1].trim();
+          }
+          if (
+            interactionMatch &&
+            interactionMatch[1] &&
+            interactionMatch[1].trim() !== "无描述"
+          ) {
+            parsedData.interaction = interactionMatch[1].trim();
+          }
+          if (
+            requirementsMatch &&
+            requirementsMatch[1] &&
+            requirementsMatch[1].trim() !== "无描述"
+          ) {
+            parsedData.requirements = requirementsMatch[1].trim();
+          }
+
+          setFormData((prev) => ({
+            ...prev,
+            ...parsedData,
+          }));
+          return;
+        }
+
+        // 兼容旧格式的解析逻辑（key=value，key=value格式）
+        const fields = defaultValue.split("，").filter(Boolean);
+        const parsedData: Record<string, string> = {};
+
+        fields.forEach((field) => {
+          const [key, ...valueParts] = field.split("=");
+          const value = valueParts.join("=").replace(/^"(.*)"$/, "$1"); // 移除引号
+
+          switch (key?.trim()) {
+            case "用途":
+              parsedData.purpose = value || "";
+              break;
+            case "用户操作":
+              parsedData.operation = value || "";
+              break;
+            case "结果":
+              parsedData.result = value || "";
+              break;
+            case "服务端交互":
+              parsedData.interaction = value || "";
+              break;
+            case "特殊要求":
+              parsedData.requirements = value || "";
+              break;
+            default:
+              break;
+          }
+        });
+
+        setFormData((prev) => ({
+          ...prev,
+          ...parsedData,
+        }));
+      }
+    }
+  }, [defaultValue]);
+
+  // 处理 resetKey 变化：仅重置展开状态，不清空表单，避免回显丢失
+  useEffect(() => {
+    if (resetKey !== undefined) {
+      setExpandedSections({
+        purpose: true,
+        operation: false,
+        result: false,
+        interaction: false,
+        requirements: false,
+        mapping: false,
+      });
+    }
+  }, [resetKey]);
 
   /**
    * 处理拖拽调整侧边栏宽度
@@ -135,123 +271,6 @@ export const AnnotationSidebar = ({
       document.body.style.userSelect = "";
     };
   }, [handleMouseMove, handleMouseUp, isResizing]);
-
-  // 使用原生事件监听器阻止wheel事件冒泡到画布
-  useEffect(() => {
-    if (!sidebarRef.current || !isVisible) {
-      return;
-    }
-
-    const sidebar = sidebarRef.current;
-
-    const handleWheelEvent = (e: WheelEvent) => {
-      // 阻止wheel事件冒泡到Excalidraw容器
-      e.stopPropagation();
-    };
-
-    const handleTouchStart = (e: TouchEvent) => {
-      // 阻止触摸事件冒泡到Excalidraw容器
-      e.stopPropagation();
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      // 阻止触摸移动事件冒泡到Excalidraw容器
-      e.stopPropagation();
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      // 阻止触摸结束事件冒泡到Excalidraw容器
-      e.stopPropagation();
-    };
-
-    // 使用原生addEventListener，设置passive: false以便能够调用preventDefault
-    sidebar.addEventListener("wheel", handleWheelEvent, {
-      passive: false,
-    });
-    sidebar.addEventListener("touchstart", handleTouchStart, {
-      passive: false,
-    });
-    sidebar.addEventListener("touchmove", handleTouchMove, {
-      passive: false,
-    });
-    sidebar.addEventListener("touchend", handleTouchEnd, {
-      passive: false,
-    });
-
-    return () => {
-      sidebar.removeEventListener("wheel", handleWheelEvent);
-      sidebar.removeEventListener("touchstart", handleTouchStart);
-      sidebar.removeEventListener("touchmove", handleTouchMove);
-      sidebar.removeEventListener("touchend", handleTouchEnd);
-    };
-  }, [isVisible]);
-
-  // 自动聚焦到第一个输入框
-  useEffect(() => {
-    if (isVisible) {
-      const timerId = setTimeout(() => {
-        if (firstFieldRef.current) {
-          firstFieldRef.current.focus();
-        }
-      }, 300);
-
-      return () => clearTimeout(timerId);
-    }
-  }, [isVisible]);
-
-  // 解析默认值并填充表单
-  useEffect(() => {
-    if (defaultValue) {
-      try {
-        const parsedData = JSON.parse(defaultValue);
-        if (typeof parsedData === "object" && parsedData !== null) {
-          setFormData({
-            purpose: parsedData.purpose || "",
-            operation: parsedData.operation || "",
-            result: parsedData.result || "",
-            interaction: parsedData.interaction || "",
-            requirements: parsedData.requirements || "",
-            mapping: parsedData.mapping || "",
-          });
-          return;
-        }
-      } catch (e) {
-        // 兼容旧格式的解析逻辑
-        const fields = defaultValue.split("，").filter(Boolean);
-        const parsedData: Record<string, string> = {};
-
-        fields.forEach((field) => {
-          const [key, ...valueParts] = field.split("=");
-          const value = valueParts.join("=").replace(/^"(.*)"$/, "$1");
-
-          switch (key?.trim()) {
-            case "用途":
-              parsedData.purpose = value || "";
-              break;
-            case "用户操作":
-              parsedData.operation = value || "";
-              break;
-            case "结果":
-              parsedData.result = value || "";
-              break;
-            case "服务端交互":
-              parsedData.interaction = value || "";
-              break;
-            case "特殊要求":
-              parsedData.requirements = value || "";
-              break;
-            default:
-              break;
-          }
-        });
-
-        setFormData((prev) => ({
-          ...prev,
-          ...parsedData,
-        }));
-      }
-    }
-  }, [defaultValue]);
 
   if (!isVisible) {
     return null;

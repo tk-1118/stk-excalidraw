@@ -6489,68 +6489,40 @@ class App extends React.Component<AppProps, AppState> {
                 `\n用户操作与交互: ${json.result || "无描述"}\n` +
                 `\n服务端接口交互: ${json.interaction || "无描述"}\n` +
                 `\n特殊要求: ${json.requirements || "无描述"}\n`;
-              this.mutateElement(annotation, {
-                text: displayText,
-                customData: {
-                  ...(annotation.customData || {}),
-                  rawData: text,
-                },
-              });
-            } catch {
-              this.mutateElement(annotation, {
-                text,
-                customData: {
-                  ...(annotation.customData || {}),
-                  rawData: undefined,
-                },
-              });
-            }
-            this.setOpenDialog(null);
-          },
-        },
-      });
-      return;
-    }
 
-    // 若双击的是批注元素，打开编辑对话框
-    if (
-      selectedElements.length === 1 &&
-      isAnnotationElement(selectedElements[0])
-    ) {
-      const annotation = selectedElements[0] as any;
-      const defaultValue =
-        annotation.customData?.rawData || annotation.text || "";
-      this.setState({
-        openDialog: {
-          name: "annotation",
-          defaultValue,
-          onClose: () => this.setOpenDialog(null),
-          onConfirm: (text: string) => {
-            try {
-              const json = JSON.parse(text);
-              const displayText =
-                `组件：\n` +
-                `\n作用对象: ${json.purpose || "无描述"}\n` +
-                `\n需求说明: ${json.operation || "无描述"}\n` +
-                `\n用户操作与交互: ${json.result || "无描述"}\n` +
-                `\n服务端接口交互: ${json.interaction || "无描述"}\n` +
-                `\n特殊要求: ${json.requirements || "无描述"}\n`;
-              this.mutateElement(annotation, {
-                text: displayText,
-                customData: {
-                  ...(annotation.customData || {}),
-                  rawData: text,
-                },
-              });
+              // 获取最新的元素引用，避免使用闭包中的旧引用
+              const latestAnnotation = this.scene
+                .getNonDeletedElementsMap()
+                .get(annotation.id);
+              if (latestAnnotation) {
+                this.mutateElement(
+                  latestAnnotation as any,
+                  {
+                    text: displayText,
+                    customData: {
+                      ...(latestAnnotation.customData || {}),
+                      rawData: text,
+                    },
+                  } as any,
+                );
+              }
             } catch {
               // 非JSON，按纯文本保存
-              this.mutateElement(annotation, {
-                text,
-                customData: {
-                  ...(annotation.customData || {}),
-                  rawData: undefined,
-                },
-              });
+              const latestAnnotation = this.scene
+                .getNonDeletedElementsMap()
+                .get(annotation.id);
+              if (latestAnnotation) {
+                this.mutateElement(
+                  latestAnnotation as any,
+                  {
+                    text,
+                    customData: {
+                      ...(latestAnnotation.customData || {}),
+                      rawData: undefined,
+                    },
+                  } as any,
+                );
+              }
             }
             this.setOpenDialog(null);
           },
@@ -7389,9 +7361,13 @@ class App extends React.Component<AppProps, AppState> {
 
     // 如果找到悬停的标注元素，设置其isExpanded为true
     if (hoveredAnnotation && !hoveredAnnotation.customData?.isExpanded) {
+      // 使用最新的元素数据，避免闭包旧数据覆盖最新 customData（特别是 rawData）
+      const latest = this.scene
+        .getNonDeletedElementsMap()
+        .get(hoveredAnnotation.id);
       this.mutateElement(hoveredAnnotation, {
         customData: {
-          ...hoveredAnnotation.customData,
+          ...(latest?.customData || hoveredAnnotation.customData),
           isExpanded: true,
         },
       });
@@ -7437,9 +7413,13 @@ class App extends React.Component<AppProps, AppState> {
 
           // 满足：未在图标上、且未在内容上，则关闭
           if (!isHoveringIcon && !isHoveringContent) {
+            // 使用最新的元素数据以避免由于闭包导致的 customData 回滚（丢失 rawData 等字段）
+            const latest = this.scene
+              .getNonDeletedElementsMap()
+              .get(annotation.id);
             this.mutateElement(annotation, {
               customData: {
-                ...annotation.customData,
+                ...(latest?.customData || annotation.customData),
                 isExpanded: false,
               },
             });
@@ -7585,11 +7565,14 @@ class App extends React.Component<AppProps, AppState> {
 
       // 使用更大的检测范围
       if (distance <= 16) {
-        // 切换展开/收起状态
+        // 切换展开/收起状态（读取最新元素，避免闭包旧数据覆盖 customData/rawData）
+        const latest = this.scene.getNonDeletedElementsMap().get(element.id);
         this.mutateElement(element, {
           customData: {
-            ...element.customData,
-            isExpanded: !element.customData?.isExpanded,
+            ...(latest?.customData || element.customData),
+            isExpanded: !(
+              latest?.customData?.isExpanded ?? element.customData?.isExpanded
+            ),
           },
         });
         // 阻止事件继续传播，避免创建新元素
