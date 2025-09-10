@@ -12,6 +12,8 @@ import {
   isFrameLikeElement,
 } from "@excalidraw/element";
 
+import { getElementsOverlappingFrame } from "@excalidraw/element/frame";
+
 import { CaptureUpdateAction } from "@excalidraw/element";
 
 import type { Theme } from "@excalidraw/element/types";
@@ -37,7 +39,6 @@ import "../components/ToolIcon.scss";
 import { serializeAsJSON } from "../data/json";
 
 import { register } from "./register";
-
 
 export const actionChangeProjectName = register({
   name: "changeProjectName",
@@ -167,8 +168,29 @@ export const actionSaveToActiveFile = register({
   perform: async (elements, appState, value, app) => {
     const frames = elements.filter((el) => isFrameLikeElement(el));
     const framesData: any[] = frames.map((frame: any) => {
-      // 获取frame内的所有子元素
-      const childrenElements = getFrameChildren(elements, frame.id);
+      // 获取frame内已正确关联的子元素（frameId匹配）
+      const associatedChildren = getFrameChildren(elements, frame.id);
+
+      // 获取所有与frame重叠/包含在frame内的元素（包括未正确关联frameId的元素）
+      const overlappingElements = getElementsOverlappingFrame(elements, frame);
+
+      // 合并两个集合，去重，确保收集到所有相关元素
+      const allChildrenMap = new Map<string, any>();
+
+      // 添加已关联的子元素
+      associatedChildren.forEach((element) => {
+        allChildrenMap.set(element.id, element);
+      });
+
+      // 添加重叠的元素（排除frame自身和其他frame元素）
+      overlappingElements.forEach((element) => {
+        if (element.id !== frame.id && !isFrameLikeElement(element)) {
+          allChildrenMap.set(element.id, element);
+        }
+      });
+
+      // 转换为数组
+      const childrenElements = Array.from(allChildrenMap.values());
 
       // 构建包含frame和其子元素的完整元素列表
       const frameElements = [frame, ...childrenElements];
@@ -189,6 +211,7 @@ export const actionSaveToActiveFile = register({
         excalidrawData,
       };
     });
+    // eslint-disable-next-line no-console
     console.log("framesData", framesData);
     app.onHemaButtonClick("framesDataExport", {
       type: "FRAMES_DATA_CHANGED",
