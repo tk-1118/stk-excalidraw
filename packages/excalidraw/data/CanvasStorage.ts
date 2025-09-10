@@ -103,6 +103,27 @@ class CanvasStorageManager {
   }
 
   /**
+   * 序列化AppState，移除不可序列化的属性（如函数）
+   * 主要处理openDialog中的函数属性，避免IndexedDB序列化失败
+   */
+  private serializeAppState(appState: Partial<AppState>): Partial<AppState> {
+    const serializedState = { ...appState };
+
+    // 处理openDialog中的不可序列化属性
+    if (serializedState.openDialog) {
+      if (serializedState.openDialog.name === "annotation") {
+        // 移除annotation对话框中的函数属性
+        const { onClose, onConfirm, ...serializableDialog } =
+          serializedState.openDialog;
+        serializedState.openDialog = serializableDialog as any;
+      }
+      // 可以在这里添加其他对话框类型的处理逻辑
+    }
+
+    return serializedState;
+  }
+
+  /**
    * 保存画布数据到IndexedDB
    */
   async saveCanvasData(
@@ -118,13 +139,16 @@ class CanvasStorageManager {
 
       const nonDeletedElements = elements.filter((el) => !el.isDeleted);
 
+      // 序列化appState，移除不可序列化的属性
+      const serializedAppState = this.serializeAppState(appState);
+
       const db = await this.initDB();
       const transaction = db.transaction([this.storeName], "readwrite");
       const store = transaction.objectStore(this.storeName);
 
       const canvasData: CanvasData = {
         elements: nonDeletedElements,
-        appState,
+        appState: serializedAppState,
         timestamp: Date.now(),
         businessServiceSN,
       };
@@ -182,7 +206,6 @@ class CanvasStorageManager {
       return this.fallbackFromLocalStorage(businessServiceSN);
     }
   }
-
 
   /**
    * 检查是否存在缓存数据
@@ -307,10 +330,7 @@ class CanvasStorageManager {
     }
     return null;
   }
-
-
 }
 
 // 导出单例实例
 export const canvasStorage = new CanvasStorageManager();
-

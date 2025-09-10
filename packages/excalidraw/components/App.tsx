@@ -2817,12 +2817,11 @@ class App extends React.Component<AppProps, AppState> {
   /**
    * 为复制功能生成frame数据，参考BusinessServiceProtoNav的generateFrameData逻辑
    * 收集frame及其关联的所有子元素（包括frameId匹配和几何范围内的元素）
+   * 并为所有元素生成新的唯一ID，避免ID冲突
    * @param frame - 要复制的frame元素
    * @returns 包含frame和子元素的完整数据结构
    */
   private generateFrameDataForCopy = (frame: ExcalidrawFrameLikeElement) => {
-    frame = JSON.parse(JSON.stringify(frame));
-
     const elements = this.scene.getNonDeletedElements();
 
     // 获取frame内已正确关联的子元素（frameId匹配）
@@ -2849,14 +2848,30 @@ class App extends React.Component<AppProps, AppState> {
     // 转换为数组
     const childrenElements = Array.from(allChildrenMap.values());
 
-    (frame as any).id = randomId();
-    delete frame.customData?.designPageSN;
+    // 深拷贝frame，避免修改原始对象
+    const copiedFrame = JSON.parse(JSON.stringify(frame));
 
-    // 构建包含frame和其子元素的完整元素列表
-    const frameElements = [frame, ...childrenElements];
+    // 使用duplicateElements函数为frame和所有子元素生成新的唯一ID
+    // 这样可以确保所有元素都有新的ID，并且元素间的引用关系得到正确更新
+    const allElements = [copiedFrame, ...childrenElements];
+    const { duplicatedElements } = duplicateElements({
+      type: "everything",
+      elements: allElements,
+      randomizeSeed: true,
+    });
+
+    // 获取新的frame元素（第一个元素）
+    const newFrame = duplicatedElements[0] as ExcalidrawFrameLikeElement;
+    const newChildrenElements = duplicatedElements.slice(1);
+
+    // 删除设计页面序号，避免与原页面冲突
+    if (newFrame.customData?.designPageSN) {
+      delete newFrame.customData.designPageSN;
+    }
+
     // 生成Excalidraw格式的JSON数据
     const excalidrawData = serializeAsJSON(
-      frameElements,
+      duplicatedElements,
       this.state,
       this.files,
       "local",
@@ -2866,10 +2881,10 @@ class App extends React.Component<AppProps, AppState> {
       data: {
         frames: [
           {
-            frameId: frame.id,
-            frameName: frame.name || getDefaultFrameName(frame),
-            frameElement: frame,
-            childrenElements,
+            frameId: newFrame.id,
+            frameName: newFrame.name || getDefaultFrameName(newFrame),
+            frameElement: newFrame,
+            childrenElements: newChildrenElements,
             excalidrawData,
             timestamp: Date.now(),
           },
