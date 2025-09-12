@@ -147,11 +147,15 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
       boxShadow: "0 2px 12px 0 rgba(0,0,0,.1)",
       overflow: "auto",
     });
+    // 搜索相关状态
+    const [searchKeyword, setSearchKeyword] = useState("");
+    const [selectedIndex, setSelectedIndex] = useState(-1);
 
     // DOM 引用
     const editableDivRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     // 选区管理
     const selectionRef = useRef<Selection | null>(null);
@@ -247,7 +251,13 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
 
         if (show) {
           prepareCascaderOptions();
-          setTimeout(updateDropdownPosition, 0);
+          setSearchKeyword("");
+          setSelectedIndex(-1);
+          setTimeout(() => {
+            updateDropdownPosition();
+            // 自动聚焦搜索框
+            searchInputRef.current?.focus();
+          }, 0);
         }
       },
       [prepareCascaderOptions, updateDropdownPosition],
@@ -631,8 +641,17 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
         // 阻止事件冒泡
         event.stopPropagation();
 
+        // 检查焦点是否转移到下拉框内的元素
         setTimeout(() => {
-          setShowMentionDropdown(false);
+          const activeElement = document.activeElement;
+          const isDropdownFocused =
+            dropdownRef.current?.contains(activeElement) ||
+            searchInputRef.current === activeElement;
+
+          // 只有当焦点不在下拉框内时才关闭下拉框
+          if (!isDropdownFocused) {
+            setShowMentionDropdown(false);
+          }
         }, 200);
         onBlur?.();
       },
@@ -674,18 +693,93 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
     }, []);
 
     /**
+     * 处理搜索输入
+     */
+    const handleSearchInput = useCallback(
+      (event: React.ChangeEvent<HTMLInputElement>) => {
+        const keyword = event.target.value;
+        setSearchKeyword(keyword);
+        setSelectedIndex(-1); // 重置选中索引
+      },
+      [],
+    );
+
+    /**
      * 过滤服务选项
      */
     const filteredOptions = cascaderOptions
       .map((option) => ({
         ...option,
         services: option.services.filter((service) => {
-          return service.name
-            .toLowerCase()
-            .includes(mentionSearchText.toLowerCase());
+          const searchText = searchKeyword || mentionSearchText;
+          return service.name.toLowerCase().includes(searchText.toLowerCase());
         }),
       }))
       .filter((option) => option.services.length > 0);
+
+    /**
+     * 处理搜索框失焦事件
+     */
+    const handleSearchBlur = useCallback(
+      (event: React.FocusEvent<HTMLInputElement>) => {
+        event.stopPropagation();
+
+        // 检查焦点是否转移到主输入框或下拉框内的其他元素
+        setTimeout(() => {
+          const activeElement = document.activeElement;
+          const isInputFocused = editableDivRef.current === activeElement;
+          const isDropdownFocused =
+            dropdownRef.current?.contains(activeElement) ||
+            searchInputRef.current === activeElement;
+
+          // 只有当焦点不在相关元素内时才关闭下拉框
+          if (!isInputFocused && !isDropdownFocused) {
+            setShowMentionDropdown(false);
+          }
+        }, 200);
+      },
+      [],
+    );
+
+    /**
+     * 处理搜索框键盘事件
+     */
+    const handleSearchKeyDown = useCallback(
+      (event: React.KeyboardEvent<HTMLInputElement>) => {
+        event.stopPropagation();
+
+        if (event.key === "Escape") {
+          toggleMentionDropdown(false);
+          editableDivRef.current?.focus();
+          return;
+        }
+
+        // 获取当前过滤后的所有服务项
+        const allFilteredServices: ServiceOption[] = [];
+        filteredOptions.forEach((option) => {
+          allFilteredServices.push(...option.services);
+        });
+
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          setSelectedIndex((prev) =>
+            prev < allFilteredServices.length - 1 ? prev + 1 : 0,
+          );
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          setSelectedIndex((prev) =>
+            prev > 0 ? prev - 1 : allFilteredServices.length - 1,
+          );
+        } else if (event.key === "Enter" && selectedIndex >= 0) {
+          event.preventDefault();
+          const selectedService = allFilteredServices[selectedIndex];
+          if (selectedService) {
+            selectMention(selectedService);
+          }
+        }
+      },
+      [toggleMentionDropdown, selectedIndex, filteredOptions, selectMention],
+    );
 
     // 暴露组件方法
     useImperativeHandle(
@@ -763,7 +857,7 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
 
     // 监听value变化并设置内容
     useEffect(() => {
-      console.log("value变化:", value, "localValue:", localValue);
+      // console.log("value变化:", value, "localValue:", localValue);
       if (editableDivRef.current) {
         const currentContent = editableDivRef.current.innerHTML;
 
@@ -775,11 +869,11 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
           // 检查是否是HTML内容（包含HTML标签）
           if (value && value.includes("<") && value.includes(">")) {
             // 如果是HTML内容，直接设置innerHTML
-            console.log("设置HTML内容:", value);
+            // console.log("设置HTML内容:", value);
             editableDivRef.current.innerHTML = value;
           } else {
             // 如果是纯文本，设置textContent
-            console.log("设置纯文本内容:", value);
+            // console.log("设置纯文本内容:", value);
             editableDivRef.current.textContent = value || "";
           }
 
@@ -842,36 +936,67 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >
+            {/* 搜索输入框 */}
+            <div className="mention-search-container">
+              <input
+                ref={searchInputRef}
+                type="text"
+                className="mention-search-input"
+                placeholder="搜索服务..."
+                value={searchKeyword}
+                onChange={handleSearchInput}
+                onKeyDown={handleSearchKeyDown}
+                onBlur={handleSearchBlur}
+                onMouseDown={(e) => e.stopPropagation()}
+                onMouseUp={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
             <div className="mention-dropdown-content">
               {filteredOptions.length > 0 ? (
-                filteredOptions.map((option, index) => (
-                  <div key={index} className="mention-option-group">
-                    <div className="mention-option-group-title">
-                      《{option.title}》业务服务下的应用服务
-                    </div>
-                    {option.services.map((service, serviceIndex) => (
-                      <div
-                        key={serviceIndex}
-                        className="mention-option-item"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          selectMention(service);
-                        }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onMouseUp={(e) => e.stopPropagation()}
-                      >
-                        <span className="mention-option-name">
-                          {service.name}
-                        </span>
-                        {/* <span className="mention-option-type">
-                          {service.type}
-                        </span> */}
+                (() => {
+                  let globalIndex = 0;
+                  return filteredOptions.map((option, groupIndex) => (
+                    <div key={groupIndex} className="mention-option-group">
+                      <div className="mention-option-group-title">
+                        《{option.title}》业务服务下的应用服务
                       </div>
-                    ))}
-                  </div>
-                ))
+                      {option.services.map((service, serviceIndex) => {
+                        const currentGlobalIndex = globalIndex++;
+                        const isSelected = currentGlobalIndex === selectedIndex;
+                        return (
+                          <div
+                            key={serviceIndex}
+                            className={`mention-option-item ${
+                              isSelected ? "selected" : ""
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              selectMention(service);
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onMouseUp={(e) => e.stopPropagation()}
+                            onMouseEnter={() =>
+                              setSelectedIndex(currentGlobalIndex)
+                            }
+                          >
+                            <span className="mention-option-name">
+                              {service.name}
+                            </span>
+                            {/* <span className="mention-option-type">
+                              {service.type}
+                            </span> */}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ));
+                })()
               ) : (
-                <div className="mention-no-options">暂无匹配的服务</div>
+                <div className="mention-no-options">
+                  {searchKeyword ? "暂无匹配的服务" : "暂无可用服务"}
+                </div>
               )}
             </div>
           </div>

@@ -2374,19 +2374,19 @@ class App extends React.Component<AppProps, AppState> {
         const frame = data;
         const elements = this.scene.getNonDeletedElements();
         const componentDetails = buildComponentDetails(elements, frame);
-        const componentsTips = buildComponentsTips(elements).map((tip) => {
-          return [
-            `作用对象: ${tip.purpose}`,
-            `需求说明: ${tip.operation}`,
-            `用户操作与交互: ${tip.result}`,
-            `服务端接口交互: ${tip.interaction}`,
-          ].join("\n");
+        const componentsTips: string[] = [];
+        const componentMentoins: any[] = [];
+        buildComponentsTips(elements, frame).forEach((tip) => {
+          componentsTips.push(
+            [
+              `作用对象: ${tip.purpose}`,
+              `需求说明: ${tip.operation}`,
+              `用户操作与交互: ${tip.result}`,
+              `服务端接口交互: ${tip.interaction}`,
+            ].join("\n"),
+          );
+          componentMentoins.push(this.convertHtmlToJson(tip.interaction) || []);
         });
-        const componentMentoinJson = buildComponentsTips(elements).map(
-          (tip) => {
-            return this.convertHtmlToJson(tip.interaction) || [];
-          },
-        );
         const componentLayoutJSON = buildComponentLayoutJSON(
           elements,
           frame,
@@ -2419,7 +2419,7 @@ class App extends React.Component<AppProps, AppState> {
           frame,
           componentDetails,
           componentsTips,
-          componentMentoinJson,
+          componentMentoins,
           componentLayoutJSON,
           componentGroupsJSON,
           frameImage: frameImageBase64,

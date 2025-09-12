@@ -115,8 +115,56 @@
   max-width: 600px;
   min-width: 280px;
   max-height: 300px;
-  overflow-y: auto;
+  overflow: hidden; /* 改为hidden，让内部元素控制滚动 */
   backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column; /* 使用flex布局 */
+}
+
+/**
+ * 搜索容器样式 - 固定在顶部
+ */
+.mention-search-container {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--color-surface-low);
+  background: var(--color-surface-lowest);
+  flex-shrink: 0; /* 防止收缩 */
+  position: sticky; /* 粘性定位 */
+  top: 0; /* 固定在顶部 */
+  z-index: 1; /* 确保在内容之上 */
+}
+
+.mention-search-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--input-border-color);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  background: var(--input-bg-color);
+  color: var(--text-primary-color);
+  outline: none;
+  transition: all 0.2s ease;
+
+  &::placeholder {
+    color: var(--color-gray-50);
+  }
+
+  &:focus {
+    border-color: var(--focus-highlight-color);
+    box-shadow: 0 0 0 2px rgba(var(--focus-highlight-color-rgb), 0.1);
+  }
+
+  &:hover {
+    border-color: var(--focus-highlight-color);
+  }
+}
+
+.mention-dropdown-content {
+  padding: 0.5rem 0;
+  flex: 1; /* 占据剩余空间 */
+  overflow-y: auto; /* 只有内容区域可滚动 */
 
   /* 自定义滚动条样式，与 AnnotationSidebar 保持一致 */
   &::-webkit-scrollbar {
@@ -136,10 +184,6 @@
       background: var(--color-gray-40);
     }
   }
-}
-
-.mention-dropdown-content {
-  padding: 0.5rem 0;
 }
 
 /**
@@ -178,14 +222,20 @@
   border-radius: 0;
   margin: 0 0.25rem;
 
-  &:hover {
+  &:hover,
+  &.selected {
     background: var(--button-gray-1);
     border-radius: 4px;
     transform: translateX(2px);
   }
 
-  &:active {
+  &.selected {
     background: var(--color-primary-alpha-10);
+    border-left: 3px solid var(--color-primary);
+  }
+
+  &:active {
+    background: var(--color-primary-alpha-20);
     transform: translateX(0);
   }
 }
@@ -264,17 +314,42 @@
     }
   }
 
+  .mention-search-container {
+    background: var(--color-surface-lowest);
+    border-bottom-color: var(--color-surface-low);
+    /* 确保在暗色主题下也保持固定位置 */
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .mention-search-input {
+    background: var(--input-bg-color);
+    border-color: var(--input-border-color);
+    color: var(--text-primary-color);
+
+    &::placeholder {
+      color: var(--color-gray-50);
+    }
+  }
+
   .mention-option-group-title {
     background: var(--color-surface-lowest);
   }
 
   .mention-option-item {
-    &:hover {
+    &:hover,
+    &.selected {
       background: var(--button-gray-1);
     }
 
-    &:active {
+    &.selected {
       background: var(--color-primary-alpha-10);
+      border-left-color: var(--color-primary);
+    }
+
+    &:active {
+      background: var(--color-primary-alpha-20);
     }
   }
 }

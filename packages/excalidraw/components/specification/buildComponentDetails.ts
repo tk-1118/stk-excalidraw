@@ -1,4 +1,8 @@
-import { getFrameChildren } from "@excalidraw/element";
+import {
+  getElementsOverlappingFrame,
+  getFrameChildren,
+  isFrameLikeElement,
+} from "@excalidraw/element";
 
 import type {
   ExcalidrawElement,
@@ -555,10 +559,38 @@ export function buildComponentDetails(
 
 export function buildComponentsTips(
   elements: readonly ExcalidrawElement[],
+  frame: ExcalidrawFrameLikeElement,
 ): any[] {
-  return elements
-    .filter((el) => el.type === "annotation")
-    .map((el) => JSON.parse(el.customData?.rawData));
+  try {
+    // 获取frame内已正确关联的子元素（frameId匹配）
+    const associatedChildren = getFrameChildren(elements, frame.id);
+
+    // 获取所有与frame重叠/包含在frame内的元素（包括未正确关联frameId的元素）
+    const overlappingElements = getElementsOverlappingFrame(elements, frame);
+
+    // 合并两个集合，去重，确保收集到所有相关元素
+    const allChildrenMap = new Map<string, ExcalidrawElement>();
+
+    // 添加已关联的子元素
+    associatedChildren.forEach((element) => {
+      allChildrenMap.set(element.id, element);
+    });
+
+    // 添加重叠的元素（排除frame自身和其他frame元素）
+    overlappingElements.forEach((element) => {
+      if (element.id !== frame.id && !isFrameLikeElement(element)) {
+        allChildrenMap.set(element.id, element);
+      }
+    });
+
+    // 转换为数组
+    const childrenElements = Array.from(allChildrenMap.values());
+    return childrenElements
+      .filter((el) => el.type === "annotation")
+      .map((el) => JSON.parse(el.customData?.rawData));
+  } catch (error) {
+    return [];
+  }
 }
 
 /**
