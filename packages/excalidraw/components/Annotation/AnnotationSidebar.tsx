@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useI18n } from "../../i18n";
 import { CloseIcon } from "../icons";
 
+import MentionInput, { type ApplicationService } from "./MentionInput";
+
 import "./AnnotationSidebar.scss";
 
 interface AnnotationSidebarProps {
@@ -16,6 +18,8 @@ interface AnnotationSidebarProps {
   isVisible: boolean;
   /** 强制重置表单的标识符，当此值变化时会重置表单 */
   resetKey?: string | number;
+  /** 应用服务树数据，用于@提及功能 */
+  applicationServiceTree?: ApplicationService[];
 }
 
 /**
@@ -28,6 +32,7 @@ export const AnnotationSidebar = ({
   defaultValue = "",
   isVisible,
   resetKey,
+  applicationServiceTree = [],
 }: AnnotationSidebarProps) => {
   const { t } = useI18n();
 
@@ -40,6 +45,7 @@ export const AnnotationSidebar = ({
     requirements: "",
     mapping: "",
   });
+
   const [expandedSections, setExpandedSections] = useState({
     purpose: true,
     operation: false,
@@ -57,6 +63,7 @@ export const AnnotationSidebar = ({
 
   // 完全照抄 AnnotationDialog 的 handleInputChange
   const handleInputChange = (field: keyof typeof formData, value: string) => {
+    console.log("handleInputChange", field, value);
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -74,6 +81,9 @@ export const AnnotationSidebar = ({
       requirements: formData.requirements || "无描述",
       mapping: formData.mapping || "无描述",
     };
+
+    console.log("提交的jsonData:", jsonData);
+    console.log("formData.interaction:", formData.interaction);
 
     // 将JSON数据作为字符串传递
     onConfirm(JSON.stringify(jsonData));
@@ -103,10 +113,12 @@ export const AnnotationSidebar = ({
 
   // 完全照抄 AnnotationDialog 的第二个 useEffect（解析 defaultValue）
   useEffect(() => {
+    console.log("解析 defaultValue:", defaultValue);
     if (defaultValue) {
       try {
         // 尝试解析默认值为JSON
         const parsedData = JSON.parse(defaultValue);
+        console.log("解析后的 parsedData:", parsedData);
         if (typeof parsedData === "object" && parsedData !== null) {
           setFormData({
             purpose: parsedData.purpose || "",
@@ -116,6 +128,7 @@ export const AnnotationSidebar = ({
             requirements: parsedData.requirements || "",
             mapping: parsedData.mapping || "",
           });
+
           return;
         }
       } catch (e) {
@@ -452,18 +465,28 @@ export const AnnotationSidebar = ({
           </div>
           {expandedSections.interaction && (
             <div className="annotation-sidebar-section-content">
-              <textarea
-                className="annotation-sidebar-textarea"
+              <MentionInput
                 value={formData.interaction}
-                onChange={(e) =>
-                  handleInputChange("interaction", e.target.value)
-                }
+                onChange={(html: string) => {
+                  // MentionInput 直接传递HTML内容
+                  console.log("MentionInput onChange:", html);
+                  handleInputChange("interaction", html);
+                }}
+                applicationServiceTree={applicationServiceTree}
                 placeholder={`引用已配置的服务端应用服务，并说明调用目的、输入输出要点。
 格式：
   • 应用服务：@服务端/应用服务名称
   • 调用目的：简要说明为何调用
   • 关键输入：说明哪些字段会传入（字段名可与应用服务定义一致）
   • 关键输出：说明需要用到的返回字段`}
+                className="annotation-sidebar-mention-input"
+                onMentionSelected={(mentions: any) => {
+                  // 处理选中的提及服务，可以在这里添加业务逻辑
+                  // 例如：验证服务可用性、记录使用统计等
+                  if (mentions.length > 0) {
+                    // 可以触发其他回调或状态更新
+                  }
+                }}
               />
             </div>
           )}

@@ -49,7 +49,7 @@
     // background-color: var(--color-surface-high);
     text-align: center;
     position: relative;
-    
+
     h3 {
       margin: 0;
       font-size: 1.1em;
@@ -68,7 +68,7 @@
     background-color: var(--color-surface-high);
     border-radius: 4px;
     // border-left: 2px solid var(--color-primary);
-    
+
     &:last-child {
       margin-bottom: 0;
     }
@@ -95,20 +95,92 @@
     font-size: 0.9em;
     color: var(--color-primary);
     margin-bottom: 0;
+    flex: 1;
+  }
+
+  .annotation-field-html-badge {
+    background: var(--color-primary-alpha-10);
+    color: var(--color-primary);
+    font-size: 0.7em;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
   }
 
   .annotation-field-value {
     font-size: 0.9em;
     line-height: 1.5;
     color: var(--text-primary-color);
-    white-space: pre-wrap;
-    word-break: break-word;
     padding-left: 28px;
-    
+
     &:empty::after {
       content: "未提供详细信息";
       color: var(--color-gray);
       font-style: italic;
+    }
+  }
+
+  .annotation-field-text-content {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .annotation-field-html-content {
+    word-break: break-word;
+
+    // 提及标签样式 - 与 MentionInput 保持一致
+    .mention-tag {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--color-primary-alpha-10), var(--color-primary-alpha-20));
+      color: var(--color-primary);
+      border: 1px solid var(--color-primary-alpha-30);
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin: 0 2px;
+      font-weight: 500;
+      font-size: 0.8em;
+      white-space: nowrap;
+      user-select: all;
+      cursor: default;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+      &:hover {
+        background: linear-gradient(135deg, var(--color-primary-alpha-20), var(--color-primary-alpha-30));
+        border-color: var(--color-primary-alpha-50);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    }
+
+    // 其他 HTML 元素样式
+    p {
+      margin: 0.5em 0;
+
+      &:first-child {
+        margin-top: 0;
+      }
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    strong, b {
+      font-weight: 600;
+      color: var(--text-primary-color);
+    }
+
+    em, i {
+      font-style: italic;
+      color: var(--color-gray-60);
+    }
+
+    br {
+      line-height: 1.5;
     }
   }
 
@@ -153,18 +225,18 @@
       box-shadow: 0 0 0 2px var(--color-primary-light);
     }
   }
-  
+
   .annotation-empty-state {
     text-align: center;
     padding: 24px 16px;
     color: var(--color-gray);
-    
+
     .annotation-empty-icon {
       font-size: 36px;
       margin-bottom: 12px;
       opacity: 0.6;
     }
-    
+
     p {
       margin: 0;
       font-size: 1em;
@@ -182,30 +254,56 @@
 
   .annotation-content-header {
     background-color: var(--color-surface-mid);
-    
+
     h3 {
       color: var(--color-primary-light);
     }
   }
-  
+
   .annotation-field {
     background-color: rgba(255, 255, 255, 0.05);
     border-left-color: var(--color-primary-darker);
   }
-  
+
   .annotation-field-label {
     color: var(--color-primary-light);
   }
-  
+
+  .annotation-field-html-badge {
+    background: var(--color-primary-alpha-20);
+    color: var(--color-primary-light);
+  }
+
+  .annotation-field-html-content {
+    .mention-tag {
+      background: linear-gradient(135deg, var(--color-primary-alpha-10), var(--color-primary-alpha-20));
+      color: var(--color-primary-light);
+      border-color: var(--color-primary-alpha-30);
+
+      &:hover {
+        background: linear-gradient(135deg, var(--color-primary-alpha-20), var(--color-primary-alpha-30));
+        border-color: var(--color-primary-alpha-50);
+      }
+    }
+
+    strong, b {
+      color: var(--text-primary-color);
+    }
+
+    em, i {
+      color: var(--color-gray-40);
+    }
+  }
+
   .annotation-content-close {
     background: rgba(30, 30, 30, 0.8);
     border-color: var(--color-border-outline-variant);
-    
+
     &:hover {
       background-color: var(--color-primary);
     }
   }
-  
+
   .annotation-empty-state {
     color: var(--color-gray);
   }

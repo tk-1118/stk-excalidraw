@@ -18,6 +18,102 @@ interface AnnotationContentProps {
   onClose?: () => void;
 }
 
+/**
+ * 检测字符串是否包含 HTML 标签
+ */
+const isHtmlContent = (content: string): boolean => {
+  if (!content) {
+    return false;
+  }
+  // 检测是否包含 HTML 标签
+  const htmlTagRegex = /<[^>]+>/;
+  return htmlTagRegex.test(content);
+};
+
+/**
+ * 简单的 HTML 内容清理，移除潜在的危险标签和属性
+ * 只保留安全的标签和样式
+ */
+const sanitizeHtml = (html: string): string => {
+  if (!html) {
+    return "";
+  }
+
+  // 创建临时 DOM 元素来解析 HTML
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = html;
+
+  // 允许的标签列表
+  const allowedTags = ["span", "div", "p", "br", "strong", "em", "b", "i"];
+  // 允许的属性列表
+  const allowedAttributes = [
+    "class",
+    "style",
+    "data-type",
+    "data-bounded-context",
+    "data-business-service",
+    "data-application-service",
+  ];
+
+  // 递归清理节点
+  const cleanNode = (node: Node): Node | null => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node;
+    }
+
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as HTMLElement;
+      const tagName = element.tagName.toLowerCase();
+
+      // 如果是允许的标签
+      if (allowedTags.includes(tagName)) {
+        // 清理属性
+        const attributes = Array.from(element.attributes);
+        attributes.forEach((attr) => {
+          if (!allowedAttributes.includes(attr.name)) {
+            element.removeAttribute(attr.name);
+          }
+        });
+
+        // 递归清理子节点
+        const children = Array.from(element.childNodes);
+        children.forEach((child) => {
+          const cleanedChild = cleanNode(child);
+          if (cleanedChild !== child) {
+            if (cleanedChild) {
+              element.replaceChild(cleanedChild, child);
+            } else {
+              element.removeChild(child);
+            }
+          }
+        });
+
+        return element;
+      }
+      // 不允许的标签，只保留文本内容
+      const textContent = element.textContent || "";
+      return document.createTextNode(textContent);
+    }
+
+    return null;
+  };
+
+  // 清理所有子节点
+  const children = Array.from(tempDiv.childNodes);
+  children.forEach((child) => {
+    const cleanedChild = cleanNode(child);
+    if (cleanedChild !== child) {
+      if (cleanedChild) {
+        tempDiv.replaceChild(cleanedChild, child);
+      } else {
+        tempDiv.removeChild(child);
+      }
+    }
+  });
+
+  return tempDiv.innerHTML;
+};
+
 export const AnnotationContent = ({
   element,
   onClose,
@@ -27,29 +123,8 @@ export const AnnotationContent = ({
   const [parsedData, setParsedData] = useState<AnnotationData | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setIsVisible(true);
-
-    // 尝试解析结构化数据，优先使用customData中的rawData
-    if (element.customData?.rawData) {
-      try {
-        const data = JSON.parse(element.customData.rawData);
-        setParsedData(data);
-      } catch (e) {
-        console.error("Failed to parse annotation rawData", e);
-        // 如果rawData解析失败，尝试解析text字段
-        parseTextData();
-      }
-    } else {
-      // 如果没有rawData，尝试解析text字段
-      parseTextData();
-    }
-
-    return () => setIsVisible(false);
-  }, [element]);
-
   // 解析text字段中的数据
-  const parseTextData = () => {
+  const parseTextData = useCallback(() => {
     if (element.text) {
       const parsed: AnnotationData = {
         purpose: "",
@@ -96,7 +171,28 @@ export const AnnotationContent = ({
         setParsedData(parsed);
       }
     }
-  };
+  }, [element.text]);
+
+  useEffect(() => {
+    setIsVisible(true);
+
+    // 尝试解析结构化数据，优先使用customData中的rawData
+    if (element.customData?.rawData) {
+      try {
+        const data = JSON.parse(element.customData.rawData);
+        setParsedData(data);
+      } catch (e) {
+        console.error("Failed to parse annotation rawData", e);
+        // 如果rawData解析失败，尝试解析text字段
+        parseTextData();
+      }
+    } else {
+      // 如果没有rawData，尝试解析text字段
+      parseTextData();
+    }
+
+    return () => setIsVisible(false);
+  }, [element, parseTextData]);
 
   const handleClose = useCallback(() => {
     setIsVisible(false);
@@ -130,9 +226,14 @@ export const AnnotationContent = ({
     .filter(Boolean)
     .join(" ");
 
-  // 渲染单个字段
+  // 渲染单个字段 - 支持 HTML 和纯文本两种模式
   const renderField = (label: string, value: string, icon?: string) => {
-    if (!value || value === "无描述") return null;
+    if (!value || value === "无描述") {
+      return null;
+    }
+
+    // 检测是否为 HTML 内容
+    const isHtml = isHtmlContent(value);
 
     return (
       <div className="annotation-field">
@@ -140,13 +241,24 @@ export const AnnotationContent = ({
           {icon && <span className="annotation-field-icon">{icon}</span>}
           <span className="annotation-field-label">{label}</span>
         </div>
-        <div className="annotation-field-value">{value}</div>
+        <div className="annotation-field-value">
+          {isHtml ? (
+            <div
+              className="annotation-field-html-content"
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHtml(value),
+              }}
+            />
+          ) : (
+            <div className="annotation-field-text-content">{value}</div>
+          )}
+        </div>
       </div>
     );
   };
 
   return (
-    <div 
+    <div
       ref={contentRef}
       className={contentClasses}
       onMouseEnter={handleMouseEnter}

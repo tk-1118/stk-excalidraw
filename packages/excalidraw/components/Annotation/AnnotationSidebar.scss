@@ -298,6 +298,15 @@
   }
 }
 
+/* MentionInput 在 AnnotationSidebar 中的特定样式 */
+.annotation-sidebar-mention-input {
+  /* MentionInput 现在使用统一的样式系统，只需要确保下拉框层级正确 */
+  .mention-dropdown {
+    /* 确保下拉框在侧边栏之上 */
+    z-index: 10001;
+  }
+}
+
 /* 减少动画模式 */
 @media (prefers-reduced-motion: reduce) {
   .annotation-sidebar-overlay,
@@ -305,7 +314,8 @@
   .annotation-sidebar-section,
   .annotation-sidebar-section-toggle,
   .annotation-sidebar-textarea,
-  .annotation-sidebar-button {
+  .annotation-sidebar-button,
+  .annotation-sidebar-mention-input {
     animation: none;
     transition: none;
   }

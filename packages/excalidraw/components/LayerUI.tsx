@@ -576,6 +576,9 @@ const LayerUI = ({
           defaultValue={appState.openDialog.defaultValue || ""}
           isVisible={true}
           resetKey={appState.openDialog.defaultValue}
+          applicationServiceTree={
+            UIOptions.businessServiceInfo?.applicationServiceTree || []
+          }
         />
       )}
       {appState.openDialog?.name === "remark" && (
