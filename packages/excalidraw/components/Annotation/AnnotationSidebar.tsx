@@ -7,6 +7,8 @@ import MentionInput, { type ApplicationService } from "./MentionInput";
 
 import "./AnnotationSidebar.scss";
 
+import type { AppClassProperties } from "../../types";
+
 interface AnnotationSidebarProps {
   /** 关闭侧边栏的回调函数 */
   onClose: () => void;
@@ -20,6 +22,8 @@ interface AnnotationSidebarProps {
   resetKey?: string | number;
   /** 应用服务树数据，用于@提及功能 */
   applicationServiceTree?: ApplicationService[];
+  /** 应用实例 */
+  app: AppClassProperties;
 }
 
 /**
@@ -33,6 +37,7 @@ export const AnnotationSidebar = ({
   isVisible,
   resetKey,
   applicationServiceTree = [],
+  app,
 }: AnnotationSidebarProps) => {
   const { t } = useI18n();
 
@@ -63,7 +68,7 @@ export const AnnotationSidebar = ({
 
   // 完全照抄 AnnotationDialog 的 handleInputChange
   const handleInputChange = (field: keyof typeof formData, value: string) => {
-    console.log("handleInputChange", field, value);
+    // console.log("handleInputChange", field, value);
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -83,7 +88,7 @@ export const AnnotationSidebar = ({
     };
 
     console.log("提交的jsonData:", jsonData);
-    console.log("formData.interaction:", formData.interaction);
+    // console.log("formData.interaction:", formData.interaction);
 
     // 将JSON数据作为字符串传递
     onConfirm(JSON.stringify(jsonData));
@@ -464,12 +469,18 @@ export const AnnotationSidebar = ({
             </span>
           </div>
           {expandedSections.interaction && (
-            <div className="annotation-sidebar-section-content">
+            <div
+              className="annotation-sidebar-section-content"
+              onMouseEnter={() => {
+                console.log("updateApplicationServiceTree");
+
+                app.onHemaButtonClick("updateApplicationServiceTree", {});
+              }}
+            >
               <MentionInput
                 value={formData.interaction}
                 onChange={(html: string) => {
                   // MentionInput 直接传递HTML内容
-                  console.log("MentionInput onChange:", html);
                   handleInputChange("interaction", html);
                 }}
                 applicationServiceTree={applicationServiceTree}
@@ -481,8 +492,6 @@ export const AnnotationSidebar = ({
   • 关键输出：说明需要用到的返回字段`}
                 className="annotation-sidebar-mention-input"
                 onMentionSelected={(mentions: any) => {
-                  // 处理选中的提及服务，可以在这里添加业务逻辑
-                  // 例如：验证服务可用性、记录使用统计等
                   if (mentions.length > 0) {
                     // 可以触发其他回调或状态更新
                   }

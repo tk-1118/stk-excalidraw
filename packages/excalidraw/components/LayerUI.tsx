@@ -579,6 +579,7 @@ const LayerUI = ({
           applicationServiceTree={
             UIOptions.businessServiceInfo?.applicationServiceTree || []
           }
+          app={app}
         />
       )}
       {appState.openDialog?.name === "remark" && (
