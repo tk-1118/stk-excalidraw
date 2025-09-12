@@ -118,12 +118,12 @@ export const AnnotationSidebar = ({
 
   // 完全照抄 AnnotationDialog 的第二个 useEffect（解析 defaultValue）
   useEffect(() => {
-    console.log("解析 defaultValue:", defaultValue);
+    // console.log("解析 defaultValue:", defaultValue);
     if (defaultValue) {
       try {
         // 尝试解析默认值为JSON
         const parsedData = JSON.parse(defaultValue);
-        console.log("解析后的 parsedData:", parsedData);
+        // console.log("解析后的 parsedData:", parsedData);
         if (typeof parsedData === "object" && parsedData !== null) {
           setFormData({
             purpose: parsedData.purpose || "",

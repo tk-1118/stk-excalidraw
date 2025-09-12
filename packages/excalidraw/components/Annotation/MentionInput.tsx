@@ -36,6 +36,9 @@ interface ApplicationService {
   name: string;
   description?: string;
   category?: string;
+  boundedContextSN?: string;
+  businessServiceSN?: string;
+  applicationServiceSN?: string;
   boundedContextName?: string;
   boundedContextEnglishName?: string;
   businessServiceInfoList?: BusinessServiceInfo[];
@@ -47,6 +50,9 @@ interface ApplicationService {
 interface ServiceOption {
   name: string;
   type: string;
+  boundedContextSN?: string;
+  businessServiceSN?: string;
+  applicationServiceSN?: string;
   boundedContextName?: string;
   boundedContextEnglishName?: string;
   businessServiceName?: string;
@@ -180,6 +186,9 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
                   applicationService.applicationServiceName,
                 applicationServiceEnglishName:
                   applicationService.applicationServiceEnglishName,
+                boundedContextSN: boundedContext.boundedContextSN,
+                businessServiceSN: businessService.businessServiceSN,
+                applicationServiceSN: applicationService.applicationServiceSN,
               });
             },
           );
@@ -276,6 +285,12 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
                 element.getAttribute("data-business-service") || "";
               const applicationServiceName =
                 element.getAttribute("data-application-service") || "";
+              const boundedContextSN =
+                element.getAttribute("data-bounded-context-SN") || "";
+              const businessServiceSN =
+                element.getAttribute("data-business-service-SN") || "";
+              const applicationServiceSN =
+                element.getAttribute("data-application-service-SN") || "";
 
               jsonArray.push({
                 type: "mention",
@@ -283,6 +298,9 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
                   boundedContextName,
                   businessServiceName,
                   applicationServiceName,
+                  boundedContextSN,
+                  businessServiceSN,
+                  applicationServiceSN,
                 },
               });
             }
@@ -432,6 +450,18 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
         mentionElement.setAttribute(
           "data-application-service",
           service.applicationServiceName || "",
+        );
+        mentionElement.setAttribute(
+          "data-bounded-context-SN",
+          service.boundedContextSN || "",
+        );
+        mentionElement.setAttribute(
+          "data-business-service-SN",
+          service.businessServiceSN || "",
+        );
+        mentionElement.setAttribute(
+          "data-application-service-SN",
+          service.applicationServiceSN || "",
         );
 
         // 删除@和搜索文本
@@ -649,9 +679,11 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
     const filteredOptions = cascaderOptions
       .map((option) => ({
         ...option,
-        services: option.services.filter((service) =>
-          service.name.toLowerCase().includes(mentionSearchText.toLowerCase()),
-        ),
+        services: option.services.filter((service) => {
+          return service.name
+            .toLowerCase()
+            .includes(mentionSearchText.toLowerCase());
+        }),
       }))
       .filter((option) => option.services.length > 0);
 

@@ -212,13 +212,15 @@ export const AnnotationDialog = ({
   // 优先使用侧边栏模式，提供更好的用户体验
   if (useSidebar) {
     return (
-      <AnnotationSidebar
-        onClose={onClose}
-        onConfirm={onConfirm}
-        defaultValue={defaultValue}
-        isVisible={true}
-        resetKey={resetKey}
-      />
+      <></>
+      // <AnnotationSidebar
+      //   onClose={onClose}
+      //   onConfirm={onConfirm}
+      //   defaultValue={defaultValue}
+      //   isVisible={true}
+      //   resetKey={resetKey}
+      //   app={app}
+      // />
     );
   }
 

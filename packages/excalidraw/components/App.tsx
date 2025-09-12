@@ -2305,6 +2305,69 @@ class App extends React.Component<AppProps, AppState> {
     return this.scene.getNonDeletedElements();
   };
 
+  /**
+   * 将HTML内容转换为JSON结构
+   */
+  public convertHtmlToJson = (html: string) => {
+    try {
+      const jsonArray: Array<{
+        type: string;
+        text?: string;
+        attrs?: Record<string, string>;
+      }> = [];
+
+      const processNode = (node: Node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          // const text = node.textContent?.trim();
+          // if (text) {
+          //   jsonArray.push({ type: "text", text });
+          // }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as HTMLElement;
+          if (element.classList.contains("mention-tag")) {
+            const mentionType = element.getAttribute("data-type");
+
+            if (mentionType === "application") {
+              const boundedContextName =
+                element.getAttribute("data-bounded-context") || "";
+              const businessServiceName =
+                element.getAttribute("data-business-service") || "";
+              const applicationServiceName =
+                element.getAttribute("data-application-service") || "";
+              const boundedContextSN =
+                element.getAttribute("data-bounded-context-SN") || "";
+              const businessServiceSN =
+                element.getAttribute("data-business-service-SN") || "";
+              const applicationServiceSN =
+                element.getAttribute("data-application-service-SN") || "";
+
+              jsonArray.push({
+                type: "mention",
+                attrs: {
+                  boundedContextName,
+                  businessServiceName,
+                  applicationServiceName,
+                  boundedContextSN,
+                  businessServiceSN,
+                  applicationServiceSN,
+                },
+              });
+            }
+          } else {
+            element.childNodes.forEach(processNode);
+          }
+        }
+      };
+      const div = document.createElement("div");
+      div.innerHTML = html;
+      div.childNodes.forEach(processNode);
+      return jsonArray;
+    } catch (error) {
+      console.error("Error converting HTML to JSON:", error);
+      return [];
+    }
+  };
+
   public onHemaButtonClick = async (type: string, data: any) => {
     if ((type === "buildProtocol" || type === "buildFrontPage") && data) {
       try {
@@ -2319,6 +2382,11 @@ class App extends React.Component<AppProps, AppState> {
             `服务端接口交互: ${tip.interaction}`,
           ].join("\n");
         });
+        const componentMentoinJson = buildComponentsTips(elements).map(
+          (tip) => {
+            return this.convertHtmlToJson(tip.interaction) || [];
+          },
+        );
         const componentLayoutJSON = buildComponentLayoutJSON(
           elements,
           frame,
@@ -2351,10 +2419,12 @@ class App extends React.Component<AppProps, AppState> {
           frame,
           componentDetails,
           componentsTips,
+          componentMentoinJson,
           componentLayoutJSON,
           componentGroupsJSON,
           frameImage: frameImageBase64,
         };
+
         this.props.onHemaButtonClick &&
           this.props.onHemaButtonClick(type, payload);
         // debug: onHemaButtonClick
