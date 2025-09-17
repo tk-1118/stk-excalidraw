@@ -3216,6 +3216,14 @@ class App extends React.Component<AppProps, AppState> {
   }
 
   public async componentDidMount() {
+    // 注册CanvasStorage使用
+    if (typeof window !== "undefined") {
+      try {
+        canvasStorage.register();
+      } catch (error) {
+        console.warn("Failed to register CanvasStorage:", error);
+      }
+    }
     this.unmounted = false;
     this.excalidrawContainerValue.container =
       this.excalidrawContainerRef.current;
@@ -3346,6 +3354,15 @@ class App extends React.Component<AppProps, AppState> {
     // 清理CanvasStorage相关资源
     this.debouncedSaveToIndexedDB.cancel();
     this.lastSavedElementsRef = null;
+
+    // 清理CanvasStorage缓存（不销毁全局单例）
+    if (typeof window !== "undefined") {
+      try {
+        canvasStorage.cleanup(); // 使用 cleanup 而不是 destroy
+      } catch (error) {
+        console.warn("Failed to cleanup CanvasStorage:", error);
+      }
+    }
   }
 
   private onResize = withBatchedUpdates(() => {

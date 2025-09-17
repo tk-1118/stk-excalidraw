@@ -380,7 +380,7 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
     };
 
     /**
-     * 防抖导出函数
+     * 防抖导出函数 - 优化版本，减少不必要的调用
      */
     const debouncedExportFramesData = useCallback(
       (framesData: FramesExportData) => {
@@ -389,8 +389,15 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
 
         // 设置新的定时器
         debounceTimer.current = setTimeout(() => {
-          // exportFramesData(framesData);
-          setPrevFramesData(framesData);
+          try {
+            // exportFramesData(framesData);
+            setPrevFramesData(framesData);
+          } catch (error) {
+            console.error("[BusinessServiceProtoNav] 导出数据时出错:", error);
+          } finally {
+            // 确保定时器引用被清除
+            debounceTimer.current = null;
+          }
         }, 300); // 300ms 防抖延迟
       },
       [clearDebounceTimer],
@@ -440,6 +447,16 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
         }
       };
     }, [titleClickTimer, clearDebounceTimer]);
+
+    /**
+     * 监听依赖变化时清理定时器，防止内存泄漏
+     */
+    useEffect(() => {
+      // 当依赖发生变化时，清理之前的定时器
+      return () => {
+        clearDebounceTimer();
+      };
+    }, [generateFramesSnapshot, generateFramesExportData, clearDebounceTimer]);
 
     // 模板类型数据
     const templateTypes = excalidrawTemplate?.map((temp) => {

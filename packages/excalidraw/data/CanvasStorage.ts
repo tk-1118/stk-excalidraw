@@ -28,6 +28,19 @@ class CanvasStorageManager {
 
   // 极简缓存：只存储关键标识信息，避免存储大量元素数据
   private lastSavedSignature = new Map<string, string>();
+  private lastSavedElementsCount = new Map<string, number>(); // 记录上次保存的元素数量
+  private lastSaveTime = new Map<string, number>(); // 记录上次保存时间
+
+  // 缓存策略配置
+  private readonly SAVE_INTERVAL = 60 * 1000; // 1分钟缓存间隔
+  private readonly MIN_ELEMENTS_THRESHOLD = 1; // 最少元素数量阈值
+
+  // 添加定时清理机制，防止内存累积
+  private cleanupTimer: NodeJS.Timeout | null = null;
+  private readonly CLEANUP_INTERVAL = 10 * 60 * 1000; // 10分钟清理一次
+  private readonly MAX_SIGNATURE_CACHE_SIZE = 50; // 最大缓存签名数量
+  private isCleanupTimerStarted = false; // 防止重复启动定时器
+  private static instanceCount = 0; // 引用计数
 
   /**
    * 初始化IndexedDB数据库
@@ -46,6 +59,16 @@ class CanvasStorageManager {
 
       request.onsuccess = () => {
         this.db = request.result;
+
+        // 设置数据库连接错误处理
+        this.db.onerror = (event) => {
+          console.error("IndexedDB error:", event);
+          this.closeDB(); // 出错时关闭连接
+        };
+
+        // 启动定时清理（仅启动一次）
+        this.ensureCleanupTimerStarted();
+
         resolve(this.db);
       };
 
@@ -66,40 +89,106 @@ class CanvasStorageManager {
   }
 
   /**
-   * 生成元素签名：O(1)时间复杂度，无循环
-   * 利用数组引用和长度变化检测数据变化
+   * 生成元素签名：优化的快速哈希算法
+   * 单次遍历，避免排序，O(n)时间复杂度
    */
   private generateElementsSignature(elements: ExcalidrawElement[]): string {
-    // 使用元素数组的内存地址哈希 + 长度 + 最后修改时间
-    const arrayHash = (elements as any).__hash__ || Math.random().toString(36);
-    const timestamp = Date.now();
-
-    // 如果数组没有哈希标记，给它添加一个（表示数据已变化）
-    if (!(elements as any).__hash__) {
-      (elements as any).__hash__ = arrayHash;
-      (elements as any).__lastModified__ = timestamp;
+    if (elements.length === 0) {
+      return "empty";
     }
 
-    return `${elements.length}-${arrayHash}-${
-      (elements as any).__lastModified__
-    }`;
+    // 单次遍历收集所有必要信息 - O(n)
+    let versionSum = 0;
+    let lastUpdated = 0;
+    let idHash = 0; // 使用数值哈希替代字符串排序
+
+    for (const element of elements) {
+      // 累加版本号
+      versionSum += element.versionNonce || 0;
+
+      // 更新最后修改时间
+      const elementUpdated = element.updated || 0;
+      if (elementUpdated > lastUpdated) {
+        lastUpdated = elementUpdated;
+      }
+
+      // 使用简单的数值哈希替代字符串排序
+      // 这样可以避免O(n log n)的排序开销
+      idHash = this.combineHashes(idHash, this.simpleHash(element.id));
+    }
+
+    // 直接返回数值组合，避免字符串拼接
+    return `${elements.length}-${idHash}-${versionSum}-${lastUpdated}`;
   }
 
   /**
-   * 极简数据变化检测：O(1)时间复杂度
+   * 组合两个哈希值的辅助函数
+   */
+  private combineHashes(hash1: number, hash2: number): number {
+    return ((hash1 << 5) - hash1 + hash2) & 0x7fffffff; // 保持正数
+  }
+
+  /**
+   * 简单哈希函数，用于字符串快速哈希
+   */
+  private simpleHash(str: string): number {
+    let hash = 0;
+    if (str.length === 0) {
+      return hash;
+    }
+
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+
+    return Math.abs(hash);
+  }
+
+  /**
+   * 优化的数据保存策略：1分钟间隔 + 元素数量检查 + 内容变化检测
+   * 避免频繁的IndexedDB操作，提升性能
    */
   private shouldSaveData(
     businessServiceSN: string,
     elements: ExcalidrawElement[],
   ): boolean {
-    if (elements.length === 0) {
+    const now = Date.now();
+    const lastSaveTime = this.lastSaveTime.get(businessServiceSN) || 0;
+    const lastElementsCount =
+      this.lastSavedElementsCount.get(businessServiceSN) || 0;
+    const currentElementsCount = elements.filter((el) => !el.isDeleted).length;
+
+    // 1. 检查时间间隔：必须超过1分钟才能保存
+    if (now - lastSaveTime < this.SAVE_INTERVAL) {
       return false;
     }
 
+    // 2. 检查元素数量：如果新元素数量小于已缓存的，不保存
+    if (currentElementsCount < lastElementsCount && lastElementsCount > 0) {
+      return false;
+    }
+
+    // 3. 检查元素数量阈值：至少要有一定数量的元素才保存
+    if (currentElementsCount < this.MIN_ELEMENTS_THRESHOLD) {
+      return false;
+    }
+
+    // 4. 检查内容是否真的有变化（签名对比）
     const currentSignature = this.generateElementsSignature(elements);
     const lastSignature = this.lastSavedSignature.get(businessServiceSN);
 
-    return currentSignature !== lastSignature;
+    if (currentSignature === lastSignature) {
+      return false;
+    }
+
+    // 更新缓存信息
+    this.lastSavedSignature.set(businessServiceSN, currentSignature);
+    this.lastSavedElementsCount.set(businessServiceSN, currentElementsCount);
+    this.lastSaveTime.set(businessServiceSN, now);
+
+    return true;
   }
 
   /**
@@ -243,6 +332,102 @@ class CanvasStorageManager {
   }
 
   /**
+   * 确保定时清理机制启动（防重复）
+   */
+  private ensureCleanupTimerStarted(): void {
+    if (this.isCleanupTimerStarted) {
+      return; // 已经启动，避免重复
+    }
+    this.isCleanupTimerStarted = true;
+    this.startCleanupTimer();
+  }
+
+  /**
+   * 启动定时清理机制
+   */
+  private startCleanupTimer(): void {
+    // 清除已有定时器
+    if (this.cleanupTimer) {
+      clearTimeout(this.cleanupTimer);
+    }
+
+    this.cleanupTimer = setTimeout(() => {
+      try {
+        this.performCleanup();
+      } catch (error) {
+        console.error("[CanvasStorage] 清理过程中出现异常:", error);
+      } finally {
+        // 确保即使出现异常也能继续下一次清理
+        this.startCleanupTimer();
+      }
+    }, this.CLEANUP_INTERVAL);
+  }
+
+  /**
+   * 停止定时清理机制
+   */
+  private stopCleanupTimer(): void {
+    if (this.cleanupTimer) {
+      clearTimeout(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+    this.isCleanupTimerStarted = false; // 重置标志
+  }
+
+  /**
+   * 执行清理操作
+   */
+  private async performCleanup(): Promise<void> {
+    try {
+      // 清理过期数据
+      await this.cleanupExpiredData();
+
+      // 清理签名缓存，防止内存累积
+      this.cleanupSignatureCache();
+
+      // eslint-disable-next-line no-console
+      console.log("[CanvasStorage] 定时清理完成");
+    } catch (error) {
+      console.error("[CanvasStorage] 定时清理失败:", error);
+    }
+  }
+
+  /**
+   * 清理签名缓存，防止内存累积
+   */
+  private cleanupSignatureCache(): void {
+    if (this.lastSavedSignature.size > this.MAX_SIGNATURE_CACHE_SIZE) {
+      // 保留最近使用的一半缓存
+      const entries = Array.from(this.lastSavedSignature.entries());
+      const keepCount = Math.floor(this.MAX_SIGNATURE_CACHE_SIZE / 2);
+
+      // 清理所有相关缓存
+      this.lastSavedSignature.clear();
+      this.lastSavedElementsCount.clear();
+      this.lastSaveTime.clear();
+
+      // 保留最新的缓存项（假设最新添加的在数组末尾）
+      entries.slice(-keepCount).forEach(([key, value]) => {
+        this.lastSavedSignature.set(key, value);
+      });
+
+      // eslint-disable-next-line no-console
+      console.log(`[CanvasStorage] 清理缓存，保留 ${keepCount} 项`);
+    }
+  }
+
+  /**
+   * 关闭数据库连接
+   */
+  private closeDB(): void {
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+    }
+    this.stopCleanupTimer();
+  }
+
+  /**
    * 清理过期的缓存数据（超过30天）
    */
   async cleanupExpiredData(): Promise<void> {
@@ -272,6 +457,47 @@ class CanvasStorageManager {
     } catch (error) {
       console.error("清理过期缓存数据失败:", error);
     }
+  }
+
+  /**
+   * 注册一个使用该存储的实例
+   */
+  public register(): void {
+    CanvasStorageManager.instanceCount++;
+  }
+
+  /**
+   * 清理当前实例的资源
+   * 用于单个应用实例退出时的清理
+   */
+  public cleanup(): void {
+    CanvasStorageManager.instanceCount--;
+
+    // 清理所有缓存
+    this.lastSavedSignature.clear();
+    this.lastSavedElementsCount.clear();
+    this.lastSaveTime.clear();
+
+    // 如果没有实例在使用，可以考虑停止定时器
+    if (CanvasStorageManager.instanceCount <= 0) {
+      CanvasStorageManager.instanceCount = 0;
+      // 可以在这里添加更积极的清理逻辑
+      // eslint-disable-next-line no-console
+      console.log("[CanvasStorage] 所有实例已清理，考虑深度清理");
+    }
+  }
+
+  /**
+   * 完全销毁资源，用于整个应用退出时清理
+   * ⚠️ 谨慎使用：这会影响所有使用该单例的实例
+   */
+  public destroy(): void {
+    this.stopCleanupTimer();
+    this.closeDB();
+    // 清空所有缓存
+    this.lastSavedSignature.clear();
+    this.lastSavedElementsCount.clear();
+    this.lastSaveTime.clear();
   }
 
   /**
