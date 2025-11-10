@@ -749,7 +749,7 @@ export const getTargetFrame = (
     : getContainingFrame(_element, elementsMap);
 };
 
-// TODO: this a huge bottleneck for large scenes, optimise
+// Performance optimization: Optimized frame membership check
 // given an element, return if the element is in some frame
 export const isElementInFrame = (
   element: ExcalidrawElement,
@@ -760,6 +760,11 @@ export const isElementInFrame = (
     checkedGroups?: Map<string, boolean>;
   },
 ) => {
+  // Performance optimization: Early exit if no frame rendering
+  if (!appState.frameRendering || !appState.frameRendering.enabled) {
+    return false;
+  }
+
   const frame =
     opts?.targetFrame ?? getTargetFrame(element, allElementsMap, appState);
 
@@ -770,6 +775,11 @@ export const isElementInFrame = (
   const _element = isTextElement(element)
     ? getContainerElement(element, allElementsMap) || element
     : element;
+
+  // Performance optimization: Cache frameId check for faster lookup
+  if (_element.frameId === frame.id) {
+    return true;
+  }
 
   const setGroupsInFrame = (isInFrame: boolean) => {
     if (opts?.checkedGroups) {

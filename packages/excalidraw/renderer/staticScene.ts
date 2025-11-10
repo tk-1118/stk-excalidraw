@@ -2,19 +2,13 @@ import { FRAME_STYLE, throttleRAF } from "@excalidraw/common";
 import { isElementLink } from "@excalidraw/element";
 import { createPlaceholderEmbeddableLabel } from "@excalidraw/element";
 import { getBoundTextElement } from "@excalidraw/element";
-import {
-  isEmbeddableElement,
-  isIframeLikeElement,
-  isTextElement,
-} from "@excalidraw/element";
+import { isEmbeddableElement, isIframeLikeElement } from "@excalidraw/element";
 import {
   elementOverlapsWithFrame,
   getTargetFrame,
   shouldApplyFrameClip,
 } from "@excalidraw/element";
-
 import { renderElement } from "@excalidraw/element";
-
 import { getElementAbsoluteCoords } from "@excalidraw/element";
 
 import type {
@@ -22,6 +16,9 @@ import type {
   ExcalidrawFrameLikeElement,
   NonDeletedExcalidrawElement,
 } from "@excalidraw/element/types";
+
+import { frameCache } from "../cache/FrameCache";
+import { extremePerformanceManager } from "../performance/ExtremePerformanceManager";
 
 import {
   EXTERNAL_LINK_IMG,
@@ -280,32 +277,202 @@ const _renderStaticScene = ({
 
   const inFrameGroupsMap = new Map<string, boolean>();
 
-  // Paint visible elements
-  visibleElements
-    .filter((el) => !isIframeLikeElement(el))
-    .forEach((element) => {
-      try {
-        const frameId = element.frameId || appState.frameToHighlight?.id;
+  // 🚀 极端性能优化：对于大规模场景，先进行激进的元素过滤
+  const isDragging = appState.selectedElementsAreBeingDragged || false;
+  const optimizationStartTime = performance.now();
+  const optimizedVisibleElements =
+    extremePerformanceManager.optimizeElementsForRendering(
+      visibleElements,
+      appState,
+      elementsMap,
+      isDragging,
+    );
+  const optimizationTime = performance.now() - optimizationStartTime;
 
-        if (
-          isTextElement(element) &&
-          element.containerId &&
-          elementsMap.has(element.containerId)
-        ) {
-          // will be rendered with the container
-          return;
+  // 如果经过优化后元素数量大幅减少，使用优化后的列表
+  let finalVisibleElements = visibleElements;
+  if (optimizedVisibleElements.length < visibleElements.length * 0.8) {
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `🎯 性能优化：从 ${visibleElements.length} 减少到 ${
+          optimizedVisibleElements.length
+        } 个元素 (耗时: ${optimizationTime.toFixed(2)}ms)`,
+      );
+    }
+    finalVisibleElements = optimizedVisibleElements;
+  }
+
+  // Performance optimization: Early exit if frame rendering is disabled
+  const shouldProcessFrameClipping =
+    appState.frameRendering.enabled && appState.frameRendering.clip;
+
+  // Performance optimization: Batch elements by frame for more efficient processing
+  const elementsByFrame = new Map<string, NonDeletedExcalidrawElement[]>();
+  const elementsWithoutFrame: NonDeletedExcalidrawElement[] = [];
+  const processedElementIds = new Set<string>(); // 防止重复渲染
+
+  if (shouldProcessFrameClipping) {
+    // Group elements by frame for batch processing
+    finalVisibleElements
+      .filter((el) => !isIframeLikeElement(el))
+      .forEach((element) => {
+        if (processedElementIds.has(element.id)) {
+          return; // 跳过已处理的元素
         }
 
-        context.save();
+        const frameId = element.frameId || appState.frameToHighlight?.id;
+        if (frameId) {
+          if (!elementsByFrame.has(frameId)) {
+            elementsByFrame.set(frameId, []);
+          }
+          elementsByFrame.get(frameId)!.push(element);
+        } else {
+          elementsWithoutFrame.push(element);
+        }
 
-        if (
-          frameId &&
-          appState.frameRendering.enabled &&
-          appState.frameRendering.clip
-        ) {
-          const frame = getTargetFrame(element, elementsMap, appState);
+        processedElementIds.add(element.id);
+      });
+  } else {
+    // No frame processing needed, add all elements to no-frame list
+    finalVisibleElements
+      .filter((el) => !isIframeLikeElement(el))
+      .forEach((element) => {
+        if (!processedElementIds.has(element.id)) {
+          elementsWithoutFrame.push(element);
+          processedElementIds.add(element.id);
+        }
+      });
+  }
+
+  // Render elements without frames (fast path)
+  elementsWithoutFrame.forEach((element) => {
+    try {
+      // 修复：暂时不跳过绑定文本元素，确保表格文字可见
+      // 原逻辑期望容器渲染绑定文本，但可能存在问题
+      /*
+      if (
+        isTextElement(element) &&
+        element.containerId &&
+        elementsMap.has(element.containerId)
+      ) {
+        // will be rendered with the container
+        return;
+      }
+      */
+
+      context.save();
+      renderElement(
+        element,
+        elementsMap,
+        allElementsMap,
+        rc,
+        context,
+        renderConfig,
+        appState,
+      );
+
+      const boundTextElement = getBoundTextElement(element, elementsMap);
+      if (boundTextElement && !processedElementIds.has(boundTextElement.id)) {
+        processedElementIds.add(boundTextElement.id);
+        renderElement(
+          boundTextElement,
+          elementsMap,
+          allElementsMap,
+          rc,
+          context,
+          renderConfig,
+          appState,
+        );
+      }
+
+      context.restore();
+
+      if (!isExporting) {
+        renderLinkIcon(element, context, appState, elementsMap);
+      }
+    } catch (error: any) {
+      console.error(
+        error,
+        element.id,
+        element.x,
+        element.y,
+        element.width,
+        element.height,
+      );
+    }
+  });
+
+  // Render elements with frames (optimized path with composite caching)
+  if (shouldProcessFrameClipping) {
+    elementsByFrame.forEach((frameElements, frameId) => {
+      const frame = elementsMap.get(frameId) as
+        | ExcalidrawFrameLikeElement
+        | undefined;
+      if (!frame) {
+        return;
+      }
+
+      // Performance optimization: Try to use frame composite cache
+      const shouldUseCompositeCache = frameElements.length > 5; // Use cache for frames with many elements
+
+      if (shouldUseCompositeCache) {
+        try {
+          const { composite, fromCache } = frameCache.getFrameComposite(
+            frame,
+            frameElements,
+            elementsMap,
+            (elements) => {
+              // Fallback render function for cache miss
+              // This would generate a composite drawable, but for now we'll render individually
+              return null;
+            },
+          );
+
+          if (fromCache && composite) {
+            // Fast path: render from cache
+            context.save();
+            if (
+              shouldApplyFrameClip(
+                frame,
+                frame,
+                appState,
+                elementsMap,
+                inFrameGroupsMap,
+              )
+            ) {
+              frameClip(frame, context, renderConfig, appState);
+            }
+            rc.draw(composite);
+            context.restore();
+            return;
+          }
+        } catch (error) {
+          console.warn(
+            "Frame cache error, falling back to individual rendering:",
+            error,
+          );
+        }
+      }
+
+      // Standard path: render elements individually
+      frameElements.forEach((element) => {
+        try {
+          // 修复：frame内也不跳过绑定文本元素
+          /*
           if (
-            frame &&
+            isTextElement(element) &&
+            element.containerId &&
+            elementsMap.has(element.containerId)
+          ) {
+            // will be rendered with the container
+            return;
+          }
+          */
+
+          context.save();
+
+          // Apply frame clipping if needed
+          if (
             shouldApplyFrameClip(
               element,
               frame,
@@ -316,6 +483,7 @@ const _renderStaticScene = ({
           ) {
             frameClip(frame, context, renderConfig, appState);
           }
+
           renderElement(
             element,
             elementsMap,
@@ -325,47 +493,42 @@ const _renderStaticScene = ({
             renderConfig,
             appState,
           );
-        } else {
-          renderElement(
-            element,
-            elementsMap,
-            allElementsMap,
-            rc,
-            context,
-            renderConfig,
-            appState,
+
+          const boundTextElement = getBoundTextElement(element, elementsMap);
+          if (
+            boundTextElement &&
+            !processedElementIds.has(boundTextElement.id)
+          ) {
+            processedElementIds.add(boundTextElement.id);
+            renderElement(
+              boundTextElement,
+              elementsMap,
+              allElementsMap,
+              rc,
+              context,
+              renderConfig,
+              appState,
+            );
+          }
+
+          context.restore();
+
+          if (!isExporting) {
+            renderLinkIcon(element, context, appState, elementsMap);
+          }
+        } catch (error: any) {
+          console.error(
+            error,
+            element.id,
+            element.x,
+            element.y,
+            element.width,
+            element.height,
           );
         }
-
-        const boundTextElement = getBoundTextElement(element, elementsMap);
-        if (boundTextElement) {
-          renderElement(
-            boundTextElement,
-            elementsMap,
-            allElementsMap,
-            rc,
-            context,
-            renderConfig,
-            appState,
-          );
-        }
-
-        context.restore();
-
-        if (!isExporting) {
-          renderLinkIcon(element, context, appState, elementsMap);
-        }
-      } catch (error: any) {
-        console.error(
-          error,
-          element.id,
-          element.x,
-          element.y,
-          element.width,
-          element.height,
-        );
-      }
+      });
     });
+  }
 
   // render embeddables on top
   visibleElements

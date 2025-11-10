@@ -166,31 +166,63 @@ export const actionSaveToActiveFile = register({
     );
   },
   perform: async (elements, appState, value, app) => {
-    const frames = elements.filter((el) => isFrameLikeElement(el));
-    const framesData: any[] = frames.map((frame: any) => {
-      // 获取frame内已正确关联的子元素（frameId匹配）
-      const associatedChildren = getFrameChildren(elements, frame.id);
-
-      // 获取所有与frame重叠/包含在frame内的元素（包括未正确关联frameId的元素）
-      const overlappingElements = getElementsOverlappingFrame(elements, frame);
-
-      // 合并两个集合，去重，确保收集到所有相关元素
-      const allChildrenMap = new Map<string, any>();
-
-      // 添加已关联的子元素
-      associatedChildren.forEach((element) => {
-        allChildrenMap.set(element.id, element);
-      });
-
-      // 添加重叠的元素（排除frame自身和其他frame元素）
-      overlappingElements.forEach((element) => {
-        if (element.id !== frame.id && !isFrameLikeElement(element)) {
-          allChildrenMap.set(element.id, element);
+    // 🚀 同步BusinessServiceProtoNav的优化逻辑
+    const frames = elements
+      .filter((el) => isFrameLikeElement(el) && !el.isDeleted) // 确保不包含已删除的frame
+      .reduce((unique, frame) => {
+        // 去重：防止重复的frame
+        if (!unique.find((f) => f.id === frame.id)) {
+          unique.push(frame);
         }
-      });
+        return unique;
+      }, [] as any[]);
 
-      // 转换为数组
-      const childrenElements = Array.from(allChildrenMap.values());
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        "🔍 SaveToActiveFile - Processing frames:",
+        frames.length,
+        "frames",
+      );
+    }
+
+    const framesData: any[] = frames.map((frame: any) => {
+      // 🚀 智能的子元素收集策略（同步BusinessServiceProtoNav逻辑）
+      let childrenElements: any[] = [];
+
+      // 检查是否需要几何检测（简化版，因为actionExport通常在静态状态下调用）
+      const isDragging = appState.selectedElementsAreBeingDragged || false;
+      const needsGeometricCheck = isDragging || frame.versionNonce; // 总是进行完整检测以确保数据完整性
+
+      if (!needsGeometricCheck) {
+        // 🚀 快速路径：只使用frameId关联（适用于静态状态）
+        childrenElements = getFrameChildren(elements, frame.id);
+      } else {
+        // 🚀 完整路径：同时使用frameId关联和几何重叠（适用于动态状态）
+        const associatedChildren = getFrameChildren(elements, frame.id);
+        const overlappingElements = getElementsOverlappingFrame(
+          elements,
+          frame,
+        );
+
+        // 合并两个集合，去重
+        const allChildrenMap = new Map<string, any>();
+
+        // 先添加frameId关联的元素
+        associatedChildren.forEach((element) => {
+          allChildrenMap.set(element.id, element);
+        });
+
+        // 再添加几何重叠的元素
+        overlappingElements.forEach((element) => {
+          if (element.id !== frame.id && !isFrameLikeElement(element)) {
+            if (!allChildrenMap.has(element.id)) {
+              allChildrenMap.set(element.id, element);
+            }
+          }
+        });
+
+        childrenElements = Array.from(allChildrenMap.values());
+      }
 
       // 构建包含frame和其子元素的完整元素列表
       const frameElements = [frame, ...childrenElements];
@@ -203,24 +235,50 @@ export const actionSaveToActiveFile = register({
         "local",
       );
 
-      return {
+      const frameData = {
         frameId: frame.id,
         frameName: frame.name || getDefaultFrameName(frame),
         frameElement: frame,
         childrenElements,
         excalidrawData,
       };
+
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "🔍 Generated frame data:",
+          frame.name || frame.id,
+          "children:",
+          frameData.childrenElements.length,
+        );
+      }
+
+      return frameData;
     });
+
+    // 🚀 性能监控和数据验证
+    const exportData = {
+      frames: framesData,
+      timestamp: Date.now(),
+      totalFrames: frames.length,
+    };
+
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        "🔍 SaveToActiveFile - Final export data:",
+        exportData.totalFrames,
+        "frames",
+      );
+    }
+
+    // 保留原有的console.log用于兼容性
     // eslint-disable-next-line no-console
     console.log("framesData", framesData);
+
+    // 🚀 触发优化后的数据导出事件
     app.onHemaButtonClick("framesDataExport", {
       type: "FRAMES_DATA_CHANGED",
-      data: {
-        frames: framesData,
-        timestamp: Date.now(),
-        totalFrames: frames.length,
-      },
-      timestamp: Date.now(),
+      data: exportData,
+      timestamp: exportData.timestamp,
     });
     // const fileHandleExists = !!appState.fileHandle;
 

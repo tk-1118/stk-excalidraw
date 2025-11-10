@@ -65,44 +65,44 @@ class LocalFileManager extends FileManager {
   };
 }
 
-const saveDataStateToLocalStorage = (
-  elements: readonly ExcalidrawElement[],
-  appState: AppState,
-) => {
-  try {
-    // 如果画布数据为空（没有任何非删除的元素），跳过保存以保护现有缓存
-    const nonDeletedElements = elements.filter((el) => !el.isDeleted);
-    if (nonDeletedElements.length === 0) {
-      // eslint-disable-next-line no-console
-      console.log("画布为空，跳过localStorage保存以保护现有缓存数据");
-      return;
-    }
+// const saveDataStateToLocalStorage = (
+//   elements: readonly ExcalidrawElement[],
+//   appState: AppState,
+// ) => {
+//   try {
+//     // 如果画布数据为空（没有任何非删除的元素），跳过保存以保护现有缓存
+//     const nonDeletedElements = elements.filter((el) => !el.isDeleted);
+//     if (nonDeletedElements.length === 0) {
+//       // eslint-disable-next-line no-console
+//       console.log("画布为空，跳过localStorage保存以保护现有缓存数据");
+//       return;
+//     }
 
-    const _appState = clearAppStateForLocalStorage(appState);
+//     const _appState = clearAppStateForLocalStorage(appState);
 
-    if (
-      _appState.openSidebar?.name === DEFAULT_SIDEBAR.name &&
-      _appState.openSidebar.tab === CANVAS_SEARCH_TAB
-    ) {
-      _appState.openSidebar = null;
-    }
+//     if (
+//       _appState.openSidebar?.name === DEFAULT_SIDEBAR.name &&
+//       _appState.openSidebar.tab === CANVAS_SEARCH_TAB
+//     ) {
+//       _appState.openSidebar = null;
+//     }
 
-    // 注意：这里仍然保存到原有的localStorage键名
-    // 主要用于excalidraw-app的兼容性，不会与新的IndexedDB方案冲突
-    localStorage.setItem(
-      STORAGE_KEYS.LOCAL_STORAGE_ELEMENTS,
-      JSON.stringify(clearElementsForLocalStorage(elements)),
-    );
-    localStorage.setItem(
-      STORAGE_KEYS.LOCAL_STORAGE_APP_STATE,
-      JSON.stringify(_appState),
-    );
-    updateBrowserStateVersion(STORAGE_KEYS.VERSION_DATA_STATE);
-  } catch (error: any) {
-    // Unable to access window.localStorage
-    console.error(error);
-  }
-};
+//     // 注意：这里仍然保存到原有的localStorage键名
+//     // 主要用于excalidraw-app的兼容性，不会与新的IndexedDB方案冲突
+//     localStorage.setItem(
+//       STORAGE_KEYS.LOCAL_STORAGE_ELEMENTS,
+//       JSON.stringify(clearElementsForLocalStorage(elements)),
+//     );
+//     localStorage.setItem(
+//       STORAGE_KEYS.LOCAL_STORAGE_APP_STATE,
+//       JSON.stringify(_appState),
+//     );
+//     updateBrowserStateVersion(STORAGE_KEYS.VERSION_DATA_STATE);
+//   } catch (error: any) {
+//     // Unable to access window.localStorage
+//     console.error(error);
+//   }
+// };
 
 type SavingLockTypes = "collaboration";
 
@@ -114,13 +114,12 @@ export class LocalData {
       files: BinaryFiles,
       onFilesSaved: () => void,
     ) => {
-      saveDataStateToLocalStorage(elements, appState);
-
-      await this.fileStorage.saveFiles({
-        elements,
-        files,
-      });
-      onFilesSaved();
+      // saveDataStateToLocalStorage(elements, appState);
+      // await this.fileStorage.saveFiles({
+      //   elements,
+      //   files,
+      // });
+      // onFilesSaved();
     },
     SAVE_TO_LOCAL_STORAGE_TIMEOUT,
   );

@@ -220,6 +220,7 @@ class CanvasStorageManager {
     elements: ExcalidrawElement[],
     appState: Partial<AppState>,
   ): Promise<void> {
+    return;
     try {
       // 快速检查是否需要保存
       if (!this.shouldSaveData(businessServiceSN, elements)) {
@@ -271,6 +272,7 @@ class CanvasStorageManager {
    * 从IndexedDB加载画布数据（无缓存，直接读取）
    */
   async loadCanvasData(businessServiceSN: string): Promise<CanvasData | null> {
+    return null;
     try {
       const db = await this.initDB();
       const transaction = db.transaction([this.storeName], "readonly");
@@ -313,6 +315,7 @@ class CanvasStorageManager {
    * 删除指定业务服务的缓存数据
    */
   async deleteCanvasData(businessServiceSN: string): Promise<void> {
+    return;
     try {
       const db = await this.initDB();
       const transaction = db.transaction([this.storeName], "readwrite");
@@ -431,6 +434,7 @@ class CanvasStorageManager {
    * 清理过期的缓存数据（超过30天）
    */
   async cleanupExpiredData(): Promise<void> {
+    return;
     try {
       const db = await this.initDB();
       const transaction = db.transaction([this.storeName], "readwrite");

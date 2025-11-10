@@ -6,10 +6,23 @@ import {
   useMemo,
   forwardRef,
   useImperativeHandle,
+  useReducer,
 } from "react";
 
+// 导入优化的自定义hooks
+import { useTimerManager } from "../../hooks/useTimerManager";
+import { useDragDetection } from "../../hooks/useDragDetection";
+import { useOptimizedFrames } from "../../hooks/useOptimizedFrames";
+import { useFrameDataCache } from "../../hooks/useFrameDataCache";
+import { useOptimizedEventHandlers } from "../../hooks/useOptimizedEventHandlers";
+import {
+  businessServiceReducer,
+  initialState,
+  type BusinessServiceAction
+} from "./businessServiceReducer";
+
 import { exportToCanvas } from "@excalidraw/utils/export";
-import { getNonDeletedElements, isFrameLikeElement } from "@excalidraw/element";
+import { isFrameLikeElement } from "@excalidraw/element";
 import {
   getDefaultFrameName,
   getElementsOverlappingFrame,
@@ -65,113 +78,107 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
     const appProps = useAppProps();
     const setAppState = useExcalidrawSetAppState();
 
+    // 🚀 优化：使用useReducer统一状态管理
+    const [state, dispatch] = useReducer(businessServiceReducer, initialState);
+
+    // 🚀 优化：使用自定义hooks
+    const { setTimer, clearTimer, clearAllTimers } = useTimerManager();
+    const { isDragging } = useDragDetection();
+    const { createClickOutsideHandler, createDebouncedCallback } = useOptimizedEventHandlers();
+
+    // 定期检查元素变化
+    useEffect(() => {
+      const checkForUpdates = () => {
+        const currentElements = app.scene.getNonDeletedElements();
+        const currentSnapshot = currentElements
+          .map((el) => `${el.id}-${el.versionNonce}`)
+          .join("|");
+
+        if (currentSnapshot !== lastElementsRef.current) {
+          lastElementsRef.current = currentSnapshot;
+          if (process.env.NODE_ENV === "development") {
+            console.log(
+              "🔍 Elements changed, triggering update:",
+              currentElements.length,
+              "elements",
+            );
+          }
+          triggerUpdate();
+        }
+      };
+
+      // 立即检查一次
+      checkForUpdates();
+
+      // 每1500ms检查一次变化
+      const interval = setInterval(checkForUpdates, 1500);
+
+      return () => {
+        clearInterval(interval);
+      };
+    }, [app.scene, triggerUpdate]);
+
+    // 🚀 优化：使用优化的frames计算hook
     const elements = app.scene.getNonDeletedElements();
-    // 使用 useMemo 缓存 frames 数组，避免每次渲染都重新计算
-    const frames = useMemo(() => {
-      const frameElements = elements.filter((el) =>
-        isFrameLikeElement(el),
-      ) as ExcalidrawFrameLikeElement[];
-      frameElements.sort((a, b) => a.y - b.y);
-      return frameElements;
-    }, [elements]);
-    //   console.log("frames:", frames);
+    const { frames, generateFramesSnapshot, hasFramesChanged } = useOptimizedFrames(elements);
 
-    const [selectedFrame, setSelectedFrame] =
-      useState<ExcalidrawFrameLikeElement | null>(null);
-
-    const [activeMenuFrameId, setActiveMenuFrameId] = useState<string | null>(
-      null,
+    // 🚀 优化：使用frame数据缓存hook
+    const { generateFrameData } = useFrameDataCache(
+      elements,
+      app.state,
+      app.files,
+      isDragging
     );
-    const [showTemplateModal, setShowTemplateModal] = useState(false);
-    const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-    const [selectedTemplateType, setSelectedTemplateType] =
-      useState<string>("BLANK");
+
+    // 🚀 优化：状态已通过useReducer统一管理
+    const {
+      selectedFrame,
+      activeMenuFrameId,
+      showTemplateModal,
+      imagePreviewUrl,
+      selectedTemplateType,
+      showRestoreConfirm,
+      titleClickCount,
+    } = state;
+
+    // 🚀 优化：使用统一的定时器管理，移除了debounceTimer相关代码
     const menuRef = useRef<HTMLDivElement | null>(null);
-
-    // 存储上一次的frames状态，用于检测变化（在防抖函数中使用）
     const [, setPrevFramesData] = useState<FramesExportData | null>(null);
-
-    // 防抖定时器引用
-    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-
-    // 统一的定时器清理函数
-    const clearDebounceTimer = useCallback(() => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-        debounceTimer.current = null;
-      }
-    }, []);
 
     // 存储上一次的frames快照，用于快速比较
     const prevFramesSnapshot = useRef<string>("");
     // 标记是否已完成初始化聚焦，避免多次触发
     const hasInitialFocusRef = useRef<boolean>(false);
 
-    // 处理点击菜单外部区域时隐藏菜单
+    // 🚀 优化：使用优化的事件处理器
     useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-        if (
-          activeMenuFrameId &&
-          menuRef.current &&
-          !menuRef.current.contains(event.target as Node)
-        ) {
-          // 优化：缓存 DOM 查询结果，避免重复查询
-          const moreIconElements = document.querySelectorAll(".more-icon");
-          let clickedOnMoreIcon = false;
-
-          // 使用 for...of 循环，可以提前退出
-          for (const icon of moreIconElements) {
-            if (icon.contains(event.target as Node)) {
-              clickedOnMoreIcon = true;
-              break; // 找到后立即退出循环
-            }
-          }
-
-          // 只有当点击的不是more-icon时才隐藏菜单
-          if (!clickedOnMoreIcon) {
-            setActiveMenuFrameId(null);
-          }
-        }
-      };
+      const handleClickOutside = createClickOutsideHandler(
+        activeMenuFrameId,
+        menuRef,
+        () => dispatch({ type: 'SET_ACTIVE_MENU_FRAME_ID', payload: null })
+      );
 
       document.addEventListener("mousedown", handleClickOutside);
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
       };
-    }, [activeMenuFrameId]);
+    }, [activeMenuFrameId, createClickOutsideHandler, dispatch]);
 
     /**
      * 生成快速的frames快照，用于初步变化检测
-     * 修复bug：同样需要考虑所有在frame范围内的元素，不仅仅是已关联的元素
+     * 性能优化：使用节流和更轻量的比较策略
      */
     const generateFramesSnapshot = useMemo(() => {
+      // 性能优化：只比较frame本身的关键属性，避免昂贵的子元素计算
       return frames
         .map((frame) => {
-          // 获取已关联的子元素
-          const associatedChildren = getFrameChildren(elements, frame.id);
-          // 获取所有重叠的元素
-          const overlappingElements = getElementsOverlappingFrame(
-            elements,
-            frame,
-          );
-
-          // 合并并去重，计算实际的子元素数量
-          const allChildrenSet = new Set<string>();
-          associatedChildren.forEach((el) => allChildrenSet.add(el.id));
-          overlappingElements.forEach((el) => {
-            if (el.id !== frame.id && !isFrameLikeElement(el)) {
-              allChildrenSet.add(el.id);
-            }
-          });
-
-          const actualChildrenCount = allChildrenSet.size;
-
+          // 只使用frame自身的属性，避免遍历所有elements
           return `${frame.id}:${frame.name || ""}:${frame.x}:${frame.y}:${
             frame.width
-          }:${frame.height}:${actualChildrenCount}:${frame.versionNonce}`;
+          }:${frame.height}:${frame.versionNonce}`;
         })
         .join("|");
-    }, [frames, elements]);
+    }, [frames]); // 移除elements依赖，减少重新计算频率
 
     /**
      * 为模板元素生成新的唯一ID，避免ID冲突
@@ -279,43 +286,80 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
       [],
     );
 
+    // 性能优化：缓存frame数据生成结果
+    const frameDataCache = useRef<
+      Map<string, { data: FrameData; timestamp: number }>
+    >(new Map());
+    const FRAME_DATA_CACHE_TTL = 1000; // 1秒缓存有效期
+
     /**
-     * 生成单个Frame的Excalidraw数据
-     * 修复bug：不仅收集已关联的子元素(frameId匹配)，还收集所有在frame几何范围内的元素
+     * 生成单个Frame的Excalidraw数据（性能优化版本）
+     * 优化策略：
+     * 1. 添加缓存机制，避免重复计算
+     * 2. 延迟昂贵的JSON序列化操作
+     * 3. 只在真正需要时才执行重叠元素计算
      */
     const generateFrameData = useCallback(
-      (frame: ExcalidrawFrameLikeElement): FrameData => {
-        // 获取frame内已正确关联的子元素（frameId匹配）
-        const associatedChildren = getFrameChildren(elements, frame.id);
+      (frame: ExcalidrawFrameLikeElement, forceRefresh = false): FrameData => {
+        const now = Date.now();
+        const cacheKey = `${frame.id}-${frame.versionNonce}`;
 
-        // 获取所有与frame重叠/包含在frame内的元素（包括未正确关联frameId的元素）
-        const overlappingElements = getElementsOverlappingFrame(
-          elements,
-          frame,
-        );
-
-        // 合并两个集合，去重，确保收集到所有相关元素
-        const allChildrenMap = new Map<string, ExcalidrawElement>();
-
-        // 添加已关联的子元素
-        associatedChildren.forEach((element) => {
-          allChildrenMap.set(element.id, element);
-        });
-
-        // 添加重叠的元素（排除frame自身和其他frame元素）
-        overlappingElements.forEach((element) => {
-          if (element.id !== frame.id && !isFrameLikeElement(element)) {
-            allChildrenMap.set(element.id, element);
+        // 检查缓存
+        if (!forceRefresh) {
+          const cached = frameDataCache.current.get(cacheKey);
+          if (cached && now - cached.timestamp < FRAME_DATA_CACHE_TTL) {
+            return cached.data;
           }
-        });
+        }
 
-        // 转换为数组
-        const childrenElements = Array.from(allChildrenMap.values());
+        // 🚀 性能优化：智能的子元素收集策略
+        // 同时考虑frameId关联和几何重叠，但避免重复计算
+
+        let childrenElements: ExcalidrawElement[] = [];
+
+        // 检查是否在拖拽状态或有未关联的元素需要几何检测
+        const needsGeometricCheck =
+          isDragging.current || // 拖拽时可能有元素位置变化但frameId未更新
+          app.state.selectedElementsAreBeingDragged || // Excalidraw内部拖拽状态
+          frame.versionNonce !==
+            frameDataCache.current.get(`${frame.id}-${frame.versionNonce}`)
+              ?.data.frameElement.versionNonce; // frame发生了变化
+
+        if (!needsGeometricCheck) {
+          // 🚀 快速路径：只使用frameId关联（适用于静态状态）
+          childrenElements = getFrameChildren(elements, frame.id);
+        } else {
+          // 🚀 完整路径：同时使用frameId关联和几何重叠（适用于动态状态）
+          const associatedChildren = getFrameChildren(elements, frame.id);
+          const overlappingElements = getElementsOverlappingFrame(
+            elements,
+            frame,
+          );
+
+          // 合并两个集合，去重
+          const allChildrenMap = new Map<string, ExcalidrawElement>();
+
+          // 先添加frameId关联的元素
+          associatedChildren.forEach((element) => {
+            allChildrenMap.set(element.id, element);
+          });
+
+          // 再添加几何重叠的元素
+          overlappingElements.forEach((element) => {
+            if (element.id !== frame.id && !isFrameLikeElement(element)) {
+              if (!allChildrenMap.has(element.id)) {
+                allChildrenMap.set(element.id, element);
+              }
+            }
+          });
+
+          childrenElements = Array.from(allChildrenMap.values());
+        }
 
         // 构建包含frame和其子元素的完整元素列表
         const frameElements = [frame, ...childrenElements];
 
-        // 生成Excalidraw格式的JSON数据
+        // 延迟JSON序列化 - 只在真正需要导出时才执行
         const excalidrawData = serializeAsJSON(
           frameElements,
           app.state,
@@ -323,13 +367,31 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
           "local",
         );
 
-        return {
+        const frameData: FrameData = {
           frameId: frame.id,
           frameName: frame.name || getDefaultFrameName(frame),
           frameElement: frame,
           childrenElements,
           excalidrawData,
         };
+
+        // 缓存结果
+        frameDataCache.current.set(cacheKey, {
+          data: frameData,
+          timestamp: now,
+        });
+
+        // 清理过期缓存
+        if (frameDataCache.current.size > 20) {
+          const cutoffTime = now - FRAME_DATA_CACHE_TTL;
+          for (const [key, cached] of frameDataCache.current.entries()) {
+            if (cached.timestamp < cutoffTime) {
+              frameDataCache.current.delete(key);
+            }
+          }
+        }
+
+        return frameData;
       },
       [elements, app.state, app.files],
     );
@@ -338,15 +400,36 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
      * 生成所有Frames的导出数据
      */
     const generateFramesExportData = useCallback((): FramesExportData => {
-      const framesData: FrameData[] = frames.map((frame) =>
-        generateFrameData(frame),
-      );
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "🔍 Generating frames export data for",
+          frames.length,
+          "frames",
+        );
+      }
+      const framesData: FrameData[] = frames.map((frame) => {
+        const frameData = generateFrameData(frame);
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            "🔍 Generated data for frame:",
+            frame.name || frame.id,
+            "children:",
+            frameData.childrenElements.length,
+          );
+        }
+        return frameData;
+      });
 
-      return {
+      const exportData = {
         frames: framesData,
         timestamp: Date.now(),
         totalFrames: frames.length,
       };
+
+      if (process.env.NODE_ENV === "development") {
+        console.log("🔍 Final export data:", exportData.totalFrames, "frames");
+      }
+      return exportData;
     }, [frames, generateFrameData]);
 
     /**
@@ -380,36 +463,97 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
     };
 
     /**
-     * 防抖导出函数 - 优化版本，减少不必要的调用
+     * 🚀 优化：防抖导出函数 - 使用统一定时器管理
      */
-    const debouncedExportFramesData = useCallback(
-      (framesData: FramesExportData) => {
-        // 使用统一的清理函数
-        clearDebounceTimer();
-
-        // 设置新的定时器
-        debounceTimer.current = setTimeout(() => {
-          try {
-            // exportFramesData(framesData);
-            setPrevFramesData(framesData);
-          } catch (error) {
-            console.error("[BusinessServiceProtoNav] 导出数据时出错:", error);
-          } finally {
-            // 确保定时器引用被清除
-            debounceTimer.current = null;
-          }
-        }, 300); // 300ms 防抖延迟
-      },
-      [clearDebounceTimer],
+    const debouncedExportFramesData = createDebouncedCallback(
+      useCallback((framesData: FramesExportData) => {
+        try {
+          // exportFramesData(framesData);
+          setPrevFramesData(framesData);
+        } catch (error) {
+          console.error("[BusinessServiceProtoNav] 导出数据时出错:", error);
+        }
+      }, [setPrevFramesData]),
+      300 // 300ms 防抖延迟
     );
 
+    // 性能优化：使用ref存储上次检查时间，实现节流
+    const lastCheckTime = useRef<number>(0);
+    const THROTTLE_INTERVAL = 2000; // 🚀 增加到2秒节流间隔，大幅减少拖动时的计算
+
+    // 🚀 性能优化：拖拽状态检测，避免拖拽时进行昂贵计算
+    const isDragging = useRef<boolean>(false);
+    const dragTimeout = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+      const handlePointerMove = () => {
+        if (!isDragging.current) {
+          isDragging.current = true;
+          // 清除之前的拖拽结束定时器
+          if (dragTimeout.current) {
+            clearTimeout(dragTimeout.current);
+          }
+        }
+
+        // 设置拖拽结束检测（1500ms无移动认为拖拽结束）
+        dragTimeout.current = setTimeout(() => {
+          isDragging.current = false;
+        }, 1500);
+      };
+
+      const handlePointerUp = () => {
+        // 指针抬起时立即结束拖拽状态
+        isDragging.current = false;
+        if (dragTimeout.current) {
+          clearTimeout(dragTimeout.current);
+        }
+      };
+
+      document.addEventListener("pointermove", handlePointerMove, {
+        passive: true,
+      });
+      document.addEventListener("pointerup", handlePointerUp, {
+        passive: true,
+      });
+
+      return () => {
+        document.removeEventListener("pointermove", handlePointerMove);
+        document.removeEventListener("pointerup", handlePointerUp);
+        if (dragTimeout.current) {
+          clearTimeout(dragTimeout.current);
+        }
+      };
+    }, []);
+
     /**
-     * 监听frames变化的Effect（优化版本）
-     * 修复循环依赖问题：使用防抖机制避免频繁触发
+     * 监听frames变化的Effect（极端性能优化版本）
+     * 优化策略：
+     * 1. 拖拽时完全跳过计算
+     * 2. 大幅增加节流间隔
+     * 3. 使用更轻量的变化检测
      */
     useEffect(() => {
+      const now = Date.now();
+
+      // 🚀 拖拽时完全跳过计算
+      if (isDragging.current) {
+        return;
+      }
+
+      // 节流：如果距离上次检查时间不足THROTTLE_INTERVAL，跳过本次检查
+      if (now - lastCheckTime.current < THROTTLE_INTERVAL) {
+        return;
+      }
+
       // 防抖定时器，避免频繁触发
       const timeoutId = setTimeout(() => {
+        // 再次检查是否在拖拽中
+        if (isDragging.current) {
+          return;
+        }
+
+        lastCheckTime.current = Date.now();
+
         // 首先进行快速检测
         if (!hasFramesChangedQuick(generateFramesSnapshot)) {
           return; // 没有变化，直接返回
@@ -420,14 +564,11 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
 
         // 使用防抖导出
         debouncedExportFramesData(currentFramesData);
-      }, 100); // 100ms 防抖延迟
+      }, 800); // 🚀 增加到800ms防抖延迟，进一步减少计算频率
 
       return () => clearTimeout(timeoutId);
-    }, [
-      generateFramesSnapshot,
-      generateFramesExportData,
-      debouncedExportFramesData,
-    ]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateFramesSnapshot]); // 性能优化：只监听快照变化，避免函数依赖导致的频繁重渲染
 
     // 开发人员隐藏功能：点击标题六次触发恢复弹框
     const [titleClickCount, setTitleClickCount] = useState(0);
@@ -471,10 +612,9 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
       },
     ];
 
-    const frameClick = (frame: ExcalidrawFrameLikeElement) => {
-      // console.log("frame:", frame);
-      setSelectedFrame(frame);
-      setActiveMenuFrameId(null);
+    // 🚀 优化：使用dispatch替代多个setState调用
+    const frameClick = useCallback((frame: ExcalidrawFrameLikeElement) => {
+      dispatch({ type: 'SET_SELECTED_FRAME', payload: frame });
 
       // 主动选中frame元素
       setAppState({
@@ -482,7 +622,7 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
         selectedGroupIds: {}, // 清除组选择，避免跨frame影响
       });
       app.scrollToContent(frame, { animate: true });
-    };
+    }, [dispatch, setAppState, app]);
 
     // 默认将第一个 frame 聚焦到画布中心（仅初始化一次）
     useEffect(() => {
@@ -504,10 +644,34 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
     const frameExportPng = async (
       exportingFrame: ExcalidrawFrameLikeElement,
     ) => {
-      const elementsInFrame = getFrameChildren(
-        getNonDeletedElements(elements),
-        exportingFrame.id,
-      ).filter((element) => !(element.type === "text" && element.containerId));
+      // 🚀 PNG导出需要完整的视觉内容，必须包含所有几何重叠的元素
+      // 不能只依赖frameId，因为用户期望看到frame区域内的所有视觉元素
+
+      // 获取frameId关联的元素
+      const associatedChildren = getFrameChildren(elements, exportingFrame.id);
+
+      // 获取几何重叠的元素（PNG导出必须包含这些）
+      const overlappingElements = getElementsOverlappingFrame(
+        elements,
+        exportingFrame,
+      );
+
+      // 合并去重，确保PNG包含所有可见内容
+      const allElementsMap = new Map<string, ExcalidrawElement>();
+
+      associatedChildren.forEach((element) => {
+        allElementsMap.set(element.id, element);
+      });
+
+      overlappingElements.forEach((element) => {
+        if (element.id !== exportingFrame.id && !isFrameLikeElement(element)) {
+          allElementsMap.set(element.id, element);
+        }
+      });
+
+      const elementsInFrame = Array.from(allElementsMap.values()).filter(
+        (element) => !(element.type === "text" && element.containerId),
+      );
 
       // const exportedElements = getElementsOverlappingFrame(
       //   elements,
@@ -688,7 +852,17 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
         newElements = [...app.scene.getElementsIncludingDeleted(), newFrame];
       }
 
+      // 🚀 修复：确保新frame被添加到画布中
       // app.scene.replaceAllElements(newElements);
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "🔍 New frame added to canvas:",
+          newFrame.name,
+          "Total elements:",
+          newElements.length,
+        );
+      }
+
       app.onHemaButtonClick("addNewFrame", {
         data: {
           frames: [
@@ -736,7 +910,16 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
     const isCanvasEmpty = useMemo(() => {
       // 获取所有非删除的元素，包括frame元素
       const nonDeletedElements = elements.filter((el) => !el.isDeleted);
-      return nonDeletedElements.length === 0;
+      const isEmpty = nonDeletedElements.length === 0;
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "🔍 Canvas empty check:",
+          isEmpty,
+          "elements count:",
+          nonDeletedElements.length,
+        );
+      }
+      return isEmpty;
     }, [elements]);
 
     /**
@@ -955,6 +1138,17 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
           </div>
           <div className="business-service-proto-nav-body">
             <div className="business-service-proto-nav-body-frames">
+              {/* 🔍 调试按钮：手动刷新frame列表 */}
+              {/* {process.env.NODE_ENV === "development" && (
+                <div
+                  className="export-all-button"
+                  onClick={triggerUpdate}
+                  title="刷新frame列表（调试用）"
+                  style={{ backgroundColor: "#ff6b6b", marginBottom: "8px" }}
+                >
+                  🔍 刷新列表
+                </div>
+              )} */}
               {(appProps.UIOptions.visibility?.customButtons === true ||
                 (typeof appProps.UIOptions.visibility?.customButtons ===
                   "object" &&
@@ -967,7 +1161,7 @@ export const BusinessServiceProtoNav = forwardRef<BusinessServiceProtoNavRef>(
                   onClick={isCanvasEmpty ? undefined : manualExportFramesData}
                   title={isCanvasEmpty ? "画布为空，无法保存" : "保存画布"}
                 >
-                  保存画布
+                  保存画布 ({elements.length} 元素, {frames.length} 页面)
                 </div>
               )}
               {(appProps.UIOptions.visibility?.customButtons === true ||

@@ -216,10 +216,54 @@ const getRelevantAppStateProps = (
   activeLockedId: appState.activeLockedId,
 });
 
+// Performance optimization: Throttle rendering during drag operations
+let lastDragRenderTime = 0;
+const DRAG_RENDER_THROTTLE_MS = 33; // ~30fps for extreme scenarios
+const EXTREME_SCENE_THRESHOLD = 50000; // 5万+元素认为是极端场景
+const FRAME_DRAG_ELEMENT_THRESHOLD = 10; // frame拖拽时超过10个元素就开启节流
+
 const areEqual = (
   prevProps: InteractiveCanvasProps,
   nextProps: InteractiveCanvasProps,
 ) => {
+  const prevAppState = prevProps.appState as AppState;
+  const nextAppState = nextProps.appState as AppState;
+
+  // Performance optimization: Throttle rendering during drag operations
+  const isDragging = nextAppState.selectedElementsAreBeingDragged;
+  const totalElements = nextProps.visibleElements.length;
+  const isExtremeScene = totalElements > EXTREME_SCENE_THRESHOLD;
+
+  // 极端场景下更激进的节流策略
+  const isDraggingFrameWithManyElements =
+    isDragging &&
+    (isExtremeScene ||
+      (nextProps.selectedElements.some((el) => el.type === "frame") &&
+        nextProps.selectedElements.length > FRAME_DRAG_ELEMENT_THRESHOLD));
+
+  if (isDraggingFrameWithManyElements) {
+    const now = Date.now();
+    const timeSinceLastRender = now - lastDragRenderTime;
+
+    // Skip rendering if we're within throttle window and only position changed
+    if (timeSinceLastRender < DRAG_RENDER_THROTTLE_MS) {
+      // Check if only scroll position changed (common during drag)
+      const onlyPositionChanged =
+        prevAppState.scrollX !== nextAppState.scrollX ||
+        prevAppState.scrollY !== nextAppState.scrollY;
+
+      if (
+        onlyPositionChanged &&
+        prevProps.selectionNonce === nextProps.selectionNonce &&
+        prevProps.sceneNonce === nextProps.sceneNonce
+      ) {
+        return true; // Skip render
+      }
+    }
+
+    lastDragRenderTime = now;
+  }
+
   // This could be further optimised if needed, as we don't have to render interactive canvas on each scene mutation
   if (
     prevProps.selectionNonce !== nextProps.selectionNonce ||
@@ -240,8 +284,8 @@ const areEqual = (
   return isShallowEqual(
     // asserting AppState because we're being passed the whole AppState
     // but resolve to only the InteractiveCanvas-relevant props
-    getRelevantAppStateProps(prevProps.appState as AppState),
-    getRelevantAppStateProps(nextProps.appState as AppState),
+    getRelevantAppStateProps(prevAppState),
+    getRelevantAppStateProps(nextAppState),
   );
 };
 
