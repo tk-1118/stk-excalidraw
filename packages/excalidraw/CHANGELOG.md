@@ -13,7 +13,7 @@ Please add the latest change on the top under the correct section.
 
 ## Excalidraw Library
 
-## 0.18.0 (2025-03-11)
+## 0.19.0 (2025-03-11)
 
 ### Highlights
 
@@ -103,7 +103,7 @@ import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 <!-- excalidraw styles -->
 <link
   rel="stylesheet"
-  href="https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/dev/index.css"
+  href="https://esm.sh/@excalidraw/excalidraw@0.19.0/dist/dev/index.css"
 />
 <!-- import maps used for deduplicating react & react-dom versions -->
 <script type="importmap">
@@ -118,7 +118,7 @@ import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 <script type="module">
   import React from "https://esm.sh/react@19.0.0";
   import ReactDOM from "https://esm.sh/react-dom@19.0.0";
-  import * as ExcalidrawLib from "https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/dev/index.js?external=react,react-dom";
+  import * as ExcalidrawLib from "https://esm.sh/@excalidraw/excalidraw@0.19.0/dist/dev/index.js?external=react,react-dom";
 </script>
 ```
 
