@@ -70,6 +70,8 @@
     "build:packages": "yarn build:common && yarn build:math && yarn build:element && yarn build:excalidraw",
     "===根据所有子包构建tgz===": "",
     "build:pack": "for d in packages/*; do (cd \"$d\" && npm pack --pack-destination ..\/tgz-list); done",
+    "===构建umd===": "",
+    "build:umd": "node ./scripts/buildUMD.js",
     "build:version": "yarn --cwd ./excalidraw-app build:version",
     "build": "yarn --cwd ./excalidraw-app build",
     "build:preview": "yarn --cwd ./excalidraw-app build:preview",
