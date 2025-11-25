@@ -9,7 +9,7 @@ const getUMDConfig = (outdir) => ({
   outdir,
   bundle: true,
   format: "iife", // 立即执行函数表达式，类似 UMD
-  globalName: "ExcalidrawLib", // 全局变量名
+  globalName: "ExcalidrawLibV1", // 全局变量名
   entryPoints: [path.resolve(__dirname, "./umd-entry.js")],
   entryNames: "excalidraw.umd",
   assetNames: "[dir]/[name]",
